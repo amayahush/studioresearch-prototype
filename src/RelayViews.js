@@ -121,13 +121,8 @@ function focusLayout(focus, nodes, adj, w, h, measured = {}) {
       pos[id] = { x: cx0 + rx2 * Math.cos(a), y: cy0 + ry2 * Math.sin(a), ring: 2, angle: a };
     });
   }
-  // Keep every card fully inside the stage.
-  for (const p of Object.values(pos)) {
-    p.x = Math.max(100, Math.min(w - 100, p.x));
-    p.y = Math.max(22, Math.min(h - 22, p.y));
-  }
-  // Cards are wider than the rings on a narrow stage, so nudge overlapping cards apart.
-  // The outer card of a pair moves; the centered card never does.
+  // Place cards one at a time (center, then first ring, then outer ring), each in the free spot
+  // nearest to where the ring puts it. Cards never overlap; outer cards with no room are hidden.
   const box = (id) => {
     const p = pos[id], chars = nodes[id].label.length;
     const real = measured[`${id}:${p.ring}`]; // size from the last render, when we have it
@@ -138,37 +133,32 @@ function focusLayout(focus, nodes, adj, w, h, measured = {}) {
     if (p.ring === 1 && t === 'code') return { w: 220, h: 36 + 14 + 18 * Math.min(2, nodes[id].code.length) };
     return { w: Math.min(160, 50 + chars * 7.2), h: p.ring === 1 ? 36 : 30 };
   };
-  const ids = Object.keys(pos);
-  const size = Object.fromEntries(ids.map((id) => [id, box(id)]));
-  for (let pass = 0; pass < 120; pass++) {
-    let moved = false;
-    for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
-      const a = ids[i], b = ids[j], A = pos[a], B = pos[b];
-      const ox = (size[a].w + size[b].w) / 2 + 8 - Math.abs(A.x - B.x);
-      const oy = (size[a].h + size[b].h) / 2 + 6 - Math.abs(A.y - B.y);
-      if (ox <= 0 || oy <= 0) continue;
-      const mover = B.ring >= A.ring ? B : A, other = mover === B ? A : B;
-      const ms = mover === B ? size[b] : size[a], os = mover === B ? size[a] : size[b];
-      // Separate along the axis that needs the smaller push; fall back to the other axis at the stage edge.
-      const pushX = () => {
-        const dir = mover.x === other.x ? 1 : Math.sign(mover.x - other.x);
-        const x = Math.max(ms.w / 2 + 4, Math.min(w - ms.w / 2 - 4, mover.x + dir * Math.min(ox, 12)));
-        if (x !== mover.x) { mover.x = x; return true; }
-        if (other.ring > 0) { const x2 = Math.max(os.w / 2 + 4, Math.min(w - os.w / 2 - 4, other.x - dir * Math.min(ox, 12))); if (x2 !== other.x) { other.x = x2; return true; } }
-        return false;
-      };
-      const pushY = () => {
-        const dir = mover.y === other.y ? (mover === B ? 1 : -1) : Math.sign(mover.y - other.y);
-        const y = Math.max(ms.h / 2 + 4, Math.min(h - ms.h / 2 - 4, mover.y + dir * Math.min(oy, 12)));
-        if (y !== mover.y) { mover.y = y; return true; }
-        if (other.ring > 0) { const y2 = Math.max(os.h / 2 + 4, Math.min(h - os.h / 2 - 4, other.y - dir * Math.min(oy, 12))); if (y2 !== other.y) { other.y = y2; return true; } }
-        return false;
-      };
-      if (ox < oy) pushX() || pushY(); else pushY() || pushX();
-      moved = true;
+  const GAP = 8, EDGE = 6;
+  const boxes = [];
+  const inside = (x, y, s) => x - s.w / 2 >= EDGE && x + s.w / 2 <= w - EDGE && y - s.h / 2 >= EDGE && y + s.h / 2 <= h - EDGE;
+  const free = (x, y, s) => inside(x, y, s) && boxes.every((b) => Math.abs(b.x - x) >= (b.w + s.w) / 2 + GAP || Math.abs(b.y - y) >= (b.h + s.h) / 2 + GAP);
+  const order = Object.keys(pos).sort((a, b) => pos[a].ring - pos[b].ring);
+  let hidden = 0;
+  for (const id of order) {
+    const p = pos[id], s = box(id);
+    const x0 = Math.max(s.w / 2 + EDGE, Math.min(w - s.w / 2 - EDGE, p.x));
+    const y0 = Math.max(s.h / 2 + EDGE, Math.min(h - s.h / 2 - EDGE, p.y));
+    let spot = free(x0, y0, s) || p.ring === 0 ? [x0, y0] : null;
+    // Spiral outward from the ideal spot until a free one turns up.
+    for (let r = 8; !spot && r < Math.max(w, h); r += 8) {
+      const steps = Math.max(12, Math.round(r / 6));
+      for (let k = 0; k < steps; k++) {
+        const t = (k / steps) * 2 * Math.PI;
+        const x = x0 + r * Math.cos(t), y = y0 + r * 0.7 * Math.sin(t);
+        if (free(x, y, s)) { spot = [x, y]; break; }
+      }
     }
-    if (!moved) break;
+    if (!spot && p.ring === 1) spot = [x0, y0]; // never drop a direct link
+    if (!spot) { delete pos[id]; hidden++; continue; }
+    [p.x, p.y] = spot;
+    boxes.push({ x: p.x, y: p.y, ...s });
   }
+  Object.defineProperty(pos, 'hidden', { value: hidden }); // not a card, so not enumerable
   return pos;
 }
 
@@ -317,7 +307,7 @@ export function MapView({ selected, setSelected }) {
           <span><i className="lg-line evidence" /> Evidence</span>
           <span><i className="lg-line other" /> Other PRDs</span>
           <span className="grow" />
-          <span>Click any card to center the map on it</span>
+          <span>${pos.hidden ? `${pos.hidden} more one step out · ` : ''}Click any card to center the map on it</span>
         </div>
       </div>
     </div>
