@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PRD review with collapsible inspector</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#111214}
+a{color:#8B97FF}a:hover{color:#B3BBFF}
+.hit:hover{background:#1C1D21}
+.btn:focus-visible,.hit:focus-visible{outline:2px solid #6E7BFF;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 100%; height: 832px; display: flex; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; color: #EDEDEF; background: #111214; overflow: hidden">
+
+  <nav aria-label="Workspace" style="width: {{navW}}; flex: {{navFlex}}; display: flex; flex-direction: column; gap: 4px; padding: 12px 10px; box-sizing: border-box; border-right: 1px solid #26282D; background: #141518; overflow: hidden; transition: width .22s ease, flex-basis .22s ease">
+    <sc-if value="{{navOpen}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; align-items: center; gap: 6px; padding: 0 0 8px 8px">
+        <span style="flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 14px; font-weight: 600; white-space: nowrap">Manufacturing Systems ⌄</span>
+        <button type="button" class="btn hit" onClick="{{toggleNav}}" aria-label="Collapse sidebar" aria-expanded="{{navOpen}}" title="Collapse sidebar" style="width: 32px; height: 32px; flex: 0 0 32px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: none; color: #A6A8B0; cursor: pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M9 4v16"></path><path d="M15.5 10l-2 2 2 2"></path></svg>
+        </button>
+      </div>
+      <div style="margin: 0 0 8px; padding: 9px 12px; border: 1px solid #2E3036; border-radius: 8px; font-size: 13px; color: #8E9099; white-space: nowrap">Search</div>
+      <div style="padding: 7px 8px; font-size: 13px; color: #C9CACF">Inbox</div>
+      <div style="padding: 7px 8px; font-size: 13px; color: #C9CACF">My work</div>
+      <div style="padding: 14px 8px 4px; font-size: 11px; letter-spacing: .06em; color: #8E9099">PROJECTS</div>
+      <div style="padding: 7px 8px; border-radius: 6px; background: #1E1F23; font-size: 13px; white-space: nowrap">Line Labor Dashboard</div>
+      <div style="padding: 7px 8px; font-size: 13px; color: #C9CACF; white-space: nowrap">Compliance Tracker</div>
+      <div style="padding: 7px 8px; font-size: 13px; color: #C9CACF">Shift Handoff</div>
+      <div style="padding: 14px 8px 4px; font-size: 11px; letter-spacing: .06em; color: #8E9099; white-space: nowrap">CONNECTED TOOLS</div>
+      <div style="padding: 6px 8px; font-size: 13px; color: #C9CACF; white-space: nowrap">Jira · GitLab · Figma</div>
+      <div style="padding: 6px 8px; font-size: 13px; color: #C9CACF; white-space: nowrap">Teams · SharePoint · Codex</div>
+    </sc-if>
+    <sc-if value="{{navClosed}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+        <button type="button" class="btn hit" onClick="{{toggleNav}}" aria-label="Expand sidebar" aria-expanded="{{navOpen}}" title="Expand sidebar" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: none; color: #A6A8B0; cursor: pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M9 4v16"></path><path d="M13.5 10l2 2-2 2"></path></svg>
+        </button>
+        <span style="width: 24px; height: 1px; margin: 4px 0; background: #26282D"></span>
+        <button type="button" class="btn hit" aria-label="Search" title="Search" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: none; color: #A6A8B0; cursor: pointer">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4-4"></path></svg>
+        </button>
+        <button type="button" class="btn hit" aria-label="Inbox" title="Inbox" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: none; color: #A6A8B0; cursor: pointer">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l2.5-7h11L20 13v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"></path><path d="M4 13h4.5l1 2h5l1-2H20"></path></svg>
+        </button>
+        <button type="button" class="btn hit" aria-label="My work" title="My work" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: none; color: #A6A8B0; cursor: pointer">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M5 20c1.2-3.5 4-5 7-5s5.8 1.5 7 5"></path></svg>
+        </button>
+        <button type="button" class="btn hit" aria-label="Line Labor Dashboard (current project)" title="Line Labor Dashboard" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: #1E1F23; color: #EDEDEF; cursor: pointer">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v4h4"></path><path d="M10 12h5M10 16h5"></path></svg>
+        </button>
+      </div>
+    </sc-if>
+  </nav>
+
+  <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column">
+    <header style="height: 52px; flex: 0 0 52px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid #26282D; box-sizing: border-box">
+      <span style="font-size: 14px; font-weight: 600">Line Labor Dashboard / PRD</span>
+      <span style="padding: 3px 8px; border-radius: 6px; background: #3A2A12; color: #F0B35A; font-size: 12px">v1 · 1 pending</span>
+      <span style="flex: 1 1 auto"></span>
+      <span style="font-size: 13px; color: #8E9099">Doc · Map · Screens · Present</span>
+      <span style="padding: 6px 12px; border: 1px solid #2E3036; border-radius: 8px; font-size: 13px">Share</span>
+    </header>
+    <div style="height: 46px; flex: 0 0 46px; display: flex; align-items: center; gap: 22px; padding: 0 16px; border-bottom: 1px solid #26282D; box-sizing: border-box; font-size: 13px; color: #A6A8B0">
+      <span style="font-size: 11px; letter-spacing: .06em; color: #8E9099">SLICE</span>
+      <span style="color: #EDEDEF">Main PRD</span><span>Developer</span><span>Design</span><span>SME</span><span>Business</span>
+    </div>
+
+    <div style="flex: 1 1 auto; display: flex; min-height: 0">
+      <main style="flex: 1 1 auto; min-width: 0; padding: 22px 30px; overflow-y: auto; box-sizing: border-box">
+        <button type="button" class="hit" onClick="{{selOverview}}" style="display: block; width: 100%; padding: 4px; margin: 0 0 14px -4px; border: 0; border-radius: 8px; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer">
+          <span style="display: block; font-size: 22px; font-weight: 600">Line Labor Dashboard</span>
+          <span style="display: block; margin-top: 6px; font-size: 12px; color: #8E9099">Owner Dana Ortiz (PM) · v1 · published Oct 1 · Sources: kickoff call, lead notes, labor spreadsheet</span>
+        </button>
+
+        <button type="button" class="hit" onClick="{{selProblem}}" style="display: block; width: 100%; padding: 16px 18px; margin-bottom: 14px; border: 1px solid {{problemBorder}}; border-radius: 10px; background: #16171A; font: inherit; color: inherit; text-align: left; cursor: pointer">
+          <span style="display: flex; justify-content: space-between; align-items: center">
+            <span style="font-size: 15px; font-weight: 600">Problem</span>
+            <span style="padding: 2px 8px; border-radius: 6px; background: #12301F; color: #5DD39B; font-size: 12px">Approved</span>
+          </span>
+          <span style="display: block; margin-top: 8px; line-height: 1.55; color: #D6D7DB">First-line leaders track labor hours across three spreadsheets. They can't see overtime risk until the end of the week, when it's too late to rebalance crews.</span>
+        </button>
+
+        <section style="padding: 16px 14px; border: 1px solid #26282D; border-radius: 10px; background: #16171A">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 4px 10px">
+            <span style="font-size: 15px; font-weight: 600">Requirements</span>
+            <span style="padding: 2px 8px; border-radius: 6px; background: #3A2A12; color: #F0B35A; font-size: 12px">1 pending</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <sc-for list="{{reqs}}" as="r" hint-placeholder-count="5">
+              <button type="button" class="hit" onClick="{{r.pick}}" style="display: flex; gap: 12px; align-items: flex-start; width: 100%; padding: 12px; border: 1px solid {{r.border}}; border-radius: 8px; background: {{r.bg}}; font: inherit; color: inherit; text-align: left; cursor: pointer">
+                <span style="flex: 0 0 auto; padding: 2px 7px; border-radius: 5px; background: #24262B; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #A6A8B0">{{r.id}}</span>
+                <span style="display: flex; flex-direction: column; gap: 6px">
+                  <span>{{r.text}}</span>
+                  <span style="font-size: 12px; color: {{r.metaColor}}">{{r.meta}}</span>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+        </section>
+      </main>
+
+      <aside aria-label="Details" style="width: 360px; flex: 0 0 360px; display: flex; flex-direction: column; border-left: 1px solid #26282D; background: #141518">
+        <div style="padding: 16px 18px 12px; border-bottom: 1px solid #26282D">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="padding: 3px 8px; border-radius: 6px; background: {{s.tagBg}}; color: {{s.tagFg}}; font-size: 12px">{{s.tag}}</span>
+            <span style="font-size: 15px; font-weight: 600">{{s.title}}</span>
+          </div>
+          <sc-if value="{{s.hasFrom}}" hint-placeholder-val="{{ true }}">
+            <p style="margin: 10px 0 0; font-size: 12px; color: #A6A8B0">{{s.from}}</p>
+          </sc-if>
+        </div>
+
+        <div style="flex: 1 1 auto; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+          <sc-for list="{{secs}}" as="sec" hint-placeholder-count="4">
+            <section style="border: 1px solid #26282D; border-radius: 10px; overflow: hidden; background: #16171A">
+              <button type="button" class="btn hit" onClick="{{sec.toggle}}" aria-expanded="{{sec.open}}" style="width: 100%; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; box-sizing: border-box">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="flex: 0 0 auto; color: #8E9099; transform: {{sec.rot}}; transition: transform .2s ease"><path d="M9 6l6 6-6 6"></path></svg>
+                <span style="flex: 1 1 auto; font-size: 11px; font-weight: 500; letter-spacing: .06em; color: #A6A8B0">{{sec.label}}</span>
+                <span style="font-size: 12px; color: {{sec.pvColor}}; text-align: right">{{sec.pv}}</span>
+              </button>
+              <sc-if value="{{sec.open}}" hint-placeholder-val="{{ true }}">
+                <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 14px 14px 34px">
+                  <sc-for list="{{sec.lines}}" as="ln" hint-placeholder-count="1">
+                    <p style="margin: 0; font-size: 13px; line-height: 1.55; color: {{ln.color}}; text-decoration: {{ln.deco}}">{{ln.t}}</p>
+                  </sc-for>
+                  <sc-if value="{{sec.hasChips}}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                      <sc-for list="{{sec.chips}}" as="c" hint-placeholder-count="2">
+                        <span style="padding: 4px 8px; border: 1px solid #34363C; border-radius: 6px; font-size: 12px; color: #C9CACF">{{c.t}}</span>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-for list="{{sec.people}}" as="p" hint-placeholder-count="0">
+                    <div style="display: flex; gap: 10px; align-items: flex-start">
+                      <span style="width: 26px; height: 26px; flex: 0 0 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: {{p.av}}; font-size: 11px; font-weight: 600; color: #FFFFFF">{{p.ini}}</span>
+                      <span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px">
+                        <span style="font-size: 13px"><span style="font-weight: 600">{{p.name}}</span> <span style="color: #8E9099">{{p.role}}</span></span>
+                        <span style="font-size: 12px; line-height: 1.5; color: #A6A8B0">{{p.note}}</span>
+                      </span>
+                      <span style="flex: 0 0 auto; padding: 2px 8px; border-radius: 6px; background: {{p.stBg}}; color: {{p.stFg}}; font-size: 12px">{{p.status}}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </section>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{s.approve}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid #26282D">
+            <button type="button" class="btn" style="min-height: 40px; padding: 0 16px; border: 1px solid #34363C; border-radius: 8px; background: #1A1B1F; font: inherit; font-size: 13px; color: #EDEDEF; cursor: pointer">Deny</button>
+            <button type="button" class="btn" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 8px; background: #EDEDEF; font: inherit; font-size: 13px; font-weight: 500; color: #111214; cursor: pointer">Approve &amp; publish</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{s.draft}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid #26282D">
+            <button type="button" class="btn" style="min-height: 40px; padding: 0 16px; border: 1px solid #34363C; border-radius: 8px; background: #1A1B1F; font: inherit; font-size: 13px; color: #EDEDEF; cursor: pointer">Discard</button>
+            <button type="button" class="btn" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 8px; background: #EDEDEF; font: inherit; font-size: 13px; font-weight: 500; color: #111214; cursor: pointer">Accept draft</button>
+          </div>
+        </sc-if>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":832}}'>
+var TXT = '#D6D7DB', MUTED = '#A6A8B0', WARN = '#F0B35A', OK = '#5DD39B', BAD = '#F2777A';
+var TAGS = {
+  neutral: ['#24262B', '#C9CACF'], ok: ['#12301F', '#5DD39B'], warn: ['#3A2A12', '#F0B35A'],
+  info: ['#1B2440', '#8B97FF'], sel: ['#1B2440', '#8B97FF']
+};
+function L(t, color, strike) { return { t: t, color: color || TXT, deco: strike ? 'line-through' : 'none' }; }
+
+var SEL = {
+  overview: { tag: 'PRD', tone: 'neutral', title: 'Line Labor Dashboard', from: '', sections: [
+    { key: 'status', label: 'STATUS', pv: '1 pending · 1 draft', pvTone: WARN, def: true,
+      lines: [L('R4 · change proposed by Marcus, waiting on you'), L('R5 · drafted by AI from lead notes, not reviewed yet')] },
+    { key: 'sources', label: 'SOURCES', pv: '3 sources', def: false, chips: ['Kickoff call', 'Lead notes', 'Labor spreadsheet'] },
+    { key: 'linked', label: 'LINKED WORK', pv: '6 tools', def: false, lines: [L('Jira · 4 tickets'), L('GitLab · 1 merge request'), L('Figma · 2 frames')] }
+  ] },
+  problem: { tag: 'Approved', tone: 'ok', title: 'Problem', from: '', sections: [
+    { key: 'statement', label: 'STATEMENT', pv: '', def: true,
+      lines: [L('First-line leaders track labor hours across three spreadsheets. They can’t see overtime risk until the end of the week, when it’s too late to rebalance crews.')] },
+    { key: 'sources', label: 'SOURCES', pv: '3 sources', def: false, chips: ['Kickoff call', 'Lead notes', 'Labor spreadsheet'] },
+    { key: 'history', label: 'HISTORY', pv: 'v1 · Oct 1', def: false, lines: [L('Approved and published by Dana Ortiz · Oct 1')] }
+  ] },
+  R1: { tag: 'Done', tone: 'ok', title: 'R1 · Labor hours per department', from: '', sections: [
+    { key: 'statement', label: 'REQUIREMENT', pv: '', def: true, lines: [L('Show labor hours per department for the current shift.')] },
+    { key: 'linked', label: 'LINKED WORK', pv: 'Done · Merged', pvTone: OK, def: false, chips: ['Jira LAB-12 · Done', 'GitLab !205 · Merged'] },
+    { key: 'history', label: 'HISTORY', pv: 'v1 · Oct 1', def: false, lines: [L('Approved by Dana Ortiz · Oct 1')] }
+  ] },
+  R2: { tag: 'In progress', tone: 'neutral', title: 'R2 · Overtime flag', from: '', sections: [
+    { key: 'statement', label: 'REQUIREMENT', pv: '', def: true, lines: [L('Flag any department above 85% of planned hours.')] },
+    { key: 'linked', label: 'LINKED WORK', pv: 'In progress', def: false, chips: ['Jira LAB-13 · In progress'] },
+    { key: 'history', label: 'HISTORY', pv: 'v1 · Oct 1', def: false, lines: [L('Approved by Dana Ortiz · Oct 1')] }
+  ] },
+  R4: { tag: 'Pending', tone: 'warn', title: 'R4 · Data refresh rate', from: 'From Marcus Lee · Developer · via Codex · 1:52 PM', approve: true, sections: [
+    { key: 'change', label: 'CHANGE', pv: '15 min → hourly', pvTone: WARN, def: true,
+      lines: [L('Refresh data every 15 minutes.', BAD, true), L('Refresh data hourly, 5 minutes after the timekeeping system syncs.', OK)] },
+    { key: 'reason', label: 'REASON', pv: 'API batch-loads hourly', def: true,
+      lines: [L('The timekeeping API batch-loads badge punches once an hour, at the top of the hour. Polling every 15 minutes returns the same data 3 out of 4 times, so the dashboard would look live when it isn’t.')] },
+    { key: 'evidence', label: 'EVIDENCE', pv: '3 items', def: false, chips: ['Spec §3.2 · edited Mar 2023', 'API response', 'Screen capture'] },
+    { key: 'owners', label: 'OWNERS OF LINKED WORK', pv: '1 agreed · 1 waiting', pvTone: WARN, def: false,
+      people: [
+        { ini: 'PS', av: '#B9479A', name: 'Priya Shah', role: 'Designer', note: '“I’ll relabel “Updated every 15 min” to show the actual last sync time.”', status: 'Agreed', ok: true },
+        { ini: 'KA', av: '#C77A2E', name: 'Kim Alvarez', role: 'Business lead', note: '', status: 'No reply yet', ok: false }
+      ],
+      lines: [L('Informed, no action needed: Jordan Kim, Sam Reed', MUTED)] },
+    { key: 'impact', label: 'ALSO AFFECTS', pv: 'Success metric · likely holds', def: false,
+      lines: [L('“Leaders spot overtime risk by mid-shift.” Hourly data still gives 3 to 4 readings before mid-shift, so the metric likely holds. Check with Kim if [rest of your copy].')] }
+  ] },
+  R3: { tag: 'In progress', tone: 'neutral', title: 'R3 · Filter by shift', from: '', sections: [
+    { key: 'statement', label: 'REQUIREMENT', pv: '', def: true, lines: [L('Let leaders filter by shift (1st, 2nd, 3rd).')] },
+    { key: 'linked', label: 'LINKED WORK', pv: 'Jira · Figma', def: false, chips: ['Jira LAB-14 · In progress', 'Figma · Filters'] },
+    { key: 'history', label: 'HISTORY', pv: 'v1 · Oct 1', def: false, lines: [L('Approved by Dana Ortiz · Oct 1')] }
+  ] },
+  R5: { tag: 'Draft · AI', tone: 'info', title: 'R5 · Department detail view', from: 'Drafted by Relay from lead notes', draft: true, sections: [
+    { key: 'statement', label: 'DRAFT', pv: '', def: true, lines: [L('Show a department detail view with an hourly breakdown.')] },
+    { key: 'sources', label: 'DRAFTED FROM', pv: 'Lead notes', def: false, lines: [L('[Placeholder: the line in the lead notes this came from]', MUTED)] },
+    { key: 'linked', label: 'LINKED WORK', pv: 'None yet', def: false, lines: [L('Gets a Jira ticket once accepted.', MUTED)] }
+  ] }
+};
+
+var REQS = [
+  { id: 'R1', text: 'Show labor hours per department for the current shift.', meta: 'Jira LAB-12 · Done   GitLab !205 · Merged' },
+  { id: 'R2', text: 'Flag any department above 85% of planned hours.', meta: 'Jira LAB-13 · In progress' },
+  { id: 'R4', text: 'Refresh data every 15 minutes.', meta: 'Jira LAB-15 · In progress   Pending · Dana', pending: true },
+  { id: 'R3', text: 'Let leaders filter by shift (1st, 2nd, 3rd).', meta: 'Jira LAB-14 · In progress   Figma · Filters' },
+  { id: 'R5', text: 'Show a department detail view with an hourly breakdown.', meta: 'Draft · AI from lead notes', draft: true }
+];
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'R4', open: {}, navOpen: true };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    var cur = SEL[st.sel] || SEL.overview;
+    var tag = TAGS[cur.tone] || TAGS.neutral;
+
+    var secs = cur.sections.map(function (sec) {
+      var isOpen = Object.prototype.hasOwnProperty.call(st.open, sec.key) ? st.open[sec.key] : sec.def;
+      return {
+        label: sec.label, pv: sec.pv, pvColor: sec.pvTone || '#8E9099',
+        open: isOpen, rot: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+        lines: sec.lines || [],
+        chips: (sec.chips || []).map(function (c) { return { t: c }; }),
+        hasChips: !!(sec.chips && sec.chips.length),
+        people: (sec.people || []).map(function (p) {
+          return { ini: p.ini, av: p.av, name: p.name, role: p.role, note: p.note, status: p.status,
+            stBg: p.ok ? '#12301F' : '#3A2A12', stFg: p.ok ? '#5DD39B' : '#F0B35A' };
+        }),
+        toggle: function () {
+          self.setState(function (s) {
+            var o = Object.assign({}, s.open);
+            o[sec.key] = !isOpen;
+            return { open: o };
+          });
+        }
+      };
+    });
+
+    var reqs = REQS.map(function (r) {
+      var isSel = st.sel === r.id;
+      return {
+        id: r.id, text: r.text, meta: r.meta,
+        metaColor: r.pending ? '#F0B35A' : (r.draft ? '#8B97FF' : '#8E9099'),
+        border: isSel ? '#6E7BFF' : 'transparent',
+        bg: r.pending ? '#2A2012' : (isSel ? '#1C1E27' : 'transparent'),
+        pick: function () { self.setState({ sel: r.id }); }
+      };
+    });
+
+    return {
+      s: { tag: cur.tag, tagBg: tag[0], tagFg: tag[1], title: cur.title, from: cur.from, hasFrom: !!cur.from,
+        approve: !!cur.approve, draft: !!cur.draft },
+      secs: secs,
+      reqs: reqs,
+      navOpen: st.navOpen, navClosed: !st.navOpen,
+      navW: st.navOpen ? '212px' : '56px',
+      navFlex: st.navOpen ? '0 0 212px' : '0 0 56px',
+      toggleNav: function () { self.setState(function (s) { return { navOpen: !s.navOpen }; }); },
+      problemBorder: st.sel === 'problem' ? '#6E7BFF' : '#26282D',
+      selProblem: function () { self.setState({ sel: 'problem' }); },
+      selOverview: function () { self.setState({ sel: 'overview' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
