@@ -15,9 +15,9 @@ const SCREENS = [
   ['08a', 'Marcus · Select changelog'],
   ['08b', 'Marcus · Evidence resent'],
   ['09', 'Marcus · R4 changed'],
-  ['10', 'Relay · Map view'],
-  ['11', 'Relay · Screens view'],
-  ['12', 'Relay · Present view'],
+  ['10', 'Rea · Map view'],
+  ['11', 'Rea · Screens view'],
+  ['12', 'Rea · Present view'],
 ];
 
 const TASKS = {

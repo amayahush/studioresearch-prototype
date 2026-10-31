@@ -509,7 +509,7 @@ function R4Panel({ onClose, openMap, setOpen, onApprove }) {
   ];
   if (resent && mode !== 'request') {
     sections.push(sec('updates', 'One approval also updates', true, `${checked} of 4 tools`, null, html`
-      ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Relay', 'Add a note to Success metrics']].map(
+      ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Rea', 'Add a note to Success metrics']].map(
         ([k, tool, label]) => html`<label key=${k} className="update-row">
           <input type="checkbox" checked=${updates[k]} onChange=${() => setUpdates({ ...updates, [k]: !updates[k] })} />
           <span className="chip static">${tool}</span><span className="small">${label}</span>
@@ -570,7 +570,7 @@ function R5Panel({ onClose, openMap, setOpen }) {
   const text = 'Show a department detail view with an hourly breakdown.';
   const draftedFrom = html`
     <div className="quote-card"><div className="muted tiny">Lead notes · Oct 1 · 2nd shift leads</div><div className="small">"When a department runs hot I want to click in and see which hours did it."</div></div>
-    <div className="muted tiny">Relay drafted R5 from this note. It has not been reviewed.</div>`;
+    <div className="muted tiny">Rea drafted R5 from this note. It has not been reviewed.</div>`;
 
   if (state.r5 === 'accepted') {
     return html`<${Inspector}
@@ -579,7 +579,7 @@ function R5Panel({ onClose, openMap, setOpen }) {
       sections=${[
         sec('requirement', 'Requirement', true, '', null, html`<p className="small">${text}</p>`),
         sec('linked', 'Linked work', false, 'Jira LAB-16 · To do', null, html`<div className="chips"><span className="chip static">Jira LAB-16 · To do</span></div><div className="muted tiny">Created when you accepted the draft.</div>`),
-        sec('history', 'History', false, 'Accepted today', null, html`<div className="insp-line">Drafted by Relay from lead notes · Oct 1</div><div className="insp-line">Accepted by you · today</div>`),
+        sec('history', 'History', false, 'Accepted today', null, html`<div className="insp-line">Drafted by Rea from lead notes · Oct 1</div><div className="insp-line">Accepted by you · today</div>`),
       ]}
     />`;
   }
@@ -587,7 +587,7 @@ function R5Panel({ onClose, openMap, setOpen }) {
   return html`<${Inspector}
     ...${shell}
     tag=${html`<${Tag} tone="blue">Draft · AI<//>`}
-    from=${html`<span className="ai-dot" aria-hidden="true" /> Drafted by Relay from lead notes`}
+    from=${html`<span className="ai-dot" aria-hidden="true" /> Drafted by Rea from lead notes`}
     sections=${[
       sec('draft', 'Draft', true, '', null, html`<p className="small">${text}</p><div className="muted tiny">Drafts never show as facts in Present.</div>`),
       sec('draftedFrom', 'Drafted from', false, 'Lead notes', null, draftedFrom),

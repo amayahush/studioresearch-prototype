@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rea · Conflict becomes a first-class object</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-app: #191A1A;
+    --bg-shell: #202122;
+    --bg-rail: #1A1B1B;
+    --bg-threads: #232425;
+    --bg-chat: #1A1A1A;
+    --bg-panel: #1C1D1D;
+    --bg-card: #252727;
+    --bg-code: #262626;
+    --line: #333535;
+    --line-shell: #303030;
+    --line-strong: #3A3C3C;
+    --text: #E6E8EC;
+    --text-shell: #ECECEC;
+    --muted: #9BA2AD;
+    --muted-shell: #9A9A9A;
+    --label: #878E99;
+    --amber: #E8AA4E;
+    --amber-bg: #372D1E;
+    --green: #5DC79A;
+    --blue: #8EA6FF;
+    --blue-bg: #1E2537;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: #0E0F0F;
+    color: var(--text);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .stage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .frame {
+    width: 1280px;
+    height: 832px;
+    background: var(--bg-shell);
+    color: var(--text-shell);
+    font-size: 13px;
+    line-height: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 24px 80px rgba(0,0,0,0.55);
+  }
+
+  button { font: inherit; cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
+
+  .titlebar {
+    height: 40px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px 0 12px;
+    border-bottom: 1px solid var(--line-shell);
+  }
+  .traffic { display: flex; gap: 8px; }
+  .traffic span {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+  .icon-btn {
+    width: 28px; height: 28px; border: 0; border-radius: 6px;
+    background: transparent; color: var(--muted-shell);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .titlebar-title {
+    font-weight: 500; flex: 1; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .branch {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--muted-shell);
+  }
+  .rea-pill {
+    height: 26px; padding: 0 10px; border-radius: 8px;
+    background: var(--amber-bg); color: var(--amber);
+    font-size: 12px; display: inline-flex; align-items: center; gap: 6px;
+  }
+
+  .body { flex: 1; min-height: 0; display: flex; }
+
+  .rail {
+    flex: 0 0 46px; width: 46px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding-top: 10px; border-right: 1px solid var(--line-shell);
+  }
+  .rail-item {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--muted-shell);
+  }
+  .rail-item.active { background: #2E2F30; color: var(--text-shell); }
+  .avatar-ml {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #3D5AFE; font-size: 10px; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 12px; margin-top: auto;
+  }
+
+  .threads {
+    flex: 0 0 228px; width: 228px; min-width: 0; overflow: hidden;
+    background: var(--bg-threads); padding: 12px 8px;
+    display: flex; flex-direction: column; gap: 2px;
+    border-right: 1px solid var(--line-shell);
+  }
+  .threads-head {
+    display: flex; align-items: center; gap: 6px; padding: 0 10px 10px;
+  }
+  .threads-head h1 { margin: 0; font-size: 16px; font-weight: 600; flex: 1; }
+  .nav-row {
+    height: 30px; padding: 0 10px; border-radius: 8px;
+    display: flex; align-items: center; gap: 8px; color: var(--text-shell);
+  }
+  .nav-row.active { background: #333435; }
+  .nav-row.indent { padding-left: 28px; }
+  .nav-row span {
+    flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  }
+  .section-label {
+    padding: 14px 10px 4px; color: var(--muted-shell); font-size: 12px;
+  }
+
+  .chat {
+    flex: 1; min-width: 0; background: var(--bg-chat);
+    display: flex; flex-direction: column;
+  }
+  .chat-scroll {
+    flex: 1; min-height: 0; overflow: hidden; padding: 20px 28px 0;
+  }
+  .user-bubble {
+    margin-left: auto; max-width: 78%;
+    padding: 8px 14px; border-radius: 16px;
+    background: #24427E; color: #F2F5FF;
+  }
+  .agent-step { color: var(--muted-shell); line-height: 22px; }
+  .code-card {
+    margin-top: 10px; border-radius: 14px; background: var(--bg-code);
+    padding: 12px 16px;
+  }
+  .code-card-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  }
+  .code-card-head .name { font-weight: 500; flex: 1; }
+  .mono {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-size: 12px; line-height: 19px; white-space: pre;
+  }
+  .hl-amber { background: rgba(232,170,78,0.14); display: inline-block; min-width: 100%; }
+  .c-str { color: #98C379; }
+  .c-num { color: #D19A66; }
+  .c-add { color: #A9D8B8; }
+  .c-com { color: #9A9A9A; }
+
+  .rea-note {
+    margin-top: 12px; display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px 8px 12px; border-radius: 12px;
+    background: var(--amber-bg);
+    box-shadow: inset 0 0 0 1px rgba(232,170,78,0.35);
+  }
+  .rea-note .open { font-size: 12px; color: var(--amber); font-weight: 500; }
+
+  .composer-wrap { flex: none; padding: 12px 28px 16px; }
+  .composer {
+    border-radius: 18px; background: #2A2A2A;
+    padding: 12px 14px 10px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .composer-ph { color: #7A7A7A; }
+  .composer-row {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--muted-shell); font-size: 12px;
+  }
+  .send {
+    width: 26px; height: 26px; border-radius: 50%; border: 0;
+    background: #2C4A8C; display: inline-flex;
+    align-items: center; justify-content: center; color: #fff;
+  }
+
+  /* ——— Rea panel (hero of composition) ——— */
+  .rea {
+    flex: 0 0 392px; width: 392px; min-width: 0; overflow: hidden;
+    background: var(--bg-panel);
+    border-left: 1px solid var(--line);
+    display: flex; flex-direction: column;
+    font-family: Inter, -apple-system, "Segoe UI", sans-serif;
+    font-size: 12px; line-height: 18px; color: var(--text);
+  }
+
+  .rea-brand {
+    flex: none;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(120% 80% at 0% 0%, rgba(232,170,78,0.10), transparent 55%),
+      linear-gradient(180deg, #1F2020 0%, var(--bg-panel) 100%);
+  }
+  .rea-brand-top {
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .rea-mark {
+    width: 36px; height: 36px; border-radius: 10px; flex: none;
+    background: #252727;
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text);
+  }
+  .rea-wordmark {
+    margin: 0;
+    font-size: 28px; line-height: 32px; font-weight: 700;
+    letter-spacing: -0.03em; color: var(--text);
+  }
+  .rea-tagline {
+    margin: 4px 0 0;
+    font-size: 12px; line-height: 18px; color: var(--muted);
+  }
+  .rea-brand-meta {
+    margin-top: 14px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .chip-blue {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; padding: 4px 10px; border-radius: 8px;
+    background: var(--blue-bg); color: var(--blue); white-space: nowrap;
+  }
+  .chip-amber {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; padding: 4px 10px; border-radius: 8px;
+    background: var(--amber-bg); color: var(--amber); white-space: nowrap;
+  }
+  .close-rea {
+    margin-left: auto; width: 28px; height: 28px; border: 0; border-radius: 8px;
+    background: transparent; color: var(--muted);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  .rea-body {
+    flex: 1; min-height: 0; overflow: hidden; padding: 16px 20px;
+  }
+
+  .conflict-card {
+    border-radius: 14px;
+    box-shadow: inset 0 0 0 1px var(--amber);
+    padding: 14px;
+  }
+  .conflict-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  }
+  .conflict-head .title { flex: 1; font-weight: 500; font-size: 13px; }
+  .tag-unresolved {
+    font-size: 12px; line-height: 16px; padding: 3px 8px; border-radius: 6px;
+    background: var(--amber-bg); color: var(--amber); white-space: nowrap; flex: none;
+  }
+  .compare {
+    border-radius: 10px; background: var(--bg-card);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .compare-row {
+    display: flex; align-items: center; gap: 10px;
+    min-height: 40px; padding: 0 12px;
+  }
+  .compare-row + .compare-row { border-top: 1px solid var(--line); }
+  .compare-k {
+    width: 64px; flex: none; font-size: 12px; font-weight: 600; color: var(--muted);
+  }
+  .compare-v { flex: 1; min-width: 0; font-size: 12px; }
+  .compare-meta { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .compare-meta.mono-meta {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  .impact {
+    margin: 12px 2px 0; color: var(--muted); font-size: 12px; line-height: 18px;
+  }
+
+  .divider { height: 1px; background: var(--line); margin: 14px 0; }
+  .sec-label {
+    font-size: 11px; line-height: 16px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--label); margin: 0 0 8px;
+  }
+
+  .quote {
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 1px var(--line);
+    padding: 10px 12px; display: flex; gap: 10px;
+  }
+  .quote + .quote { margin-top: 8px; }
+  .quote-src { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .quote-text {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-size: 12px; line-height: 18px; color: var(--text); margin-top: 2px;
+  }
+
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font-size: 12px; line-height: 16px; padding: 5px 10px; border-radius: 8px;
+    box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--muted);
+    white-space: nowrap;
+  }
+  .people {
+    display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--muted);
+  }
+  .stack { display: flex; }
+  .face {
+    width: 22px; height: 22px; flex: none; border-radius: 50%;
+    color: #fff; font-size: 10px; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 2px var(--bg-panel);
+  }
+  .face + .face { margin-left: -4px; }
+
+  .rea-footer {
+    flex: none; padding: 12px 20px 16px; border-top: 1px solid var(--line);
+  }
+  .disclaimer {
+    margin: 0 0 12px; text-align: center;
+    font-size: 11px; line-height: 16px; color: var(--label);
+  }
+  .actions { display: flex; align-items: center; gap: 8px; }
+  .btn {
+    height: 34px; padding: 0 16px; border-radius: 999px;
+    font-size: 13px; font-weight: 500; white-space: nowrap;
+  }
+  .btn-ghost {
+    background: transparent; color: var(--text); border: 0;
+  }
+  .btn-outline {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--line-strong);
+  }
+  .btn-primary {
+    background: var(--text); color: #0F1114; border: 0;
+  }
+  .spacer { flex: 1; }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #4C7DF0; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="frame" role="img" aria-label="Marcus in Codex with Rea panel open on R4 conflict">
+
+      <!-- Codex title bar -->
+      <header class="titlebar">
+        <span class="traffic" aria-hidden="true">
+          <span style="background:#FF5F57"></span>
+          <span style="background:#FEBC2E"></span>
+          <span style="background:#28C840"></span>
+        </span>
+        <button class="icon-btn" aria-label="Hide sidebar" type="button">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="2"/><path d="M6 2.5v11"/></svg>
+        </button>
+        <span style="width:40px"></span>
+        <span style="width:1px;height:18px;background:var(--line-shell);margin-left:100px"></span>
+        <span class="titlebar-title">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--muted-shell)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 4h5l1.5 1.5h6.5v7h-13z"/></svg>
+          Implement LAB-15 refresh job
+        </span>
+        <span class="branch">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="4" r="1.5"/><circle cx="5" cy="12" r="1.5"/><circle cx="11" cy="6" r="1.5"/><path d="M5 5.5v5M11 7.5c0 2-6 1.5-6 3"/></svg>
+          lab-15-refresh
+        </span>
+        <span class="rea-pill">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2 14 5 8 8 2 5z"/><path d="M2 8l6 3 6-3M2 11l6 3 6-3"/></svg>
+          Rea · 1 conflict
+        </span>
+      </header>
+
+      <div class="body">
+        <!-- Icon rail -->
+        <nav class="rail" aria-label="Codex">
+          <span class="rail-item active">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 7 8 2.5 13.5 7v6.5h-11z"/></svg>
+          </span>
+          <span class="rail-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2 14 5v6l-6 3-6-3V5z"/><path d="M2 5l6 3 6-3M8 8v6"/></svg>
+          </span>
+          <span class="rail-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1"/></svg>
+          </span>
+          <span class="rail-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3h4l1.5 1.5L9.5 3h4v10h-4L8 14.5 6.5 13h-4z"/></svg>
+          </span>
+          <span class="rail-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="2.5"/><path d="M10.5 8v1a2 2 0 0 0 4 0V8a6.5 6.5 0 1 0-2.5 5"/></svg>
+          </span>
+          <span class="avatar-ml" title="Marcus Lee">ML</span>
+        </nav>
+
+        <!-- Thread list -->
+        <nav class="threads" aria-label="Threads">
+          <div class="threads-head">
+            <h1>Codex</h1>
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--muted-shell)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.5H3zM6.5 14h3"/></svg>
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--muted-shell)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+          </div>
+          <a class="nav-row" href="#">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-.5L12.5 5 11 3.5 3.5 11z"/><path d="M2.5 3.5h5"/></svg>
+            New chat
+          </a>
+          <div class="section-label">Projects</div>
+          <a class="nav-row" href="#">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E2703A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 4h5l1.5 1.5h6.5v7h-13z"/></svg>
+            labor-dashboard
+          </a>
+          <a class="nav-row active indent" href="#"><span>Implement LAB-15 refresh job</span></a>
+          <a class="nav-row indent" href="#"><span>Fix shift filter query</span></a>
+          <div class="section-label">Recents</div>
+          <a class="nav-row" href="#"><span>Review !205 department totals</span></a>
+          <a class="nav-row" href="#"><span>Explain timekeeping client</span></a>
+          <a class="nav-row" href="#"><span>Write tests for LAB-13</span><span class="dot" aria-hidden="true"></span></a>
+        </nav>
+
+        <!-- Chat -->
+        <main class="chat">
+          <div class="chat-scroll">
+            <div class="user-bubble">Implement LAB-15: refresh labor hours from the timekeeping API every 15 minutes. Follow PRD R4.</div>
+
+            <div style="margin-top:18px">
+              <div class="agent-step">Reading PRD context · Line Labor Dashboard v1 · R4</div>
+              <div class="agent-step">Read docs/integrations/timekeeping-api.md</div>
+              <div class="agent-step">Called sandbox GET /v2/labor/hours?plant=EVR&amp;shift=2</div>
+
+              <div class="code-card">
+                <div class="code-card-head">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 4 2 8l3.5 4M10.5 4 14 8l-3.5 4"/></svg>
+                  <span class="name">JSON · sandbox response</span>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--muted-shell)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M3 10.5V3h7.5"/></svg>
+                </div>
+                <div class="mono">{  "plant": <span class="c-str">"EVR"</span>, "shift": <span class="c-num">2</span>,
+  "departments": <span class="c-num">14</span>,
+<span class="hl-amber">  "sync_interval": <span class="c-str">"PT1H"</span>,</span>
+  "next_sync": <span class="c-str">"2026-10-08T14:00:00"</span>
+}</div>
+              </div>
+
+              <div class="rea-note">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2 14 5 8 8 2 5z"/><path d="M2 8l6 3 6-3M2 11l6 3 6-3"/></svg>
+                <span style="flex:1"><span style="font-weight:600">Rea</span> <span style="color:#D8C4A4">R4 may not match the API.</span></span>
+                <span class="open">Open in panel</span>
+              </div>
+
+              <div style="margin-top:14px"><div class="agent-step">Writing src/jobs/refreshLaborHours.ts</div></div>
+
+              <div class="code-card">
+                <div class="code-card-head">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 4 2 8l3.5 4M10.5 4 14 8l-3.5 4"/></svg>
+                  <span class="name">src/jobs/refreshLaborHours.ts</span>
+                  <span style="font-size:12px;color:#7EC699">+4</span>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--muted-shell)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M3 10.5V3h7.5"/></svg>
+                </div>
+                <div class="mono c-add">+ export const schedule = <span class="c-str">'*/15 * * * *'</span>  <span class="c-com">// PRD R4 as written</span>
++ export async function refreshLaborHours() {
++   const res = await timekeeping.get(<span class="c-str">'/v2/labor/hours'</span>)
++ }</div>
+              </div>
+
+              <div style="margin-top:12px;display:flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#7EC699" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>
+                Draft ready · 2 files changed · not committed
+              </div>
+            </div>
+          </div>
+
+          <div class="composer-wrap">
+            <div class="composer">
+              <span class="composer-ph">Work with Codex</span>
+              <div class="composer-row">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text-shell)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+                <span style="display:inline-flex;align-items:center;gap:6px">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>
+                  Approve for me
+                </span>
+                <span class="spacer"></span>
+                <span><span style="color:var(--text-shell)">Codex</span> Medium</span>
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--text-shell)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="4" height="7" rx="2"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg>
+                <button class="send" type="button" aria-label="Send">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M4 7l4-4 4 4"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <!-- Rea panel -->
+        <aside class="rea" aria-label="Rea conflict panel">
+          <div class="rea-brand">
+            <div class="rea-brand-top">
+              <span class="rea-mark" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 14 5 8 8 2 5z"/><path d="M2 8l6 3 6-3M2 11l6 3 6-3"/></svg>
+              </span>
+              <div style="flex:1;min-width:0">
+                <h2 class="rea-wordmark">Rea</h2>
+                <p class="rea-tagline">PRD and reality disagree. Hold the build until someone decides with evidence.</p>
+              </div>
+              <button class="close-rea" type="button" aria-label="Close Rea">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+              </button>
+            </div>
+            <div class="rea-brand-meta">
+              <span class="chip-amber">
+                <span style="width:6px;height:6px;border-radius:50%;background:var(--amber)"></span>
+                Pending · R4
+              </span>
+              <span class="chip-blue">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1-1a2.5 2.5 0 0 1 3.5 3.5l-1 1M9 11.5l-1 1A2.5 2.5 0 0 1 4.5 9l1-1"/></svg>
+                via MCP
+              </span>
+            </div>
+          </div>
+
+          <div class="rea-body">
+            <div class="conflict-card">
+              <div class="conflict-head">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1.5"/></svg>
+                <span class="title">Refresh interval</span>
+                <span class="tag-unresolved">Unresolved</span>
+              </div>
+              <div class="compare">
+                <div class="compare-row">
+                  <span class="compare-k">PRD says</span>
+                  <span class="compare-v">Every <b style="font-weight:600">15</b> minutes</span>
+                  <span class="compare-meta">R4, v1</span>
+                </div>
+                <div class="compare-row">
+                  <span class="compare-k">API does</span>
+                  <span class="compare-v">Every <b style="font-weight:600">60</b> minutes</span>
+                  <span class="compare-meta mono-meta">PT1H</span>
+                </div>
+              </div>
+              <p class="impact">Polling every 15 minutes returns the same data 3 out of 4 times. The dashboard would look live when it isn’t.</p>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="sec-label">Where this comes from</div>
+            <div class="quote">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2h5l3 3v9H4z"/><path d="M9 2v3h3M6 9h4M6 11.5h3"/></svg>
+              <div style="min-width:0">
+                <div class="quote-src">Sandbox API response · 1:40 PM</div>
+                <div class="quote-text">"sync_interval": "PT1H"</div>
+              </div>
+            </div>
+            <div class="quote">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2h5l3 3v9H4z"/><path d="M9 2v3h3M6 9h4M6 11.5h3"/></svg>
+              <div style="min-width:0">
+                <div class="quote-src">timekeeping-api.md §3.2 · edited Mar 2023</div>
+                <div class="quote-text">Badge punches are batch-loaded at the top of each hour.</div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="sec-label">Linked to R4</div>
+            <div class="chips">
+              <span class="chip">Jira LAB-15</span>
+              <span class="chip">Figma · Overview</span>
+              <span class="chip">Success metric</span>
+            </div>
+            <div class="people">
+              <span class="stack">
+                <span class="face" style="background:#9F0064">P</span>
+                <span class="face" style="background:#C76A00">K</span>
+                <span class="face" style="background:#4100E2">J</span>
+              </span>
+              <span>Priya, Kim, Jordan</span>
+            </div>
+          </div>
+
+          <div class="rea-footer">
+            <p class="disclaimer">AI can make mistakes. Check the evidence.</p>
+            <div class="actions">
+              <button class="btn btn-outline" type="button">Dismiss</button>
+              <span class="spacer"></span>
+              <button class="btn btn-primary" type="button">Propose change</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

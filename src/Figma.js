@@ -127,7 +127,7 @@ export function Figma() {
             <${Avatar} legacy id="dana" size=${24} />
           </button>
           ${commentOpen && html`<div className="fg-comment-pop" role="dialog" aria-label="Comment thread">
-            <div className="fg-comment-head"><${Avatar} legacy id="dana" size=${20} /><strong>Dana Ortiz</strong><span className="muted tiny">via Relay · ${TIMES.approved}</span>${state.labelUpdated && html`<span className="grow" /><${Tag} tone="green"><${Check} size=${11} /> Resolved<//>`}</div>
+            <div className="fg-comment-head"><${Avatar} legacy id="dana" size=${20} /><strong>Dana Ortiz</strong><span className="muted tiny">via Rea · ${TIMES.approved}</span>${state.labelUpdated && html`<span className="grow" /><${Tag} tone="green"><${Check} size=${11} /> Resolved<//>`}</div>
             ${disagreed && html`<p className="small muted">Thanks for flagging this. The data owner confirmed hourly sync, and the label fix covers your concern.</p>`}
             <p className="small">R4 is hourly now (PRD v1.1). Can the label show the last sync time instead of "Updated every 15 min"?</p>
             ${!state.labelUpdated && html`<div className="plg-actions"><button className="btn btn-primary sm" onClick=${relabel}>Relabel to "Last synced · next"</button></div>`}
@@ -145,8 +145,8 @@ export function Figma() {
         <button className="tool"><${Type} size=${15} /></button>
         <button className="tool"><${MessageCircle} size=${15} /></button>
         <span className="tool-sep" />
-        <button className=${cx('tool relay', pluginOpen && 'on')} onClick=${openPlugin} aria-label="Relay plugin" aria-expanded=${pluginOpen}>
-          <${Link2} size=${14} /> Relay ${attention && html`<span className=${cx('dot amber', pulse && 'pulse')} />`}
+        <button className=${cx('tool relay', pluginOpen && 'on')} onClick=${openPlugin} aria-label="Rea plugin" aria-expanded=${pluginOpen}>
+          <${Link2} size=${14} /> Rea ${attention && html`<span className=${cx('dot amber', pulse && 'pulse')} />`}
         </button>
         <button className="tool"><${Code2} size=${15} /></button>
       </div>
@@ -256,7 +256,7 @@ function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
     body = html`<div className="plg-empty">
       <${Check} size=${18} className="green" />
       <div><strong>Nothing pending on your frames</strong></div>
-      <div className="muted small">Relay tags layers here when a linked requirement may change.</div>
+      <div className="muted small">Rea tags layers here when a linked requirement may change.</div>
       <div className="plg-linked muted tiny">Linked: R1 → Department bars · R3 → Filters · R4 → Last updated label</div>
     </div>`;
   } else if (state.stage === 'denied') {
@@ -315,7 +315,7 @@ function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
   }
 
   return html`<div className="plugin">
-    <div className="plg-head"><${Link2} size=${13} /><strong>Relay</strong><span className="muted tiny">plugin</span><span className="grow" /><button className="icon-btn sm" onClick=${onClose}><${Minus} size=${13} /></button><button className="icon-btn sm" onClick=${onClose}><${X} size=${13} /></button></div>
+    <div className="plg-head"><${Link2} size=${13} /><strong>Rea</strong><span className="muted tiny">plugin</span><span className="grow" /><button className="icon-btn sm" onClick=${onClose}><${Minus} size=${13} /></button><button className="icon-btn sm" onClick=${onClose}><${X} size=${13} /></button></div>
     ${body}
   </div>`;
 }
