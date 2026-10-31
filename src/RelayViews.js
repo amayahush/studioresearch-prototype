@@ -1,4 +1,4 @@
-import { html, useState, useEffect, useRef, cx, Fragment } from './lib.js';
+import { html, useState, useEffect, useLayoutEffect, useRef, cx, Fragment } from './lib.js';
 import { useStore, TEXT, TIMES, EVIDENCE, isPending, r4Text, prdVersion } from './store.js';
 import { Avatar, Tag, SectionLabel } from './ui.js';
 import { DEPARTMENTS, dashboardLabel } from './Figma.js';
@@ -10,11 +10,13 @@ import { X, FileText, Link2, ChevronDown, ChevronLeft, ChevronRight, ListTree, B
 // ring around it, and things one step further out on a faded outer ring. Lines only radiate from
 // the center, so they don't tangle. Clicking any card moves the center there.
 
-const TYPE_ORDER = ['prd', 'epic', 'req', 'jira', 'gitlab', 'figma', 'evidence', 'goal', 'people', 'cluster', 'untraced'];
+const TYPE_ORDER = ['prd', 'epic', 'req', 'jira', 'gitlab', 'code', 'figma', 'evidence', 'goal', 'people', 'cluster', 'untraced'];
 
 const LINKS = [
-  ['prd', 'E1'], ['prd', 'E2'], ['prd', 'goal'], ['prd', '!218'],
-  ['E1', 'R1'], ['E1', 'R2'], ['E1', 'R4'], ['E2', 'R3'], ['E2', 'R5'],
+  ['prd', 'E1'], ['prd', 'E2'], ['prd', 'E3'], ['prd', 'goal'], ['prd', '!218'],
+  ['E1', 'R1'], ['E1', 'R2'], ['E1', 'R4'], ['E1', 'R6'], ['E2', 'R3'], ['E2', 'R5'], ['E3', 'R7'], ['E3', 'R8'],
+  ['R6', 'Overview'], ['R7', 'R2'], ['R7', 'kim'], ['R8', 'sam'],
+  ['!219', 'code-job'], ['!219', 'code-ui'], ['Overview', 'code-ui'], ['!205', 'code-dept'], ['!212', 'code-filter'], ['Filters', 'code-filter'],
   ['R1', 'LAB-12'], ['R1', '!205'], ['R1', 'Overview'],
   ['R2', 'LAB-13'], ['R2', 'Overview'], ['R2', 'goal'],
   ['R4', 'LAB-15'], ['R4', '!219'], ['R4', 'Overview'], ['R4', 'ev-spec'], ['R4', 'ev-api'], ['R4', 'ev-log'], ['R4', 'goal'], ['R4', 'dana'],
@@ -34,6 +36,19 @@ function graphNodes(state) {
     R2: { type: 'req', label: 'R2 · 85% flag', kind: 'Requirement', full: 'Flag any department above 85% of planned hours.', status: 'Approved' },
     R4: { type: 'req', label: 'R4 · Refresh rate', kind: 'Requirement', full: r4Text(state), status: changed ? 'Changed in v1.1' : pending ? 'Pending change · Dana decides' : 'Approved', tone: changed ? 'changed' : pending ? 'pending' : '' },
     R3: { type: 'req', label: 'R3 · Shift filter', kind: 'Requirement', full: 'Let leaders filter by shift (1st, 2nd, 3rd).', status: 'Approved' },
+    R6: { type: 'req', label: 'R6 · Crews by lead', kind: 'Requirement · assumed', full: 'Show each crew lead their own departments first.', status: 'Assumed · from a lead sync call, Oct 3' },
+    R7: { type: 'req', label: 'R7 · Overtime alerts', kind: 'Requirement · assumed', full: 'Send the shift lead a Teams alert when a department crosses the overtime threshold.', status: 'Assumed · kickoff 31:20' },
+    R8: { type: 'req', label: 'R8 · Shift history', kind: 'Requirement · assumed', full: 'Keep 90 days of shift history for weekly labor reviews.', status: 'Assumed · SME sync, Oct 4' },
+    E3: { type: 'epic', label: 'LAB-E3 · Alerts and history', kind: 'Epic', full: 'LAB-E3 · Alerts and history', status: 'R7, R8 · no tickets yet' },
+    sam: { type: 'people', person: 'sam', label: 'Sam Reed', kind: 'Person', full: 'Sam Reed', status: 'SME · line operations' },
+    'code-job': { type: 'code', label: 'refreshLaborHours.ts', kind: 'Code · GitLab !219', full: 'src/jobs/refreshLaborHours.ts', status: state.codeUpdated ? 'Matches R4 v1.1' : 'Polls every 15 minutes, as R4 v1 says', code: state.codeUpdated
+      ? [["- export const schedule = '*/15 * * * *'", 'del'], ["+ export const schedule = '5 * * * *'", 'add'], ['  // R4 v1.1: hourly, 5 min after the sync', 'muted'], ['  export async function refreshLaborHours() {']]
+      : [["export const schedule = '*/15 * * * *'", 'hl'], ['// PRD R4 as written', 'muted'], ['export async function refreshLaborHours() {'], ["  const res = await timekeeping.get('/v2/labor/hours')"]] },
+    'code-ui': { type: 'code', label: 'Overview.tsx', kind: 'Code · GitLab !219', full: 'src/ui/Overview.tsx', status: state.codeUpdated ? 'Shows the real last-sync time' : 'Label still says every 15 min', code: state.codeUpdated
+      ? [['- <Label>Updated every 15 min</Label>', 'del'], ['+ <Label>Last synced {lastSync} · next {nextSync}</Label>', 'add']]
+      : [['<Header title="Line labor" />'], ['<Label>Updated every 15 min</Label>', 'hl'], ['<DepartmentBars rows={totals} />']] },
+    'code-dept': { type: 'code', label: 'departmentTotals.ts', kind: 'Code · GitLab !205', full: 'src/api/departmentTotals.ts', status: 'Merged', code: [['export function departmentTotals(rows) {'], ["  return groupBy(rows, 'department')"], ['}']] },
+    'code-filter': { type: 'code', label: 'ShiftFilter.tsx', kind: 'Code · GitLab !212', full: 'src/ui/ShiftFilter.tsx', status: 'Open', code: [['<Select label="Shift"'], ['  options={[1, 2, 3]} />']] },
     R5: { type: 'req', label: 'R5 · Dept detail', kind: 'Requirement', full: 'Show a department detail view with an hourly breakdown.', status: state.r5 === 'accepted' ? 'Approved' : 'Draft · AI from lead notes', draft: state.r5 !== 'accepted' },
     goal: { type: 'goal', label: 'Goal · mid-shift risk', kind: 'Success metric', full: 'Leaders spot overtime risk by mid-shift.', status: 'Owner Kim Alvarez · depends on R2 and R4' },
     'LAB-12': { type: 'jira', label: 'LAB-12 · Done', kind: 'Jira ticket', full: 'LAB-12 · Labor hours by department', status: 'Done' },
@@ -62,9 +77,9 @@ function graphNodes(state) {
   return n;
 }
 
-const LAYER_TYPES = { jira: ['jira'], gitlab: ['gitlab'], figma: ['figma'], evidence: ['evidence'], people: ['people'], other: ['cluster'], untraced: ['untraced'], epics: ['epic'] };
-const LAYERS = [['epics', 'Epics'], ['jira', 'Jira'], ['gitlab', 'GitLab'], ['figma', 'Figma'], ['evidence', 'Evidence'], ['people', 'People'], ['other', 'Other PRDs, same source'], ['untraced', 'Untraced work']];
-const TYPE_ICON = { prd: FileText, epic: ListTree, req: FileText, jira: Box, gitlab: GitBranch, figma: Frame, evidence: FileText, goal: Target, cluster: Link2, untraced: Code };
+const LAYER_TYPES = { jira: ['jira'], gitlab: ['gitlab', 'code'], figma: ['figma'], evidence: ['evidence'], people: ['people'], other: ['cluster'], untraced: ['untraced'], epics: ['epic'] };
+const LAYERS = [['epics', 'Epics'], ['jira', 'Jira'], ['gitlab', 'GitLab and code'], ['figma', 'Figma'], ['evidence', 'Evidence'], ['people', 'People'], ['other', 'Other PRDs, same source'], ['untraced', 'Untraced work']];
+const TYPE_ICON = { prd: FileText, epic: ListTree, req: FileText, jira: Box, gitlab: GitBranch, code: Code, figma: Frame, evidence: FileText, goal: Target, cluster: Link2, untraced: Code };
 
 // Adjacency after hiding layers. A hidden epic is "see-through": the PRD links straight to its requirements.
 function adjacency(nodes, layers) {
@@ -82,7 +97,7 @@ function adjacency(nodes, layers) {
 
 const byType = (nodes) => (a, b) => TYPE_ORDER.indexOf(nodes[a].type) - TYPE_ORDER.indexOf(nodes[b].type);
 
-function focusLayout(focus, nodes, adj, w, h) {
+function focusLayout(focus, nodes, adj, w, h, measured = {}) {
   const cx0 = w / 2, cy0 = h / 2;
   const rx2 = w / 2 - 105, ry2 = h / 2 - 30; // outer ring stays inside the stage
   const rx1 = rx2 * 0.58, ry1 = ry2 * 0.58;
@@ -111,16 +126,21 @@ function focusLayout(focus, nodes, adj, w, h) {
     p.x = Math.max(100, Math.min(w - 100, p.x));
     p.y = Math.max(22, Math.min(h - 22, p.y));
   }
-  // Cards are wider than the rings on a narrow stage, so nudge overlapping cards apart vertically.
+  // Cards are wider than the rings on a narrow stage, so nudge overlapping cards apart.
   // The outer card of a pair moves; the centered card never does.
   const box = (id) => {
     const p = pos[id], chars = nodes[id].label.length;
-    if (p.ring === 0) return { w: 220, h: nodes[id].type === 'req' ? 150 : 104 };
+    const real = measured[`${id}:${p.ring}`]; // size from the last render, when we have it
+    if (real) return real;
+    const t = nodes[id].type;
+    if (p.ring === 0) return { w: t === 'code' ? 340 : t === 'figma' ? 260 : 220, h: t === 'figma' ? 210 : t === 'code' ? 170 : t === 'req' ? 150 : 104 };
+    if (p.ring === 1 && t === 'figma') return { w: 168, h: 112 };
+    if (p.ring === 1 && t === 'code') return { w: 220, h: 36 + 14 + 18 * Math.min(2, nodes[id].code.length) };
     return { w: Math.min(160, 50 + chars * 7.2), h: p.ring === 1 ? 36 : 30 };
   };
   const ids = Object.keys(pos);
   const size = Object.fromEntries(ids.map((id) => [id, box(id)]));
-  for (let pass = 0; pass < 80; pass++) {
+  for (let pass = 0; pass < 120; pass++) {
     let moved = false;
     for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
       const a = ids[i], b = ids[j], A = pos[a], B = pos[b];
@@ -128,11 +148,23 @@ function focusLayout(focus, nodes, adj, w, h) {
       const oy = (size[a].h + size[b].h) / 2 + 6 - Math.abs(A.y - B.y);
       if (ox <= 0 || oy <= 0) continue;
       const mover = B.ring >= A.ring ? B : A, other = mover === B ? A : B;
-      const dir = mover.y === other.y ? (mover === B ? 1 : -1) : Math.sign(mover.y - other.y);
-      const step = dir * Math.min(oy, 12);
-      const y = Math.max(20, Math.min(h - 20, mover.y + step));
-      if (y !== mover.y) mover.y = y;
-      else if (other.ring > 0) other.y = Math.max(20, Math.min(h - 20, other.y - step)); // mover is at the edge
+      const ms = mover === B ? size[b] : size[a], os = mover === B ? size[a] : size[b];
+      // Separate along the axis that needs the smaller push; fall back to the other axis at the stage edge.
+      const pushX = () => {
+        const dir = mover.x === other.x ? 1 : Math.sign(mover.x - other.x);
+        const x = Math.max(ms.w / 2 + 4, Math.min(w - ms.w / 2 - 4, mover.x + dir * Math.min(ox, 12)));
+        if (x !== mover.x) { mover.x = x; return true; }
+        if (other.ring > 0) { const x2 = Math.max(os.w / 2 + 4, Math.min(w - os.w / 2 - 4, other.x - dir * Math.min(ox, 12))); if (x2 !== other.x) { other.x = x2; return true; } }
+        return false;
+      };
+      const pushY = () => {
+        const dir = mover.y === other.y ? (mover === B ? 1 : -1) : Math.sign(mover.y - other.y);
+        const y = Math.max(ms.h / 2 + 4, Math.min(h - ms.h / 2 - 4, mover.y + dir * Math.min(oy, 12)));
+        if (y !== mover.y) { mover.y = y; return true; }
+        if (other.ring > 0) { const y2 = Math.max(os.h / 2 + 4, Math.min(h - os.h / 2 - 4, other.y - dir * Math.min(oy, 12))); if (y2 !== other.y) { other.y = y2; return true; } }
+        return false;
+      };
+      if (ox < oy) pushX() || pushY(); else pushY() || pushX();
       moved = true;
     }
     if (!moved) break;
@@ -155,7 +187,7 @@ const TIP_W = 280;
 function tipPosition(el) {
   const r = el.getBoundingClientRect();
   const left = Math.max(12, Math.min(r.left, window.innerWidth - TIP_W - 12));
-  return window.innerHeight - r.bottom < 130 ? { left, bottom: window.innerHeight - r.top + 6 } : { left, top: r.bottom + 6 };
+  return window.innerHeight - r.bottom < 260 ? { left, bottom: window.innerHeight - r.top + 6 } : { left, top: r.bottom + 6 };
 }
 
 const REQ_PANEL = ['R1', 'R2', 'R3', 'R4'];
@@ -185,7 +217,19 @@ export function MapView({ selected, setSelected }) {
     setTrail(at >= 0 ? trail.slice(0, at + 1) : [...trail, id]);
   };
 
-  const pos = focusLayout(focus, nodes, adj, w, h - 56); // keep cards clear of the legend bar
+  // Lay out with estimated card sizes, then measure the real cards and lay out again if they differ.
+  const measured = useRef({});
+  const [, remeasure] = useState(0);
+  const pos = focusLayout(focus, nodes, adj, w, h - 56, measured.current); // keep cards clear of the legend bar
+  useLayoutEffect(() => {
+    let changed = false;
+    for (const el of stageRef.current.querySelectorAll('.fnode')) {
+      const key = el.dataset.key, cur = measured.current[key];
+      const next = { w: el.offsetWidth, h: el.offsetHeight };
+      if (!cur || Math.abs(cur.w - next.w) > 2 || Math.abs(cur.h - next.h) > 2) { measured.current[key] = next; changed = true; }
+    }
+    if (changed) remeasure((n) => n + 1);
+  });
   const visible = Object.keys(pos);
   const edges = [];
   const seen = new Set();
@@ -201,7 +245,7 @@ export function MapView({ selected, setSelected }) {
     edges.push({ key, a, b, outer: Math.max(ringA, ringB) === 2, tone: r4 || nodes[a].type === 'evidence' || nodes[b].type === 'evidence' ? r4 || 'evidence' : nodes[a].type === 'cluster' || nodes[b].type === 'cluster' ? 'other' : nodes[a].type === 'untraced' || nodes[b].type === 'untraced' ? 'untraced' : '' });
   }
 
-  const hover = (id) => (e) => setTip({ n: nodes[id], pos: tipPosition(e.currentTarget) });
+  const hover = (id) => (e) => setTip({ id, n: nodes[id], pos: tipPosition(e.currentTarget) });
 
   const hidden = LAYERS.filter(([k]) => !layers[k]).length;
 
@@ -245,6 +289,7 @@ export function MapView({ selected, setSelected }) {
           const Icon = TYPE_ICON[n.type];
           return html`<button
             key=${id}
+            data-key=${`${id}:${p.ring}`}
             className=${cx('fnode', `t-${n.type}`, `ring${p.ring}`, n.tone, n.draft && 'draft')}
             style=${{ left: p.x, top: p.y }}
             onClick=${() => goTo(id)}
@@ -260,6 +305,8 @@ export function MapView({ selected, setSelected }) {
               ${n.type === 'req' && html`<span className="fnode-full">${n.full}</span>`}
               ${n.status && html`<span className="fnode-status">${n.status}</span>`}
             </span>`}
+            ${p.ring < 2 && n.type === 'figma' && html`<span className="fnode-preview"><${FramePreview} id=${id} width=${p.ring === 0 ? 236 : 144} /></span>`}
+            ${p.ring < 2 && n.code && html`<${CodePreview} lines=${p.ring === 0 ? n.code : n.code.slice(0, 2)} />`}
           </button>`;
         })}
         <div className="map-legend">
@@ -278,6 +325,8 @@ export function MapView({ selected, setSelected }) {
       <div className="tiny-label">${tip.n.kind}</div>
       <div className="map-tip-text">${tip.n.full}</div>
       <div className="muted tiny">${tip.n.status}</div>
+      ${tip.n.type === 'figma' && html`<${FramePreview} id=${tip.id} width=${256} />`}
+      ${tip.n.code && html`<${CodePreview} lines=${tip.n.code} />`}
     </div>`}
     <aside className="rl-panel">
       ${REQ_PANEL.includes(focus)
@@ -285,6 +334,31 @@ export function MapView({ selected, setSelected }) {
         : html`<${FocusPanel} id=${focus} nodes=${nodes} adj=${adj} onGo=${goTo} />`}
     </aside>
   </div>`;
+}
+
+// The real Figma frames, drawn the same way on the Map and on the Screens canvas.
+function OverviewFrame({ flag }) {
+  const { state } = useStore();
+  return html`<div className="dash-frame static">
+    <div className="dash-title">Line labor · 2nd shift</div>
+    <div className="dash-sub"><span>Bldg 40-22 · 14 departments</span><span className=${cx('dash-label', flag && 'flag')}>${dashboardLabel(state)}</span></div>
+    ${DEPARTMENTS.slice(0, 4).map(([name, pct, hot]) => html`<div key=${name} className="dash-row"><span>${name}</span><div className="bar"><div className=${cx('bar-fill', hot)} style=${{ width: pct + '%' }} /></div><span className="pct">${pct}%</span></div>`)}
+  </div>`;
+}
+const FiltersFrame = () => html`<div className="dash-frame static filters"><span className="dd">Shift: 2nd <${ChevronDown} size=${11} /></span><span className="dd">Department: All <${ChevronDown} size=${11} /></span></div>`;
+
+// A Figma frame scaled down to fit a map card or tooltip.
+const FRAME_SIZE = { Overview: [560, 236], Filters: [480, 84] };
+function FramePreview({ id, width }) {
+  const [w, h] = FRAME_SIZE[id];
+  const k = width / w;
+  return html`<span className="frame-preview" style=${{ width, height: Math.round(h * k) }} aria-hidden="true">
+    <span className="frame-preview-inner" style=${{ width: w, transform: `scale(${k})` }}>${id === 'Overview' ? html`<${OverviewFrame} />` : html`<${FiltersFrame} />`}</span>
+  </span>`;
+}
+
+function CodePreview({ lines }) {
+  return html`<span className="code-preview mono" aria-hidden="true">${lines.map(([t, tone], i) => html`<span key=${i} className=${cx('code-preview-row', tone)}>${t}</span>`)}</span>`;
 }
 
 const Check2 = () => html`<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7" /></svg>`;
@@ -311,6 +385,8 @@ function FocusPanel({ id, nodes, adj, onGo }) {
       <div className="section-label">${n.kind}</div>
       <p>${n.full}</p>
       <div className="small muted">${n.status}</div>
+      ${n.code && html`<div className="code-full mono">${n.code.map(([t, tone], i) => html`<div key=${i} className=${cx('code-preview-row', tone)}>${t}</div>`)}</div>`}
+      ${n.type === 'figma' && html`<${FramePreview} id=${id} width=${288} />`}
       ${Object.entries(groups).map(([kind, ids]) => html`<${Fragment} key=${kind}>
         <${SectionLabel}>${kind}<//>
         ${ids.map((l) => html`<button key=${l} className="link-row focus-link" onClick=${() => onGo(l)}>${nodes[l].label} <span className="muted"> · ${nodes[l].status}</span></button>`)}
@@ -437,11 +513,7 @@ export function ScreensView({ selected, setSelected }) {
             <div className="fc-name">Dashboard / Overview <span className="fc-linked">R1 · R2 · R4</span></div>
             <div className="scr-frame">
               ${pin('R4', { top: -12, right: 60 })}${pin('R1', { top: 70, left: -16 })}${pin('R2', { top: 110, right: -16 })}
-              <div className="dash-frame static">
-                <div className="dash-title">Line labor · 2nd shift</div>
-                <div className="dash-sub"><span>Bldg 40-22 · 14 departments</span><span className=${cx('dash-label', selected === 'R4' && 'flag')}>${dashboardLabel(state)}</span></div>
-                ${DEPARTMENTS.slice(0, 4).map(([name, pct, hot]) => html`<div key=${name} className="dash-row"><span>${name}</span><div className="bar"><div className=${cx('bar-fill', hot)} style=${{ width: pct + '%' }} /></div><span className="pct">${pct}%</span></div>`)}
-              </div>
+              <${OverviewFrame} flag=${selected === 'R4'} />
             </div>
           </div>
 
@@ -449,7 +521,7 @@ export function ScreensView({ selected, setSelected }) {
             <div className="fc-name">Dashboard / Filters <span className="fc-linked">R3</span></div>
             <div className="scr-frame">
               ${pin('R3', { top: -12, right: 30 })}
-              <div className="dash-frame static filters"><span className="dd">Shift: 2nd <${ChevronDown} size=${11} /></span><span className="dd">Department: All <${ChevronDown} size=${11} /></span></div>
+              <${FiltersFrame} />
             </div>
           </div>
 
@@ -515,10 +587,10 @@ function slidesFor(state, audience) {
     { name: 'Problem', kicker: 'Problem', title: 'Leaders can\'t see overtime risk until it\'s too late', body: 'First-line leaders track labor hours across three spreadsheets. They can\'t see overtime risk until the end of the week, when it\'s too late to rebalance crews.' },
     { name: 'Decision', ...decision, evidence: approved || pending ? ev : [] },
     {
-      name: 'Status', kicker: 'Status', title: `PRD ${prdVersion(state)} · 1 of 3 live-visibility requirements done`,
+      name: 'Status', kicker: 'Status', title: `PRD ${prdVersion(state)} · 1 of 4 live-visibility requirements done`,
       body: audience === 'Engineering' ? 'LAB-12 done (GitLab !205 merged). LAB-13, LAB-14, LAB-15 in progress. !218 has no linked requirement.' : 'Live labor visibility is on track. Filtering is in progress. One department-detail requirement is still a draft and is not shown as a fact.',
     },
-    { name: 'Evidence', kicker: 'Evidence', title: 'Where the facts come from', body: 'Every claim in this deck links back to a source record in Relay.', evidence: ev },
+    { name: 'Evidence', kicker: 'Evidence', title: 'Where the facts come from', body: 'Every claim in this deck links back to a source record in Rea.', evidence: ev },
     {
       name: 'Next steps', kicker: 'Next steps', title: approved ? 'Ship the hourly refresh and relabel' : 'Waiting on the R4 decision',
       body: approved

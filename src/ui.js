@@ -12,6 +12,18 @@ export function Tag({ tone = 'neutral', children, className }) {
   return html`<span className=${cx('tag', `tag-${tone}`, className)}>${children}</span>`;
 }
 
+// Assumption status (decision record spec §2). Verified shows nothing unless it changed in this version.
+const STATUS_CHIP = {
+  assumed: ['amber', () => 'Assumed'],
+  conflicting: ['danger', (n) => `Conflicting · ${n || 2} sources`],
+  contradicted: ['danger', () => 'Contradicted by build'],
+};
+export function StatusChip({ status, sources, changedIn }) {
+  if (status === 'verified') return changedIn ? html`<${Tag} tone="green">Verified · ${changedIn}<//>` : null;
+  const [tone, label] = STATUS_CHIP[status];
+  return html`<${Tag} tone=${tone}>${label(sources)}<//>`;
+}
+
 export function SectionLabel({ children, right }) {
   return html`<div className="section-label"><span>${children}</span>${right}</div>`;
 }

@@ -3,14 +3,15 @@ import { createContext, useContext } from './lib.js';
 // Story copy, shared so every tool shows the same words for the same record.
 export const TEXT = {
   r4Old: 'Refresh data every 15 minutes.',
-  r4New: 'Refresh data hourly, 5 minutes after the timekeeping system syncs.',
+  r4New: 'Refresh data hourly, 5 minutes after the timekeeping system syncs. Show the real last-sync time.',
   reason:
     "The timekeeping API batch-loads badge punches once an hour, at the top of the hour. Polling every 15 minutes returns the same data 3 out of 4 times, so the dashboard would look live when it isn't.",
   danaAsk:
     "The spec section you linked (§3.2) is from 2023. Can you confirm it's still hourly today? If a faster feed exists I'd rather keep 15 minutes.",
   marcusReply: 'Data owner confirmed hourly in Sept. Changelog attached.',
   priyaNote: 'I\'ll relabel "Updated every 15 min" to show the actual last sync time.',
-  kimNote: 'Fine if leaders still see risk before mid-shift.',
+  kimNote: 'Hourly still gets us there by lunch.',
+  approvalReason: 'Hourly still meets the mid-shift goal. Label shows the real sync time so it never looks more live than it is.',
 };
 
 export const EVIDENCE = {
@@ -53,12 +54,21 @@ export const EVIDENCE = {
   },
 };
 
+// Why R4 exists: the line from the kickoff call it was written from.
+export const R4_INTENT = {
+  quote: 'If leads can see it by lunch, they can move people before it turns into overtime.',
+  speaker: 'Kim Alvarez · Business lead',
+  source: 'Kickoff transcript 18:40',
+  goal: 'Spot overtime risk by mid-shift (success metric)',
+};
+
 export const PEOPLE = {
   marcus: { name: 'Marcus Lee', initials: 'ML', role: 'Engineer', title: 'Senior engineer', color: '#3D5AFE', legacy: '#4f6bed' },
   priya: { name: 'Priya Shah', initials: 'PS', role: 'Designer', title: 'Designer', color: '#9F0064', legacy: '#c2418a' },
   dana: { name: 'Dana Ortiz', initials: 'DO', role: 'Product manager', title: 'Product manager', color: '#2F8A6B', legacy: '#1f8a5c' },
   kim: { name: 'Kim Alvarez', initials: 'KA', role: 'Business lead', title: 'Business lead', color: '#C76A00', legacy: '#c17a1b' },
   jordan: { name: 'Jordan Kim', initials: 'JK', title: 'Ops analyst', color: '#4100E2', legacy: '#7a5af5' },
+  sam: { name: 'Sam Reed', initials: 'SR', title: 'SME', color: '#5C6370', legacy: '#5C6370' },
 };
 
 // Story clock: each step happens at a fixed time so screens agree with each other.
@@ -75,8 +85,11 @@ export const TIMES = {
 export const initialState = {
   role: null,
   relayView: 'doc',
-  // flagged → proposed → moreEvidence → resent → approved | denied
+  // unpublished (Dana, before v1) → flagged → proposed → moreEvidence → resent → approved | denied
   stage: 'flagged',
+  // Which role this story was started as; exploring another tool later doesn't change it.
+  startedAs: null,
+  approvalReason: '',
   proposal: { text: TEXT.r4New, reason: TEXT.reason },
   evidence: ['spec', 'api'],
   priya: { stance: null, note: '' },
@@ -101,17 +114,25 @@ export function reducer(state, action) {
       return { ...state, role: action.role };
     case 'START_ROLE': {
       // Each role path starts fresh at its own point in the story (brief §8).
-      const fresh = { ...initialState, role: action.role };
+      const fresh = { ...initialState, role: action.role, startedAs: action.role };
       const proposed = { who: 'marcus', text: 'Proposed a change to R4', time: TIMES.proposed };
       if (action.role === 'priya') return { ...fresh, stage: 'proposed', codexStreamed: true, log: [proposed] };
-      if (action.role === 'dana') {
-        return {
-          ...fresh, stage: 'proposed', codexStreamed: true, priya: { stance: 'agreed', note: TEXT.priyaNote },
-          log: [proposed, { who: 'priya', text: 'Agreed with the R4 change', time: TIMES.priya }],
-        };
-      }
+      // Dana starts a week earlier, about to publish v1 (screen 00).
+      if (action.role === 'dana') return { ...fresh, stage: 'unpublished', codexStreamed: true };
       return fresh;
     }
+    case 'PUBLISH_V1':
+      return { ...state, stage: 'flagged', log: log(state, 'dana', 'Published PRD v1 with R4 still assumed', 'Oct 1') };
+    case 'PROPOSAL_ARRIVES':
+      // Off screen for Dana: Marcus's build tests R4, he proposes, Priya agrees.
+      return {
+        ...state, stage: 'proposed', priya: { stance: 'agreed', note: TEXT.priyaNote },
+        log: [
+          ...state.log,
+          { who: 'marcus', text: 'Proposed a change to R4', time: TIMES.proposed },
+          { who: 'priya', text: 'Agreed with the R4 change', time: TIMES.priya },
+        ],
+      };
     case 'SET_VIEW':
       return { ...state, relayView: action.view };
     case 'PROPOSE':
@@ -155,6 +176,7 @@ export function reducer(state, action) {
         ...state,
         stage: 'approved',
         updates: action.updates,
+        approvalReason: action.reason || TEXT.approvalReason,
         log: log(state, 'dana', 'Approved R4 and published PRD v1.1', TIMES.approved),
       };
     case 'DENY':
@@ -177,8 +199,16 @@ export function reducer(state, action) {
 }
 
 export const isPending = (s) => ['proposed', 'moreEvidence', 'resent'].includes(s.stage);
+
+// Assumption status is separate from approval: it says whether anyone has checked the requirement.
+// R4 is assumed until Marcus's build tests it, contradicted while the change is open, verified once approved.
+export const r4Status = (s) => {
+  if (s.stage === 'approved') return 'verified';
+  if (isPending(s) || s.stage === 'denied') return 'contradicted';
+  return 'assumed';
+};
 export const r4Text = (s) => (s.stage === 'approved' ? s.proposal.text : TEXT.r4Old);
-export const prdVersion = (s) => (s.stage === 'approved' ? 'v1.1' : 'v1');
+export const prdVersion = (s) => (s.stage === 'approved' ? 'v1.1' : s.stage === 'unpublished' ? 'v1 draft' : 'v1');
 
 export const StoreContext = createContext(null);
 export const useStore = () => useContext(StoreContext);

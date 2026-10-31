@@ -1,6 +1,6 @@
 import { html, useState, useEffect, useRef, cx, Fragment } from './lib.js';
-import { useStore, TEXT, EVIDENCE, TIMES, prdVersion } from './store.js';
-import { Avatar, Tag, SectionLabel, Diff, EvidenceChip, Toast } from './ui.js';
+import { useStore, TEXT, EVIDENCE, TIMES, R4_INTENT, prdVersion } from './store.js';
+import { Avatar, Tag, SectionLabel, Diff, EvidenceChip, Toast, StatusChip } from './ui.js';
 import { TimeSkip, EndCard } from './Interstitials.js';
 import {
   FileText, FileCode, Code as Code2, GitBranch, X, PanelLeft, GitPullRequestArrow, CheckCircle2, MessageSquare, Paperclip,
@@ -97,7 +97,7 @@ export function Codex() {
 
   const pendingBranch = ['proposed', 'moreEvidence', 'resent'].includes(state.stage);
   const status = {
-    flagged: '1 note',
+    flagged: 'R4 · assumption tested',
     proposed: 'proposal sent',
     moreEvidence: 'Dana replied',
     resent: 'resent to Dana',
@@ -126,7 +126,7 @@ export function Codex() {
       <span className=${cx('cx-title-gap', threadsOpen && 'open')} />
       <span className="cx-thread-title"><${FolderClosed} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span>Implement LAB-15 refresh job</span></span>
       <span className="cx-branch"><${GitBranch} size=${13} strokeWidth=${1.5} aria-hidden="true" />lab-15-refresh${pendingBranch ? ' · pending-R4' : ''}</span>
-      <button className=${cx('cx-relay-pill', needsYou && 'attn')} onClick=${openNote} disabled=${!streamDone}><${Layers} size=${13} strokeWidth=${1.5} aria-hidden="true" />Relay · ${streamDone ? status : 'checking PRD'}</button>
+      <button className=${cx('cx-relay-pill', needsYou && 'attn')} onClick=${openNote} disabled=${!streamDone}><${Layers} size=${13} strokeWidth=${1.5} aria-hidden="true" />Rea · ${streamDone ? status : 'checking PRD'}</button>
     </header>
 
     <div className="cx-body">
@@ -181,7 +181,7 @@ export function Codex() {
       </main>
 
       ${panel &&
-      html`<aside className="side-panel rl" aria-label="Relay">
+      html`<aside className="side-panel rl" aria-label="Rea">
         <${CodexPanel} panel=${panel} setPanel=${setPanel} setToast=${setToast} openFile=${() => setFile('spec')} onSentClose=${afterSent} onResend=${resend} onFinish=${finish} />
       </aside>`}
     </div>
@@ -205,7 +205,7 @@ function Step({ children }) {
 function Notice({ isNew, handled, children, onView }) {
   return html`<div className=${cx('cx-notice', isNew && !handled && 'new', handled && 'handled')}>
     <${Layers} size=${14} strokeWidth=${1.5} aria-hidden="true" />
-    <span className="cx-notice-text"><strong>Relay</strong> <span>${children}</span></span>
+    <span className="cx-notice-text"><strong>Rea</strong> <span>${children}</span></span>
     ${handled ? html`<span className="cx-notice-done">Handled</span>` : html`<button className="cx-notice-open" onClick=${onView}>Open in panel</button>`}
   </div>`;
 }
@@ -284,7 +284,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
       ['  "next_sync": "2026-10-08T14:00:00"'],
       ['}'],
     ]} />`,
-    html`<${Notice} handled=${s !== 'flagged'} onView=${openNote}>R4 may not match the API.<//>`,
+    html`<${Notice} handled=${s !== 'flagged'} onView=${openNote}>R4 was never checked against this API. Your build just tested it.<//>`,
     html`<${Step}>Writing src/jobs/refreshLaborHours.ts<//>`,
     html`<${Code} title="src/jobs/refreshLaborHours.ts" meta=${html`<span className="green">+5</span>`} lines=${[
       [html`+ export const schedule = <span className="tk-str">'*/15 * * * *'</span>  <span className="muted">// PRD R4 as written</span>`, 'green'],
@@ -301,7 +301,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
     ${blocks.slice(0, shown).map((b, i) => html`<div key=${i} className=${cx('stream-block', !streamDone && 'enter')}>${b}</div>`)}
     ${streaming && html`<div className="cx-working"><span className="spinner" /> Working… <span className="cx-hint">click or press Space to skip</span></div>`}
 
-    ${!streaming && past('proposed') && html`<${Step}>Relay · proposal sent to Dana · branch tagged pending-R4<//>`}
+    ${!streaming && past('proposed') && html`<${Step}>Rea · proposal sent to Dana · branch tagged pending-R4<//>`}
 
     ${past('moreEvidence') && (s === 'moreEvidence' || state.danaAsk) &&
     html`<${Fragment}>
@@ -309,7 +309,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
       <${Notice} isNew handled=${s !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>
     <//>`}
 
-    ${afterEvidence && html`<${Step}>Relay · changelog L58–60 added as evidence · resent to Dana<//>`}
+    ${afterEvidence && html`<${Step}>Rea · changelog L58–60 added as evidence · resent to Dana<//>`}
 
     ${s === 'approved' &&
     html`<${Fragment}>
@@ -396,7 +396,7 @@ function SpecFile({ onToast, openNote }) {
           html`<div className="sel-toolbar">
             ${canAdd
               ? html`<button className="btn btn-primary sm" onClick=${addEvidence}><${Paperclip} size=${12} /> Add to R4 evidence <kbd>⌘⇧E</kbd></button>`
-              : html`<span className="muted small">${added ? 'Already on R4 evidence' : 'No open Relay request'}</span>`}
+              : html`<span className="muted small">${added ? 'Already on R4 evidence' : 'No open Rea request'}</span>`}
             <button className="btn btn-ghost sm" onClick=${() => onToast('Codex chat is not simulated in this prototype.')}><${MessageSquare} size=${12} /> Ask Codex</button>
           </div>`}
         <//>`)}
@@ -404,7 +404,7 @@ function SpecFile({ onToast, openNote }) {
     </div>
     ${canAdd && !added && html`<div className="hint">Drag across line numbers to select lines, then add them to R4's evidence.</div>`}
     <div className="section-label"><span>Codex</span></div>
-    <${Step}>Relay · proposal sent to Dana · branch tagged pending-R4<//>
+    <${Step}>Rea · proposal sent to Dana · branch tagged pending-R4<//>
     ${state.danaAsk && html`<${Divider}>${TIMES.moreEvidence}<//>
       <${Notice} isNew handled=${state.stage !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>`}
   </div>`;
@@ -425,13 +425,13 @@ function StatusCard({ title, tag, rows, children }) {
   </div>`;
 }
 
-// Every Relay panel in Codex opens with the Relay layers glyph; status lives in the body, not the icon.
+// Every Rea panel in Codex opens with the Rea layers glyph; status lives in the body, not the icon.
 function PanelHead({ title, right, onClose }) {
   return html`<div className="rl-head">
     <${Layers} size=${16} strokeWidth=${1.5} aria-hidden="true" />
     <span className="rl-head-title">${title}</span>
     ${right}
-    <button className="rl-icon" aria-label="Close Relay" onClick=${onClose}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
+    <button className="rl-icon" aria-label="Close Rea" onClick=${onClose}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
   </div>`;
 }
 
@@ -449,31 +449,33 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <${Layers} size=${16} strokeWidth=${1.5} aria-hidden="true" />
         <span className="rl-head-title">R4 may not match the API</span>
         <span className="rl-chip-blue"><${Link2} size=${13} strokeWidth=${1.5} aria-hidden="true" />via MCP</span>
-        <button className="rl-icon" aria-label="Close Relay" onClick=${close}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
+        <button className="rl-icon" aria-label="Close Rea" onClick=${close}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
       </div>
       <div className="rl-body">
         <${StatusCard} title="Refresh interval" tag="Unresolved" rows=${[
           ['PRD says', html`Every <b>15</b> minutes`, 'R4, v1'],
           ['API does', html`Every <b>60</b> minutes`, 'PT1H', true],
-        ]}>Polling every 15 minutes returns the same data 3 out of 4 times. The dashboard would look live when it isn’t.<//>
+        ]}>Polling every 15 minutes returns the same data 3 out of 4 times.<//>
         <div className="rl-divider" />
-        <div className="rl-label">Where this comes from</div>
-        <div className="rl-stack">
-          <div className="rl-source"><${FileText} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="rl-source-meta">Sandbox API response · 1:40 PM</div><div className="rl-source-quote mono">"sync_interval": "PT1H"</div></div></div>
-          <div className="rl-source"><${FileText} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="rl-source-meta">timekeeping-api.md §3.2 · edited Mar 2023</div><div className="rl-source-quote mono">Badge punches are batch-loaded at the top of each hour.</div></div></div>
+        <div className="rl-label-row"><span className="rl-label">Status of R4</span><${StatusChip} status="assumed" /></div>
+        <p className="rl-text">Set at kickoff on Oct 1. Approved in v1 without anyone checking it against the timekeeping API.</p>
+        <div className="rl-divider" />
+        <div className="rl-label">Why R4 exists</div>
+        <div className="why-card">
+          <p className="why-quote">“${R4_INTENT.quote}”</p>
+          <div className="muted">${R4_INTENT.speaker} · ${R4_INTENT.source}</div>
+          <div className="why-goal">Intent: ${R4_INTENT.goal}</div>
         </div>
         <div className="rl-divider" />
-        <div className="rl-label">Linked to R4</div>
-        <div className="chips"><span className="chip static">Jira LAB-15</span><span className="chip static">Figma · Overview</span><span className="chip static">Success metric</span></div>
-        <div className="rl-people">
-          <span className="rl-avatars"><${Avatar} id="priya" size=${22} /><${Avatar} id="kim" size=${22} /><${Avatar} id="jordan" size=${22} /></span>
-          <span className="grow">Priya, Kim, Jordan</span>
+        <div className="rl-label-row"><span className="rl-label">Linked to R4</span>
+          <span className="rl-avatars" title="Priya, Kim, Jordan"><${Avatar} id="priya" size=${22} /><${Avatar} id="kim" size=${22} /><${Avatar} id="jordan" size=${22} /></span>
           <button className="rl-icon round" aria-label="Add or suggest people" aria-expanded=${people} onClick=${() => setPeople(!people)}><${Plus} size=${12} strokeWidth=${1.5} aria-hidden="true" /></button>
         </div>
+        <div className="chips"><span className="chip static">Jira LAB-15</span><span className="chip static">Figma · Overview</span><span className="chip static">Success metric</span></div>
         ${people && html`<div className="rl-note">Suggested: Ravi Patel (owns timekeeping-api.md). Adding people is not simulated.</div>`}
         <div className="rl-divider" />
-        <div className="rl-label">Evidence · attached automatically</div>
-        <div className="chips"><${EvidenceChip} id="spec" /><${EvidenceChip} id="api" /></div>
+        <div className="rl-label">Evidence · where this comes from</div>
+        <div className="chips"><${EvidenceChip} id="api" /><${EvidenceChip} id="spec" /></div>
         <div className="rl-hint"><${Scan} size=${15} strokeWidth=${1.5} aria-hidden="true" />Select code or text to add more evidence</div>
       </div>
       <div className="rl-foot">
@@ -481,7 +483,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <div className="rl-actions">
           <button className="pill pill-text" onClick=${close}>Save for later</button>
           <span className="grow" />
-          <button className="pill pill-outline" onClick=${() => { close(); setToast('Note dismissed. R4 stays as written; reopen it from the Relay pill.'); }}>Deny</button>
+          <button className="pill pill-outline" onClick=${() => { close(); setToast('Note dismissed. R4 stays as written; reopen it from the Rea pill.'); }}>Deny</button>
           <button className="pill pill-primary" onClick=${() => setPanel('propose')}>Propose change</button>
         </div>
       </div>

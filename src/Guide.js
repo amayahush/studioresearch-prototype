@@ -12,7 +12,7 @@ function stepFor(state) {
       flagged: {
         title: 'Codex found a mismatch',
         body: 'You asked Codex to build the job that refreshes the dashboard. While working, it compared the PRD with the real timekeeping API. They disagree: the PRD says refresh every 15 minutes, but the API only has new data once an hour.',
-        next: 'Click view on the orange Relay note (or press Alt+P). Check the facts, then decide whether to propose a change to the PRD.',
+        next: 'Click view on the orange Rea note (or press Alt+P). Check the facts, then decide whether to propose a change to the PRD.',
       },
       proposed: {
         title: 'Your proposal is out',
@@ -22,19 +22,19 @@ function stepFor(state) {
       moreEvidence: {
         title: 'Dana wants more evidence',
         body: 'Dana is not convinced yet: the spec section you cited is from 2023. She wants proof the API is still hourly today.',
-        next: 'Open timekeeping-api.md from the Relay panel (or click it on the "Read docs/…" step in the thread). Select changelog lines 58–60, choose "Add to R4 evidence", then "Resend to Dana" in the Relay panel.',
+        next: 'Open timekeeping-api.md from the Rea panel (or click it on the "Read docs/…" step in the thread). Select changelog lines 58–60, choose "Add to R4 evidence", then "Resend to Dana" in the Rea panel.',
       },
       resent: {
         title: 'Dana is reviewing your evidence',
         body: 'You attached the changelog where the data owner confirmed the hourly sync. Dana decides next.',
-        next: 'Nothing to do right now. Relay will tell you when Dana decides.',
+        next: 'Nothing to do right now. Rea will tell you when Dana decides.',
       },
       approved: codeUpdated
-        ? { title: 'Your code and the PRD agree', body: 'Dana approved hourly refresh in PRD v1.1, and your refresh job now matches it.', next: 'You are done. Explore the Relay web app to see how the change traveled.' }
+        ? { title: 'Your code and the PRD agree', body: 'Dana approved hourly refresh in PRD v1.1, and your refresh job now matches it.', next: 'You are done. Explore the Rea web app to see how the change traveled.' }
         : {
             title: 'R4 changed. Your code doesn\'t match yet',
             body: 'Dana approved your proposal. The PRD now says: refresh hourly, 5 minutes after the timekeeping system syncs. One approval also updated Jira, Figma and Teams.',
-            next: 'Click view on the newest Relay note. Review the diff, then choose "Update the code to match".',
+            next: 'Click view on the newest Rea note. Review the diff, then choose "Update the code to match".',
           },
       denied: { title: 'Dana kept R4 as written', body: 'The PRD still says every 15 minutes, and your draft already follows it.', next: 'You are done.' },
     };
@@ -46,34 +46,39 @@ function stepFor(state) {
     if (pending && !priya.stance) {
       return {
         title: 'A requirement on your frame may change',
-        body: 'Marcus, an engineer, proposed changing R4: refresh hourly, not every 15 minutes. Your Overview frame has a label that says "Updated every 15 min", so it is linked to R4. Relay tagged that layer as pending.',
-        next: 'Click Relay in the toolbar at the bottom (the orange dot) to open the plugin. Read the reason and evidence, then Agree or Disagree. You can add a note for Dana.',
+        body: 'Marcus, an engineer, proposed changing R4: refresh hourly, not every 15 minutes. Your Overview frame has a label that says "Updated every 15 min", so it is linked to R4. Rea tagged that layer as pending.',
+        next: 'Click Rea in the toolbar at the bottom (the orange dot) to open the plugin. Read the reason and evidence, then Agree or Disagree. You can add a note for Dana.',
         where: 'Figma',
       };
     }
     if (pending) return { title: 'Your stance is in', body: `You ${priya.stance} with the change. Dana, the product manager, makes the final call.`, next: 'Choose "Keep designing" in the plugin (or close it). The team will respond.', where: 'Figma' };
-    if (stage === 'approved' && !labelUpdated) return { title: 'R4 changed', body: 'Dana approved hourly refresh in PRD v1.1. Relay posted her comment on your Overview frame: the label should show the last sync time.', next: 'Open Dana\'s comment on the frame (her avatar next to the label) or the Relay plugin, then choose "Relabel to Last synced · next".', where: 'Figma' };
+    if (stage === 'approved' && !labelUpdated) return { title: 'R4 changed', body: 'Dana approved hourly refresh in PRD v1.1. Rea posted her comment on your Overview frame: the label should show the last sync time.', next: 'Open Dana\'s comment on the frame (her avatar next to the label) or the Rea plugin, then choose "Relabel to Last synced · next".', where: 'Figma' };
     return { title: 'Your frame is up to date', body: 'The label now shows the real sync time, so leaders won\'t mistake hourly data for live data.', next: 'You are done.', where: 'Figma' };
   }
 
   if (role === 'dana') {
     const steps = {
+      unpublished: {
+        title: 'You are about to publish v1',
+        body: 'It is Oct 1. Rea checked the PRD: several requirements rest on something nobody has confirmed, like R4\'s "every 15 minutes", which came from a kickoff call. Approving a requirement and checking it are two different things.',
+        next: 'Read the assumption check on the right. You could ask people to confirm, but for this story choose "Publish anyway".',
+      },
       flagged: { title: 'Nothing is waiting on you', body: 'The PRD is as published.', next: 'Explore the PRD. Click any section to see its details on the right.' },
       proposed: {
         title: 'A change to your PRD is waiting',
         body: 'Marcus, the engineer, found the timekeeping API only updates hourly, so R4 ("refresh every 15 minutes") can\'t be met. He proposed hourly refresh, with evidence. Priya agreed; Kim hasn\'t replied.',
-        next: 'Review R4 in the right panel. Open the sections to check the evidence. Then approve, deny, or use the arrow next to Deny to request more evidence.',
+        next: 'Review R4 in the right panel. Marcus\'s build contradicted it. Write a reason, then approve, or use Deny ▾ to deny or request more evidence.',
       },
       moreEvidence: { title: 'Waiting on Marcus', body: 'You asked Marcus for more evidence. R4 stays pending; nothing in the PRD changes yet.', next: 'Wait for Marcus to reply.' },
       resent: {
         title: 'Marcus sent new evidence',
         body: 'He attached a changelog entry where the data owner confirmed the hourly sync in Sept 2026. Both owners now agree.',
-        next: 'Check the new evidence, pick what else to update, then "Approve and publish v1.1".',
+        next: 'Check the new evidence, pick what else to update, write a reason, then "Approve and publish v1.1".',
       },
-      approved: { title: 'R4 changed in PRD v1.1', body: 'Your approval updated the PRD and the linked work: Jira, Figma and Teams.', next: 'Try the Map, Screens and Present views at the top to see the change everywhere.' },
+      approved: { title: 'R4 is verified in PRD v1.1', body: 'Your approval updated the PRD and the linked work. The decision record on the right keeps who checked what, and why it changed.', next: 'Read the decision record, then choose Done. Try the Map to see the code and Figma frames R4 touches.' },
       denied: { title: 'You kept R4 as written', body: 'The proposal is closed and Marcus was notified.', next: 'You are done.' },
     };
-    return { ...steps[stage], where: 'Relay web app' };
+    return { ...steps[stage], where: 'Rea web app' };
   }
   return null;
 }
@@ -81,10 +86,11 @@ function stepFor(state) {
 const TERMS = [
   ['PRD', 'Product requirements document: the agreed list of what the dashboard must do.'],
   ['R4', 'Requirement 4 in the PRD: how often the dashboard refreshes.'],
-  ['Relay', 'The tool being tested. It keeps the PRD in sync with the tools each person uses.'],
+  ['Rea', 'The tool being tested. It keeps the PRD in sync with the tools each person uses.'],
   ['Pending', 'A change someone proposed that is not approved yet. Don\'t build on it.'],
+  ['Assumed', 'Approved, but nobody has checked it against a source yet.'],
   ['Evidence', 'Proof attached to a proposal, like a spec section or an API response.'],
-  ['MCP', 'How Relay connects to tools like Codex. You can ignore it.'],
+  ['MCP', 'How Rea connects to tools like Codex. You can ignore it.'],
 ];
 
 const PEOPLE_LINE = 'Marcus · engineer · Priya · designer · Dana · product manager (approves changes) · Kim · business lead';

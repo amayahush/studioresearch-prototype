@@ -1,7 +1,9 @@
 import { html, useState, useEffect, cx, Fragment } from './lib.js';
-import { useStore, TEXT, TIMES, isPending, r4Text, prdVersion } from './store.js';
-import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection } from './ui.js';
+import { useStore, TEXT, TIMES, R4_INTENT, isPending, r4Text, r4Status, prdVersion } from './store.js';
+import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection, StatusChip } from './ui.js';
+import { TimeSkip, EndCard } from './Interstitials.js';
 import { MapView, ScreensView, PresentView } from './RelayViews.js';
+import { dashboardLabel } from './Figma.js';
 import {
   ChevronDown, Search, Inbox, CircleUser, FileText, Settings, HelpCircle, X, History, Check, Clock, PanelLeft,
   Box, GitBranch, Frame, MessageSquare, Folder, Code, Upload,
@@ -9,23 +11,58 @@ import {
 
 export const TOOLS = [['Jira', '2m', Box], ['GitLab', '5m', GitBranch], ['Figma', '1m', Frame], ['Teams', 'live', MessageSquare], ['SharePoint', '10m', Folder], ['Codex', 'live', Code]];
 
+// Requirements carry two separate signals: approval (who signed off) and assumption status
+// (whether anyone checked it). "Approved + Assumed" is the state this story is about.
 export function getReqs(state) {
   const pending = isPending(state);
+  const r4 = r4Status(state);
   const reqs = [
-    { id: 'R1', epic: 'E1', text: 'Show labor hours per department for the current shift.', links: ['Jira LAB-12 · Done', 'GitLab !205 · Merged'], status: 'approved', slices: ['dev', 'design', 'sme'] },
-    { id: 'R2', epic: 'E1', text: 'Flag any department above 85% of planned hours.', links: ['Jira LAB-13 · In progress'], status: 'approved', slices: ['dev', 'business'] },
     {
-      id: 'R4', epic: 'E1', text: r4Text(state), links: ['Jira LAB-15 · In progress', 'Figma · Overview'],
-      status: pending ? 'pending' : 'approved', changed: state.stage === 'approved', slices: ['dev', 'design', 'sme', 'business'],
+      id: 'R1', epic: 'E1', name: 'Hours by department', text: 'Show labor hours per department for the current shift.', links: ['Jira LAB-12 · Done', 'GitLab !205 · Merged'], status: 'approved', slices: ['dev', 'design', 'sme'],
+      assume: 'verified', note: 'LAB-12 merged and tested on the sandbox API.', evidence: ['GitLab !205', 'Sandbox test · Sep 30'],
     },
-    { id: 'R3', epic: 'E2', text: 'Let leaders filter by shift (1st, 2nd, 3rd).', links: ['Jira LAB-14 · In progress', 'Figma · Filters'], status: 'approved', slices: ['dev', 'design'] },
     {
-      id: 'R5', epic: 'E2', text: 'Show a department detail view with an hourly breakdown.',
+      id: 'R2', epic: 'E1', name: 'Overtime flag', text: 'Flag any department above 85% of planned hours.', links: ['Jira LAB-13 · In progress'], status: 'approved', slices: ['dev', 'business'],
+      assume: 'conflicting', sources: 3, note: 'Kickoff says 85%, lead notes say 90%, the SME sync says 80%.', decision: true,
+      intent: { quote: 'Anything past 85 and we\'re already paying overtime by Friday.', speaker: 'Kim Alvarez · Business lead', source: 'Kickoff transcript 14:05', goal: 'Spot overtime risk by mid-shift (success metric)' },
+    },
+    {
+      id: 'R4', epic: 'E1', name: 'Data refresh rate', text: r4Text(state), links: ['Jira LAB-15 · In progress', 'Figma · Overview'],
+      status: pending ? 'pending' : 'approved', changed: state.stage === 'approved', slices: ['dev', 'design', 'sme', 'business'],
+      assume: r4, canVerify: 'Ravi Patel · Timekeeping data owner',
+      note: r4 === 'verified' ? 'Tested against the timekeeping API and approved in v1.1.' : r4 === 'contradicted' ? 'Marcus\'s build found the API syncs hourly (PT1H).' : 'Set at kickoff Oct 1. Never checked against the API.',
+      intent: R4_INTENT,
+    },
+    {
+      id: 'R6', epic: 'E1', name: 'Crews by lead', text: 'Show each crew lead their own departments first.', links: [], status: 'approved', slices: ['design', 'business'],
+      assume: 'assumed', canVerify: 'Kim Alvarez · Business lead', note: 'Heard once on a lead sync call. Not in the kickoff notes.',
+      intent: { quote: 'I only care about my guys. Show me my crews before anything else.', speaker: '2nd shift lead', source: 'Lead sync call · Oct 3, 07:15', goal: 'Leads act on their own crews by mid-shift' },
+    },
+    {
+      id: 'R3', epic: 'E2', name: 'Shift filter', text: 'Let leaders filter by shift (1st, 2nd, 3rd).', links: ['Jira LAB-14 · In progress', 'Figma · Filters'], status: 'approved', slices: ['dev', 'design'],
+      assume: 'assumed', canVerify: 'Sam Reed · SME', note: 'From kickoff 22:10. Never confirmed.',
+      intent: { quote: 'Second shift never looks at first shift\'s numbers.', speaker: 'Sam Reed · SME', source: 'Kickoff transcript 22:10', goal: 'Each lead sees only their shift' },
+    },
+    {
+      id: 'R5', epic: 'E2', name: 'Department detail view', text: 'Show a department detail view with an hourly breakdown.',
       links: state.r5 === 'accepted' ? ['Jira LAB-16 · To do'] : [], status: state.r5 === 'accepted' ? 'approved' : 'draft', slices: ['design', 'business'],
+      assume: 'assumed', canVerify: 'Kim Alvarez · Business lead', note: 'AI draft from lead notes p.3. Not discussed on a call.',
+    },
+    {
+      id: 'R7', epic: 'E3', name: 'Overtime alerts', text: 'Send the shift lead a Teams alert when a department crosses the overtime threshold.', links: [], status: 'approved', slices: ['dev', 'business'],
+      assume: 'assumed', canVerify: 'Jordan Kim · Ops analyst', note: 'Raised at kickoff 31:20. Nobody agreed who gets the alert.',
+      intent: { quote: 'Can it just ping me when somebody\'s running hot?', speaker: 'Kim Alvarez · Business lead', source: 'Kickoff transcript 31:20', goal: 'Spot overtime risk by mid-shift (success metric)' },
+    },
+    {
+      id: 'R8', epic: 'E3', name: 'Shift history', text: 'Keep 90 days of shift history for weekly labor reviews.', links: [], status: 'approved', slices: ['dev', 'sme'],
+      assume: 'assumed', canVerify: 'Sam Reed · SME', note: 'Sam estimated 90 days on the SME call. Retention policy not checked.',
+      intent: { quote: 'We usually look back about three months, I think.', speaker: 'Sam Reed · SME', source: 'SME sync · Oct 4, 12:05', goal: 'Weekly labor reviews' },
     },
   ];
   return state.r5 === 'discarded' ? reqs.filter((r) => r.id !== 'R5') : reqs;
 }
+
+export const unverified = (reqs) => reqs.filter((r) => r.assume !== 'verified').length;
 
 const VIEWS = [['doc', 'Doc'], ['map', 'Map'], ['screens', 'Screens'], ['present', 'Present']];
 const ICON = { size: 15, strokeWidth: 1.5, 'aria-hidden': 'true' };
@@ -43,6 +80,8 @@ function loadNavOpen() {
 export function Relay() {
   const { state, dispatch } = useStore();
   const [selected, setSelected] = useState(isPending(state) ? 'R4' : null);
+  const [skip, setSkip] = useState(null);
+  const [endCard, setEndCard] = useState(false);
   const [toast, setToast] = useState('');
   const [exportOpen, setExportOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(loadNavOpen);
@@ -65,6 +104,45 @@ export function Relay() {
   const openInbox = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); if (pending) setSelected('R4'); };
   const openProject = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); setSelected(null); };
   const Body = { doc: DocView, map: MapView, screens: ScreensView, present: PresentView }[view];
+  const ownPath = state.startedAs === 'dana';
+
+  // Dana's path (brief §8): 00 publish v1 → skip a week → 06 review → skip → 07 decision record → end card.
+  const story = {
+    publish: () => {
+      dispatch({ type: 'PUBLISH_V1' });
+      setSelected(null);
+      setSkip({
+        day: 'Oct 8', from: '9:00 AM', to: TIMES.priya, title: 'A week later, R4 gets tested',
+        events: [
+          { time: TIMES.flagged, who: 'marcus', text: 'Marcus\'s Codex build tested R4: the API syncs hourly (PT1H)' },
+          { time: TIMES.proposed, who: 'marcus', text: 'Marcus proposed refreshing hourly, with evidence' },
+          { time: TIMES.priya, who: 'priya', text: 'Priya agreed: she\'ll relabel the Overview to show the last sync time' },
+        ],
+        onDone: () => { dispatch({ type: 'PROPOSAL_ARRIVES' }); setSelected('R4'); },
+      });
+    },
+    approved: () => {
+      if (!ownPath) return;
+      setSkip({
+        from: TIMES.approved, to: '2:26 PM', title: 'v1.1 is out',
+        events: [
+          { time: '2:24 PM', who: 'marcus', text: 'Marcus updated the refresh job to match v1.1' },
+          { time: '2:26 PM', who: 'priya', text: `Priya relabeled the Overview: "${dashboardLabel({ ...state, stage: 'approved', labelUpdated: true })}"` },
+        ],
+        onDone: () => { dispatch({ type: 'UPDATE_CODE' }); dispatch({ type: 'UPDATE_LABEL' }); setSelected('R4'); },
+      });
+    },
+    done: () => (ownPath ? setEndCard(true) : setSelected(null)),
+  };
+  const endSteps = [
+    { time: 'Oct 1', who: 'You', text: 'published v1 with R4 still assumed' },
+    { time: TIMES.flagged, who: 'Marcus\'s build', text: 'contradicted R4: the API syncs hourly' },
+    { time: TIMES.proposed, who: 'Marcus', text: 'proposed hourly refresh, with evidence' },
+    { time: TIMES.priya, who: 'Priya', text: 'agreed and offered to relabel the Overview' },
+    ...(state.danaAsk ? [{ time: TIMES.moreEvidence, who: 'You', text: 'asked for more evidence' }, { time: TIMES.resent, who: 'Marcus', text: 'added the data owner\'s changelog' }] : []),
+    { time: TIMES.approved, who: 'You', text: 'approved v1.1 with a reason. R4 is verified' },
+    { time: '2:26 PM', who: 'Marcus and Priya', text: 'updated the code and the label' },
+  ];
 
   const notSimulated = (what) => () => setToast(`${what} is not simulated in this prototype.`);
 
@@ -114,6 +192,7 @@ export function Relay() {
       <header className="rl-top">
         <span className="rl-top-title">Line Labor Dashboard</span>
         <${Tag} tone=${pending ? 'amber' : state.stage === 'approved' ? 'green' : 'neutral'}>${prdVersion(state)}${pending ? ' · 1 pending' : ''}<//>
+        <span className="tag tag-outline" title="Requirements nobody has confirmed yet">${unverified(getReqs(state))} unverified</span>
         <span className="grow" />
         <div className="seg" role="group" aria-label="View">
           ${VIEWS.map(([id, label]) => html`<button key=${id} className=${cx('seg-btn', view === id && 'active')} aria-pressed=${view === id} onClick=${() => dispatch({ type: 'SET_VIEW', view: id })}>${label}</button>`)}
@@ -129,8 +208,18 @@ export function Relay() {
         <button className="btn" onClick=${() => setToast('Sharing is not simulated in this prototype.')}>Share</button>
         <span className="rl-me"><${Avatar} id="dana" size=${28} /></span>
       </header>
-      <${Body} selected=${selected} setSelected=${setSelected} toast=${setToast} />
+      <${Body} selected=${selected} setSelected=${setSelected} toast=${setToast} story=${story} />
     </section>
+    ${skip && html`<${TimeSkip} ...${skip} onDone=${() => { skip.onDone(); setSkip(null); }} />`}
+    ${endCard && html`<${EndCard}
+      role="Product manager"
+      title="R4 is verified, and the decision is on record."
+      steps=${endSteps}
+      exploreLabel="Explore the Map"
+      onClose=${() => setEndCard(false)}
+      onStart=${() => dispatch({ type: 'SET_ROLE', role: null })}
+      onExplore=${() => { setEndCard(false); dispatch({ type: 'SET_VIEW', view: 'map' }); }}
+    />`}
     <${Toast} text=${toast} />
   </div>`;
 }
@@ -139,7 +228,7 @@ const SLICES = [['main', 'Main PRD'], ['dev', 'Developer'], ['design', 'Design']
 
 const FILTERS = [['all', 'All requirements'], ['approved', 'Approved'], ['pending', 'Pending'], ['draft', 'Draft']];
 
-function DocView({ selected, setSelected }) {
+function DocView({ selected, setSelected, story }) {
   const { state } = useStore();
   const [slice, setSlice] = useState('main');
   const [filter, setFilter] = useState('all');
@@ -153,6 +242,7 @@ function DocView({ selected, setSelected }) {
   const epics = [
     ['E1', 'LAB-E1', 'Live labor visibility'],
     ['E2', 'LAB-E2', 'Filtering and drill-down'],
+    ['E3', 'LAB-E3', 'Alerts and history'],
   ];
   const filterLabel = FILTERS.find(([id]) => id === filter)[1];
 
@@ -185,7 +275,7 @@ function DocView({ selected, setSelected }) {
         <div className="rl-doc-inner">
           <button className=${cx('doc-title', (!selected || selected === 'overview') && 'selected')} onClick=${() => setSelected('overview')}>
             <h1>Line Labor Dashboard</h1>
-            <div className="doc-meta">Owner Dana Ortiz (PM) · ${prdVersion(state)} · ${state.stage === 'approved' ? `published Oct 8, ${TIMES.approved}` : 'published Oct 1'} · Sources: kickoff call, lead notes, labor spreadsheet</div>
+            <div className="doc-meta">Owner Dana Ortiz (PM) · ${prdVersion(state)} · ${state.stage === 'approved' ? `published Oct 8, ${TIMES.approved}` : state.stage === 'unpublished' ? 'not published yet' : 'published Oct 1'} · Sources: kickoff call, lead notes, labor spreadsheet</div>
           </button>
 
           ${(slice === 'main' || slice === 'business') && filter === 'all' && html`<${Fragment}>
@@ -214,6 +304,10 @@ function DocView({ selected, setSelected }) {
             </div>`;
           })}
           ${visible.length === 0 && html`<div className="muted small">No requirements match this slice and filter.</div>`}
+          ${state.stage === 'approved' && (state.codeUpdated || state.labelUpdated) && html`<div className="doc-info">
+            ${state.codeUpdated && html`<span>LAB-15 updated to hourly.</span>`}
+            ${state.labelUpdated && html`<span>Priya's Figma label now reads “${dashboardLabel(state)}”.</span>`}
+          </div>`}
         </div>
       </div>
 
@@ -222,6 +316,7 @@ function DocView({ selected, setSelected }) {
           selected=${selected}
           setSelected=${setSelected}
           reqs=${reqs}
+          story=${story}
           openMap=${openMap}
           setOpen=${(key, open) => setOpenMap((m) => ({ ...m, [key]: open }))}
         />
@@ -233,15 +328,16 @@ function DocView({ selected, setSelected }) {
 function ReqRow({ req, selected, onSelect }) {
   const pending = req.status === 'pending';
   const draft = req.status === 'draft';
-  return html`<button className=${cx('req', selected && 'selected', pending && 'pending', draft && 'draft')} onClick=${onSelect} aria-pressed=${selected}>
+  return html`<button className=${cx('req', selected && 'selected', pending && 'pending', req.changed && 'verified', draft && 'draft')} onClick=${onSelect} aria-pressed=${selected}>
     <span className="req-id mono">${req.id}</span>
     <span className="req-main">
       <span className="req-text">${req.text}</span>
       <span className="req-links">
         ${req.links.map((l) => html`<span key=${l} className="doc-chip">${l}</span>`)}
-        ${pending && html`<${Tag} tone="amber">Pending · Dana<//>`}
+        <${StatusChip} status=${req.assume} sources=${req.sources} changedIn=${req.changed && 'v1.1'} />
         ${req.changed && html`<${Tag} tone="green">Changed in v1.1<//>`}
         ${draft && html`<${Tag} tone="blue">Draft · AI from lead notes<//>`}
+        ${pending && html`<span className="req-review">Review</span>`}
       </span>
     </span>
   </button>`;
@@ -276,9 +372,11 @@ const sec = (key, label, open, preview, tone, body) => ({ key, label, open, prev
 
 const SOURCES = html`<div className="chips"><span className="chip static">Kickoff call · Sep 24</span><span className="chip static">Lead notes</span><span className="chip static">Labor spreadsheet</span></div>`;
 
-function DetailPanel({ selected, setSelected, reqs, openMap, setOpen }) {
+function DetailPanel({ selected, setSelected, reqs, openMap, setOpen, story }) {
   const { state, dispatch } = useStore();
   const shell = { openMap, setOpen, onClose: () => setSelected(null) };
+
+  if (state.stage === 'unpublished' && (!selected || selected === 'overview')) return html`<${AssumptionCheck} reqs=${reqs} onSelect=${setSelected} onPublish=${story.publish} />`;
 
   if (!selected || selected === 'overview') {
     const r5Draft = state.r5 === 'draft';
@@ -309,8 +407,8 @@ function DetailPanel({ selected, setSelected, reqs, openMap, setOpen }) {
     />`;
   }
 
-  if (selected === 'R4') return html`<${R4Panel} ...${shell} />`;
-  if (selected === 'R5') return html`<${R5Panel} ...${shell} />`;
+  if (selected === 'R4') return html`<${R4Panel} ...${shell} story=${story} />`;
+  if (selected === 'R5') return html`<${R5Panel} ...${shell} req=${reqs.find((x) => x.id === 'R5')} />`;
 
   if (selected === 'problem') {
     return html`<${Inspector}
@@ -343,21 +441,78 @@ function DetailPanel({ selected, setSelected, reqs, openMap, setOpen }) {
 
   const r = reqs.find((x) => x.id === selected);
   if (!r) return null;
-  const meta = {
-    R1: { tag: ['neutral', 'Done'], title: 'Labor hours per department', pv: ['Done · Merged', null] },
-    R2: { tag: ['neutral', 'In progress'], title: 'Overtime flag', pv: ['In progress', null] },
-    R3: { tag: ['neutral', 'In progress'], title: 'Filter by shift', pv: ['Jira · Figma', null] },
-  }[r.id];
+  const work = r.links.length ? r.links.join(' · ').replace(/Jira |GitLab /g, '') : 'None yet';
   return html`<${Inspector}
     ...${shell}
-    tag=${html`<${Tag} tone=${meta.tag[0]}>${meta.tag[1]}<//>`}
-    title=${`${r.id} · ${meta.title}`}
+    tag=${html`<${StatusChip} status=${r.assume} sources=${r.sources} />`}
+    title=${`${r.id} · ${r.name}`}
     sections=${[
-      sec('requirement', 'Requirement', true, '', null, html`<p className="small">${r.text}</p>`),
-      sec('linked', 'Linked work', false, meta.pv[0], meta.pv[1], html`<div className="chips">${r.links.map((l) => html`<span key=${l} className="chip static">${l}</span>`)}</div>`),
-      sec('history', 'History', false, 'v1 · Oct 1', null, html`<div className="insp-line">Approved by Dana Ortiz · Oct 1</div>`),
+      sec('requirement', 'Requirement', true, '', null, html`<p>${r.text}</p>`),
+      statusSection(r),
+      ...(r.intent ? [whySection(r.intent)] : []),
+      sec('linked', 'Linked work', false, work, null, r.links.length
+        ? html`<div className="chips">${r.links.map((l) => html`<span key=${l} className="chip static">${l}</span>`)}</div>`
+        : html`<div className="insp-line">No ticket yet. One is created when the work is planned.</div>`),
+      sec('history', 'History', false, 'v1 · Oct 1', null, html`<div className="insp-line">Approved by Dana Ortiz in v1 · Oct 1</div>`),
     ]}
   />`;
+}
+
+// Status: is the requirement checked? Same section on every slice (spec §5).
+const STATUS_WORD = { verified: 'Verified', assumed: 'Assumed', conflicting: 'Conflicting', contradicted: 'Contradicted' };
+function statusSection(r) {
+  return sec('status', 'Status', true, STATUS_WORD[r.assume], r.assume === 'verified' ? 'green' : r.assume === 'assumed' ? 'amber' : 'red', html`
+    <p>${r.note}</p>
+    ${r.evidence && html`<div className="chips">${r.evidence.map((e) => html`<span key=${e} className="chip static">${e}</span>`)}</div>`}
+    ${r.decision ? html`<div className="insp-line">Needs a decision from you.</div>` : r.canVerify && r.assume !== 'verified' && html`<div className="insp-line">Can confirm: ${r.canVerify}</div>`}`);
+}
+
+// "Why this exists": the line from a call the requirement was written from.
+function WhyCard({ intent }) {
+  return html`<div className="why-card">
+    <p className="why-quote">“${intent.quote}”</p>
+    <div className="small muted">${intent.speaker} · ${intent.source}</div>
+    <div className="why-goal">Intent: ${intent.goal}</div>
+  </div>`;
+}
+const whySection = (intent) => sec('why', 'Why this exists', true, '', null, html`<${WhyCard} intent=${intent} />`);
+
+// Screen 00: before Dana publishes v1, list what nobody has confirmed and who could confirm it.
+function AssumptionCheck({ reqs, onSelect, onPublish }) {
+  const [asked, setAsked] = useState({});
+  const [toast, setToast] = useState('');
+  const open = reqs.filter((r) => r.assume !== 'verified');
+  return html`<div className="sp">
+    <div className="insp-head"><span className="insp-title">Assumption check · before v1</span></div>
+    <div className="sp-body">
+      <p className="muted">${open.length} requirements rest on something nobody has confirmed. Each one names who could confirm it, so the check happens before anyone builds on it.</p>
+      ${open.map((r) => {
+        const first = r.canVerify && r.canVerify.split(' ')[0];
+        return html`<div key=${r.id} className="check-card">
+          <div className="check-card-top">
+            <button className="check-card-name" onClick=${() => onSelect(r.id)}><span className="mono muted">${r.id}</span> ${r.name}</button>
+            <${StatusChip} status=${r.assume} sources=${r.sources} />
+          </div>
+          <div className="small muted">${r.note}</div>
+          <div className="check-card-foot">
+            ${r.decision
+              ? html`<span className="small">Needs a decision from you</span>`
+              : html`<span className="small grow">Can confirm: ${r.canVerify}</span>
+                  <button className="btn sm" disabled=${asked[r.id]} onClick=${() => { setAsked({ ...asked, [r.id]: true }); setToast(`Asking ${first} is not simulated in this prototype.`); }}>${asked[r.id] ? 'Asked' : `Ask ${first}`}</button>`}
+          </div>
+        </div>`;
+      })}
+      ${toast && html`<div className="small muted">${toast}</div>`}
+    </div>
+    <div className="sp-foot check-foot">
+      <p className="tiny muted">You can still publish. Unconfirmed items stay marked Assumed in every slice.</p>
+      <div className="check-actions">
+        <span className="grow" />
+        <button className="btn" onClick=${onPublish}>Publish anyway</button>
+        <button className="btn btn-primary" onClick=${() => setToast('Sending checks is not simulated. Choose Publish anyway to continue the story.')}>Send checks</button>
+      </div>
+    </div>
+  </div>`;
 }
 
 function OwnerRow({ id, stance, quote }) {
@@ -381,8 +536,10 @@ const person = (id, line, meta) => html`<${Avatar} id=${id} size=${26} /><div cl
 const fromMarcus = (time, note) => person('marcus', note ? `Marcus Lee ${note}` : 'Marcus Lee proposed a change', `Developer · via Codex · ${time}`);
 
 // R4 follows the story stage (frames 06, 07, 07b). Only the layout changed; the flow is the same.
-function R4Panel({ onClose, openMap, setOpen }) {
+function R4Panel({ onClose, openMap, setOpen, story }) {
   const { state, dispatch } = useStore();
+  const req = getReqs(state).find((r) => r.id === 'R4');
+  const [reason, setReason] = useState('');
   const [mode, setMode] = useState(null); // null | 'request' | 'confirmDeny'
   const [menu, setMenu] = useState(false);
   const [ask, setAsk] = useState(TEXT.danaAsk);
@@ -411,36 +568,20 @@ function R4Panel({ onClose, openMap, setOpen }) {
   if (s === 'flagged' || s === 'denied') {
     return html`<${Inspector}
       ...${shell}
-      tag=${html`<${Tag}>In progress<//>`}
+      tag=${html`<${StatusChip} status=${req.assume} />`}
       sections=${[
         sec('requirement', 'Requirement', true, '', null, html`<p className="small">${TEXT.r4Old}</p>`),
+        statusSection(req),
+        whySection(R4_INTENT),
         sec('linked', 'Linked work', false, 'Jira · Figma', null, html`
           <div className="chips"><span className="chip static">Jira LAB-15 · In progress</span><span className="chip static">Figma · Overview</span></div>
           <div className="muted tiny">Owners: Priya Shah (Figma Overview), Kim Alvarez (success metric)</div>`),
-        sec('history', 'History', false, s === 'denied' ? `Change denied ${TIMES.denied}` : 'v1 · Oct 1', null, history),
+        sec('history', 'Decision record', false, s === 'denied' ? `Change denied ${TIMES.denied}` : 'v1 · Oct 1', null, history),
       ]}
     />`;
   }
 
-  if (s === 'approved') {
-    const u = state.updates;
-    const followWaiting = [!state.codeUpdated, !state.labelUpdated].filter(Boolean).length;
-    return html`<${Inspector}
-      ...${shell}
-      tag=${html`<${Tag} tone="green">Changed in v1.1<//>`}
-      from=${person('dana', 'You approved this change', `${TIMES.approved} · proposed by Marcus Lee`)}
-      sections=${[
-        sec('requirement', 'Requirement', true, '', null, html`<${Diff} from=${TEXT.r4Old} to=${state.proposal.text} labels=${['Was', 'Now']} />`),
-        sec('linked', 'Linked work', false, followWaiting ? `${followWaiting} waiting` : 'All updated', followWaiting ? 'amber' : 'green', html`
-          ${[[u.jira, 'Jira LAB-15 description'], [u.figma, 'Comment on Figma · Overview for Priya'], [u.teams, 'Post in Teams #line-labor'], [u.metric, 'Note on Success metrics']]
-            .filter(([on]) => on).map(([, l]) => html`<div key=${l} className="check-row"><${Check} size=${14} strokeWidth=${2} className="green" /> ${l}</div>`)}
-          <div className="check-row">${state.codeUpdated ? html`<${Check} size=${14} strokeWidth=${2} className="green" />` : html`<${Clock} size=${14} strokeWidth=${1.5} className="amber" />`} Marcus: refresh job ${state.codeUpdated ? 'matches v1.1' : 'not updated yet'}</div>
-          <div className="check-row">${state.labelUpdated ? html`<${Check} size=${14} strokeWidth=${2} className="green" />` : html`<${Clock} size=${14} strokeWidth=${1.5} className="amber" />`} Priya: Overview label ${state.labelUpdated ? 'shows last sync time' : 'not updated yet'}</div>`),
-        sec('history', 'History', false, 'v1.1 · Oct 8', null, html`${history}
-          <div className="chips">${state.evidence.map((id) => html`<${EvidenceChip} key=${id} id=${id} variant="short" />`)}</div>`),
-      ]}
-    />`;
-  }
+  if (s === 'approved') return html`<${DecisionRecord} onClose=${onClose} onDone=${story.done} />`;
 
   const resent = s === 'resent';
   const waiting = s === 'moreEvidence';
@@ -449,6 +590,8 @@ function R4Panel({ onClose, openMap, setOpen }) {
   const checked = Object.values(updates).filter(Boolean).length;
 
   const sections = [
+    statusSection({ ...req, assume: 'contradicted' }),
+    { ...whySection(R4_INTENT), open: false },
     sec('evidence', 'Evidence', true, `${state.evidence.length + 1} items${hasNew ? ' · 1 new' : ''}`, null, html`
       <div className="chips">
         ${state.evidence.filter((id) => id !== 'changelog').map((id) => html`<${EvidenceChip} key=${id} id=${id} variant="short" tone=${mode === 'request' && id === 'spec' ? 'amber' : null} />`)}
@@ -462,7 +605,7 @@ function R4Panel({ onClose, openMap, setOpen }) {
   ];
   if (resent && mode !== 'request') {
     sections.push(sec('updates', 'One approval also updates', true, `${checked} of 4 tools`, null, html`
-      ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Relay', 'Add a note to Success metrics']].map(
+      ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Rea', 'Add a note to Success metrics']].map(
         ([k, tool, label]) => html`<label key=${k} className="update-row">
           <input type="checkbox" checked=${updates[k]} onChange=${() => setUpdates({ ...updates, [k]: !updates[k] })} />
           <span className="small grow">${label}</span><span className="muted tiny">${tool}</span>
@@ -500,10 +643,14 @@ function R4Panel({ onClose, openMap, setOpen }) {
   return html`<${Inspector}
     ...${head}
     top=${html`${waiting && html`<div className="waiting-card"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="strong-500">Waiting on Marcus</div><div className="muted small">You asked for more evidence at ${TIMES.moreEvidence}: “${state.danaAsk}”</div></div></div>`}${changeCard}`}
-    bottom=${mode === 'confirmDeny' && html`<div className="confirm-card" role="alertdialog" aria-label="Deny this change?">
+    bottom=${mode === 'confirmDeny' ? html`<div className="confirm-card" role="alertdialog" aria-label="Deny this change?">
       <div className="strong-500">Deny this change?</div>
       <div className="muted small">Closes the proposal. R4 stays as written and Marcus is notified.</div>
       <div className="confirm-actions"><button className="btn btn-ghost sm" onClick=${() => setMode(null)}>Cancel</button><button className="btn sm" onClick=${() => dispatch({ type: 'DENY' })}>Deny</button></div>
+    </div>` : html`<div className="insp-field approve-field">
+      <label className="tiny-label" htmlFor="approve-reason">Reason for approving · required</label>
+      <textarea id="approve-reason" className="field" rows="3" placeholder="Why does this change hold up?" value=${reason} onInput=${(e) => setReason(e.target.value)} />
+      <button className=${cx('link small', reason && 'hidden')} onClick=${() => setReason(TEXT.approvalReason)}>Use suggested reason</button>
     </div>`}
     foot=${html`
       <span className="grow" />
@@ -514,17 +661,17 @@ function R4Panel({ onClose, openMap, setOpen }) {
           <button role="menuitem" className="menu-item" onClick=${() => { setMenu(false); setMode('confirmDeny'); }}><strong><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Deny</strong><span className="muted tiny">Closes the proposal. R4 stays as written.</span></button>
         </div>`}
       </div>
-      <button className="btn btn-primary" onClick=${() => dispatch({ type: 'APPROVE', updates })}>${resent ? 'Approve and publish v1.1' : 'Approve & publish'}</button>`}
+      <button className="btn btn-primary" disabled=${!reason.trim()} title=${reason.trim() ? undefined : 'Add a reason first'} onClick=${() => { dispatch({ type: 'APPROVE', updates, reason: reason.trim() }); story.approved(); }}>${resent ? 'Approve and publish v1.1' : 'Approve & publish'}</button>`}
   />`;
 }
 
-function R5Panel({ onClose, openMap, setOpen }) {
+function R5Panel({ onClose, openMap, setOpen, req }) {
   const { state, dispatch } = useStore();
   const shell = { onClose, openMap, setOpen, title: 'R5 · Department detail view' };
   const text = 'Show a department detail view with an hourly breakdown.';
   const draftedFrom = html`
     <div className="quote-card"><div className="muted tiny">Lead notes · Oct 1 · 2nd shift leads</div><div className="small">"When a department runs hot I want to click in and see which hours did it."</div></div>
-    <div className="muted tiny">Relay drafted R5 from this note. It has not been reviewed.</div>`;
+    <div className="muted tiny">Rea drafted R5 from this note. It has not been reviewed.</div>`;
 
   if (state.r5 === 'accepted') {
     return html`<${Inspector}
@@ -533,7 +680,7 @@ function R5Panel({ onClose, openMap, setOpen }) {
       sections=${[
         sec('requirement', 'Requirement', true, '', null, html`<p className="small">${text}</p>`),
         sec('linked', 'Linked work', false, 'Jira LAB-16 · To do', null, html`<div className="chips"><span className="chip static">Jira LAB-16 · To do</span></div><div className="muted tiny">Created when you accepted the draft.</div>`),
-        sec('history', 'History', false, 'Accepted today', null, html`<div className="insp-line">Drafted by Relay from lead notes · Oct 1</div><div className="insp-line">Accepted by you · today</div>`),
+        sec('history', 'History', false, 'Accepted today', null, html`<div className="insp-line">Drafted by Rea from lead notes · Oct 1</div><div className="insp-line">Accepted by you · today</div>`),
       ]}
     />`;
   }
@@ -541,9 +688,10 @@ function R5Panel({ onClose, openMap, setOpen }) {
   return html`<${Inspector}
     ...${shell}
     tag=${html`<${Tag} tone="blue">Draft · AI<//>`}
-    from=${html`<span className="ai-dot" aria-hidden="true" /><span className="muted">Drafted by Relay from lead notes. Not reviewed yet.</span>`}
+    from=${html`<span className="ai-dot" aria-hidden="true" /><span className="muted">Drafted by Rea from lead notes. Not reviewed yet.</span>`}
     sections=${[
       sec('draft', 'Draft', true, '', null, html`<p className="small">${text}</p><div className="muted tiny">Drafts never show as facts in Present.</div>`),
+      statusSection(req),
       sec('draftedFrom', 'Drafted from', false, 'Lead notes', null, draftedFrom),
       sec('linked', 'Linked work', false, 'None yet', null, html`<div className="insp-line muted">Gets a Jira ticket once accepted.</div>`),
     ]}
@@ -552,4 +700,54 @@ function R5Panel({ onClose, openMap, setOpen }) {
       <button className="btn" onClick=${() => dispatch({ type: 'DISCARD_DRAFT' })}>Discard</button>
       <button className="btn btn-primary" onClick=${() => dispatch({ type: 'ACCEPT_DRAFT' })}>Accept draft</button>`}
   />`;
+}
+
+// Screen 07: R4's decision record. It replaces R4's edit history, so there is only one trail.
+function DecisionRecord({ onClose, onDone }) {
+  const { state } = useStore();
+  const [toast, setToast] = useState('');
+  const stances = [state.priya.stance && 'Priya Shah', state.kim.stance && 'Kim Alvarez'].filter(Boolean);
+  const events = [
+    { at: 'Oct 1', actor: 'AI', text: 'Drafted “every 15 min” from kickoff 18:40', chip: 'assumed' },
+    { at: 'Oct 1', actor: 'Dana Ortiz', text: 'Approved in v1 as an assumption, not checked' },
+    { at: `Oct 8, ${TIMES.flagged}`, actor: 'Marcus\'s Codex build', text: 'Sandbox API returned sync_interval PT1H', chip: 'contradicted', danger: true },
+    { at: TIMES.proposed, actor: 'Marcus Lee', text: 'Proposed hourly. Reason drafted by Codex, edited by Marcus' },
+    ...(state.danaAsk ? [
+      { at: TIMES.moreEvidence, actor: 'Dana Ortiz', text: 'Asked for more evidence: §3.2 is from 2023' },
+      { at: TIMES.resent, actor: 'Marcus Lee', text: 'Added the data owner\'s changelog (L58–60)' },
+    ] : []),
+    {
+      at: state.kim.stance ? `${TIMES.priya} · ${TIMES.resent}` : TIMES.priya,
+      actor: stances.join(' · ') || 'Owners',
+      text: state.kim.stance ? `Both agreed. Kim: “${TEXT.kimNote}”` : state.priya.stance === 'disagreed' ? 'Priya disagreed. Kim did not reply.' : 'Priya agreed. Kim did not reply.',
+    },
+    { at: TIMES.approved, actor: 'Dana Ortiz', text: 'Approved in v1.1', quote: state.approvalReason || TEXT.approvalReason, final: true },
+  ];
+  const kept = ['Spec §3.2', 'API response 1:40 PM', ...(state.evidence.includes('changelog') ? ['Changelog L58–60'] : []), 'Kickoff 18:40', `${stances.length} stance${stances.length === 1 ? '' : 's'}`];
+  return html`<div className="sp">
+    <div className="insp-head">
+      <span className="insp-id mono">R4</span>
+      <span className="insp-title">Decision record</span>
+      <${Tag} tone="green">Verified<//>
+      <button className="icon-btn" onClick=${onClose} aria-label="Close details"><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
+    </div>
+    <div className="sp-body">
+      <ol className="record">
+        ${events.map((e, i) => html`<li key=${i} className=${cx('record-ev', e.danger && 'danger', e.final && 'final')}>
+          <span className="record-node" aria-hidden="true" />
+          <div className="record-meta">${e.at} · ${e.actor}</div>
+          <div className="record-text">${e.text}${e.chip && html` <${StatusChip} status=${e.chip} />`}</div>
+          ${e.quote && html`<div className="quote-card"><div className="small">“${e.quote}”</div></div>`}
+        </li>`)}
+      </ol>
+      <div className="section-label">Evidence kept with this decision</div>
+      <div className="chips">${kept.map((k) => html`<span key=${k} className="chip static">${k}</span>`)}</div>
+      ${toast && html`<div className="small muted">${toast}</div>`}
+    </div>
+    <div className="sp-foot">
+      <span className="grow" />
+      <button className="btn" onClick=${() => setToast('Exporting the trail is not simulated in this prototype.')}>Export trail</button>
+      <button className="btn btn-primary" onClick=${onDone}>Done</button>
+    </div>
+  </div>`;
 }

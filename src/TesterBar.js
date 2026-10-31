@@ -10,7 +10,7 @@ export function TesterBar() {
 
   return html`<header className="tester-bar">
     <button className="tb-brand" onClick=${() => dispatch({ type: 'SET_ROLE', role: null })}>
-      <span className="tb-logo"><${Layers} size=${14} strokeWidth=${1.5} aria-hidden="true" /></span> Relay
+      <span className="tb-logo"><${Layers} size=${14} strokeWidth=${1.5} aria-hidden="true" /></span> Rea
     </button>
     <span className="grow" />
     <div className="tb-actions">
