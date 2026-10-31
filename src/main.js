@@ -64,7 +64,7 @@ function App() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  const screens = { marcus: Codex, priya: Figma, dana: Rea };
+  const screens = { marcus: Codex, priya: Figma, dana: Relay };
   const Screen = screens[state.role];
 
   return html`<${StoreContext.Provider} value=${{ state, dispatch }}>
@@ -73,7 +73,7 @@ function App() {
       ${narrow
         ? html`<div className="desktop-only">
             <strong>Best viewed on a desktop</strong>
-            <p>This Rea prototype is a fixed 1280×832 walkthrough for a usability test and symposium display. Open it on a larger screen.</p>
+            <p>This Relay prototype is a fixed 1280×832 walkthrough for a usability test and symposium display. Open it on a larger screen.</p>
           </div>`
         : html`<main className="stage">
             <${StageFrame}>

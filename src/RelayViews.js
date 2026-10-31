@@ -64,9 +64,9 @@ export function MapView({ selected, setSelected }) {
             ${changed ? html`<${Tag} tone="green">Changed in v1.1<//>` : pending ? html`<${Tag} tone="amber">Pending<//>` : null}
           </div>
           <div className="rmap-node-body pad">
-            <div className="tiny-label">Now</div>
-            <div className="small">${r4Text(state)}</div>
-            <div className="muted tiny" style=${{ marginTop: '8px' }}>${changed ? 'Was every 15 minutes · approved by Dana' : 'Every 15 minutes · approved by Dana'}</div>
+            <div className="tiny-label">${changed ? 'NOW' : pending ? 'PROPOSED' : 'NOW'}</div>
+            <div className="small">${changed || pending ? state.proposal.text : TEXT.r4Old}</div>
+            <div className="muted tiny" style=${{ marginTop: '8px' }}>${changed ? 'Was every 15 minutes · approved by Dana' : pending ? 'Now: every 15 minutes · waiting on Dana' : 'Approved · Oct 1'}</div>
           </div>
           <div className="rmap-tabs"><span>Reason</span><span>Evidence</span><span className="on">Traced to</span></div>
         </button>
@@ -304,7 +304,7 @@ function slidesFor(state, audience) {
       name: 'Status', kicker: 'Status', title: `PRD ${prdVersion(state)} · 1 of 3 live-visibility requirements done`,
       body: audience === 'Engineering' ? 'LAB-12 done (GitLab !205 merged). LAB-13, LAB-14, LAB-15 in progress. !218 has no linked requirement.' : 'Live labor visibility is on track. Filtering is in progress. One department-detail requirement is still a draft and is not shown as a fact.',
     },
-    { name: 'Evidence', kicker: 'Evidence', title: 'Where the facts come from', body: 'Every claim in this deck links back to a source record in Rea.', evidence: ev },
+    { name: 'Evidence', kicker: 'Evidence', title: 'Where the facts come from', body: 'Every claim in this deck links back to a source record in Relay.', evidence: ev },
     {
       name: 'Next steps', kicker: 'Next steps', title: approved ? 'Ship the hourly refresh and relabel' : 'Waiting on the R4 decision',
       body: approved

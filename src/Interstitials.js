@@ -156,7 +156,7 @@ export function EndCard({ role, title, steps, onExplore, onStart, onClose }) {
         <button className="btn btn-ghost" onClick=${onClose}>Stay here</button>
         <span className="grow" />
         <button className="btn" onClick=${onStart}>Back to start</button>
-        <button className="btn btn-primary" onClick=${onExplore}>Explore the Rea web app <${ArrowRight} size=${14} /></button>
+        <button className="btn btn-primary" onClick=${onExplore}>Explore the Relay web app <${ArrowRight} size=${14} /></button>
       </div>
     </div>
   </div>`;

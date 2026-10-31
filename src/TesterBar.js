@@ -10,7 +10,7 @@ export function TesterBar() {
 
   return html`<header className="tester-bar">
     <button className="tb-brand" onClick=${() => dispatch({ type: 'SET_ROLE', role: null })}>
-      <span className="tb-logo">Re</span> Rea
+      <span className="tb-logo">R</span> Relay
     </button>
     <span className="grow" />
     <div className="tb-actions">

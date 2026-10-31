@@ -22,7 +22,7 @@ const PERSPECTIVES = [
   {
     id: 'dana',
     sees: 'The PRD says "Refresh data every 15 minutes."',
-    tool: 'Starts in Rea',
+    tool: 'Starts in Relay',
     toolTone: 'blue',
     task: 'A teammate proposed a change to your PRD. Review it and decide.',
   },
@@ -33,7 +33,7 @@ export function RolePicker() {
 
   return html`<div className="picker">
     <div className="picker-inner">
-      <div className="eyebrow">Rea · usability test</div>
+      <div className="eyebrow">Relay · usability test</div>
       <h1>The PRD says the dashboard refreshes every 15 minutes. The data only updates once an hour.</h1>
       <p className="picker-lede">
         You're on the Line Labor Dashboard team. A requirement changed mid-build, and each person holds one piece of the truth in a different tool.
