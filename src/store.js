@@ -24,7 +24,7 @@ export const EVIDENCE = {
       [41, '### 3.2 Sync schedule'],
       [42, 'Badge punches are batch-loaded', true],
       [43, 'at the top of each hour (PT1H).', true],
-      [44, 'Clients should not poll faster.'],
+      [44, 'Clients should not poll more often than hourly.'],
     ],
   },
   api: {
@@ -90,36 +90,55 @@ export const initialState = {
   // R5 is an AI draft: 'draft' → 'accepted' | 'discarded'
   r5: 'draft',
   updates: { jira: true, figma: true, teams: true, metric: true },
+  // Cue for scripted interstitials (Dana time skip after asking for evidence)
+  storyCue: null,
   log: [],
+  // Facilitator usability-test event log (separate from story log)
+  events: [],
+  taskCard: false,
 };
 
 const log = (state, who, text, time) => [...state.log, { who, text, time }];
 
+function track(state, type, detail = {}) {
+  const event = {
+    t: new Date().toISOString(),
+    type,
+    role: state.role,
+    stage: state.stage,
+    view: state.relayView,
+    ...detail,
+  };
+  return [...(state.events || []), event];
+}
+
 export function reducer(state, action) {
   switch (action.type) {
     case 'SET_ROLE':
-      return { ...state, role: action.role };
+      return { ...state, role: action.role, events: track(state, 'set_role', { role: action.role }) };
     case 'START_ROLE': {
       // Each role path starts fresh at its own point in the story (brief §8).
-      const fresh = { ...initialState, role: action.role };
+      const fresh = { ...initialState, role: action.role, events: state.events || [], taskCard: state.taskCard };
       const proposed = { who: 'marcus', text: 'Proposed a change to R4', time: TIMES.proposed };
-      if (action.role === 'priya') return { ...fresh, stage: 'proposed', codexStreamed: true, log: [proposed] };
+      const started = { ...fresh, events: track({ ...fresh, role: action.role }, 'start_role', { role: action.role }) };
+      if (action.role === 'priya') return { ...started, stage: 'proposed', codexStreamed: true, log: [proposed] };
       if (action.role === 'dana') {
         return {
-          ...fresh, stage: 'proposed', codexStreamed: true, priya: { stance: 'agreed', note: TEXT.priyaNote },
+          ...started, stage: 'proposed', codexStreamed: true, priya: { stance: 'agreed', note: TEXT.priyaNote },
           log: [proposed, { who: 'priya', text: 'Agreed with the R4 change', time: TIMES.priya }],
         };
       }
-      return fresh;
+      return started;
     }
     case 'SET_VIEW':
-      return { ...state, relayView: action.view };
+      return { ...state, relayView: action.view, events: track(state, 'set_view', { view: action.view }) };
     case 'PROPOSE':
       return {
         ...state,
         stage: 'proposed',
         proposal: { text: action.text, reason: action.reason },
         log: log(state, 'marcus', 'Proposed a change to R4', TIMES.proposed),
+        events: track(state, 'propose'),
       };
     case 'PRIYA_STANCE':
       return {
@@ -127,17 +146,21 @@ export function reducer(state, action) {
         priya: { stance: action.stance, note: action.note },
         // Changing a stance replaces the earlier entry instead of logging twice.
         log: log({ ...state, log: state.log.filter((e) => e.who !== 'priya') }, 'priya', action.stance === 'agreed' ? 'Agreed with the R4 change' : 'Disagreed with the R4 change', TIMES.priya),
+        events: track(state, 'priya_stance', { stance: action.stance }),
       };
     case 'REQUEST_EVIDENCE':
       return {
         ...state,
         stage: 'moreEvidence',
         danaAsk: action.ask,
+        // Dana path: cue a time skip so Marcus's evidence arrives (brief §8).
+        storyCue: state.role === 'dana' ? 'marcus-evidence' : null,
         log: log(state, 'dana', 'Requested more evidence on R4', TIMES.moreEvidence),
+        events: track(state, 'request_evidence'),
       };
     case 'ADD_EVIDENCE':
       if (state.evidence.includes(action.id)) return state;
-      return { ...state, evidence: [action.id, ...state.evidence] };
+      return { ...state, evidence: [action.id, ...state.evidence], events: track(state, 'add_evidence', { id: action.id }) };
     case 'RESEND':
       // Kim's reply is simulated: it arrives while Dana is waiting.
       return {
@@ -145,32 +168,55 @@ export function reducer(state, action) {
         stage: 'resent',
         marcusReply: action.reply,
         kim: { stance: 'agreed' },
+        storyCue: null,
         log: [
           ...log(state, 'marcus', 'Added changelog evidence and resent', TIMES.resent),
           { who: 'kim', text: 'Agreed with the R4 change', time: TIMES.resent },
         ],
+        events: track(state, 'resend'),
       };
     case 'APPROVE':
       return {
         ...state,
         stage: 'approved',
         updates: action.updates,
+        storyCue: null,
         log: log(state, 'dana', 'Approved R4 and published PRD v1.1', TIMES.approved),
+        events: track(state, 'approve'),
       };
     case 'DENY':
-      return { ...state, stage: 'denied', log: log(state, 'dana', 'Denied the R4 change. R4 stays as written', TIMES.denied) };
+      return {
+        ...state,
+        stage: 'denied',
+        storyCue: null,
+        log: log(state, 'dana', 'Denied the R4 change. R4 stays as written', TIMES.denied),
+        events: track(state, 'deny'),
+      };
     case 'UPDATE_CODE':
-      return { ...state, codeUpdated: true, log: log(state, 'marcus', 'Updated the refresh job to match v1.1', '2:24 PM') };
+      return { ...state, codeUpdated: true, log: log(state, 'marcus', 'Updated the refresh job to match v1.1', '2:24 PM'), events: track(state, 'update_code') };
     case 'UPDATE_LABEL':
-      return { ...state, labelUpdated: true, log: log(state, 'priya', 'Relabeled the Overview to show last sync time', '2:26 PM') };
+      return { ...state, labelUpdated: true, log: log(state, 'priya', 'Relabeled the Overview to show last sync time', '2:26 PM'), events: track(state, 'update_label') };
     case 'CODEX_STREAMED':
       return { ...state, codexStreamed: true };
     case 'ACCEPT_DRAFT':
-      return { ...state, r5: 'accepted', log: log(state, 'dana', 'Accepted the AI draft of R5', 'Now') };
+      return { ...state, r5: 'accepted', log: log(state, 'dana', 'Accepted the AI draft of R5', 'Now'), events: track(state, 'accept_draft') };
     case 'DISCARD_DRAFT':
-      return { ...state, r5: 'discarded', log: log(state, 'dana', 'Discarded the AI draft of R5', 'Now') };
+      return { ...state, r5: 'discarded', log: log(state, 'dana', 'Discarded the AI draft of R5', 'Now'), events: track(state, 'discard_draft') };
+    case 'CLEAR_CUE':
+      return { ...state, storyCue: null };
+    case 'LOG_EVENT':
+      return { ...state, events: track(state, action.eventType || 'click', action.detail || {}) };
+    case 'TOGGLE_TASK_CARD':
+      return { ...state, taskCard: !state.taskCard };
+    case 'JUMP': {
+      // Facilitator: load a prepared story state for a screen/role.
+      const next = { ...initialState, ...(action.patch || {}), events: state.events || [], taskCard: state.taskCard };
+      return { ...next, events: track(next, 'jump', { label: action.label || 'jump' }) };
+    }
     case 'RESET':
-      return { ...initialState };
+      return { ...initialState, events: track(state, 'reset') };
+    case 'CLEAR_EVENTS':
+      return { ...state, events: [] };
     default:
       return state;
   }
@@ -179,6 +225,66 @@ export function reducer(state, action) {
 export const isPending = (s) => ['proposed', 'moreEvidence', 'resent'].includes(s.stage);
 export const r4Text = (s) => (s.stage === 'approved' ? s.proposal.text : TEXT.r4Old);
 export const prdVersion = (s) => (s.stage === 'approved' ? 'v1.1' : 'v1');
+
+/** Prepared story patches for facilitator jump menu / deep links. */
+export function jumpPatch(id) {
+  const base = { codexStreamed: true };
+  const proposed = {
+    ...base,
+    stage: 'proposed',
+    priya: { stance: 'agreed', note: TEXT.priyaNote },
+    log: [
+      { who: 'marcus', text: 'Proposed a change to R4', time: TIMES.proposed },
+      { who: 'priya', text: 'Agreed with the R4 change', time: TIMES.priya },
+    ],
+  };
+  const moreEvidence = {
+    ...proposed,
+    stage: 'moreEvidence',
+    danaAsk: TEXT.danaAsk,
+    log: [
+      ...proposed.log,
+      { who: 'dana', text: 'Requested more evidence on R4', time: TIMES.moreEvidence },
+    ],
+  };
+  const resent = {
+    ...moreEvidence,
+    stage: 'resent',
+    evidence: ['changelog', 'spec', 'api'],
+    marcusReply: TEXT.marcusReply,
+    kim: { stance: 'agreed' },
+    log: [
+      ...moreEvidence.log,
+      { who: 'marcus', text: 'Added changelog evidence and resent', time: TIMES.resent },
+      { who: 'kim', text: 'Agreed with the R4 change', time: TIMES.resent },
+    ],
+  };
+  const approved = {
+    ...resent,
+    stage: 'approved',
+    updates: { jira: true, figma: true, teams: true, metric: true },
+    log: [...resent.log, { who: 'dana', text: 'Approved R4 and published PRD v1.1', time: TIMES.approved }],
+  };
+
+  const map = {
+    '00': { role: null },
+    '01': { role: 'marcus', stage: 'flagged', codexStreamed: false },
+    '02': { role: 'marcus', stage: 'flagged', ...base },
+    '03': { role: 'marcus', stage: 'flagged', ...base },
+    '04': { role: 'marcus', ...proposed, priya: { stance: null, note: '' }, log: [{ who: 'marcus', text: 'Proposed a change to R4', time: TIMES.proposed }] },
+    '05': { role: 'priya', ...proposed, priya: { stance: null, note: '' }, log: [{ who: 'marcus', text: 'Proposed a change to R4', time: TIMES.proposed }] },
+    '06': { role: 'dana', ...proposed, relayView: 'doc' },
+    '07': { role: 'dana', ...moreEvidence, relayView: 'doc' },
+    '07b': { role: 'dana', ...resent, relayView: 'doc' },
+    '08a': { role: 'marcus', ...moreEvidence, priya: { stance: 'agreed', note: TEXT.priyaNote } },
+    '08b': { role: 'marcus', ...resent },
+    '09': { role: 'marcus', ...approved },
+    '10': { role: 'dana', ...approved, relayView: 'map' },
+    '11': { role: 'dana', ...approved, labelUpdated: true, relayView: 'screens' },
+    '12': { role: 'dana', ...approved, labelUpdated: true, codeUpdated: true, relayView: 'present' },
+  };
+  return map[id] || null;
+}
 
 export const StoreContext = createContext(null);
 export const useStore = () => useContext(StoreContext);

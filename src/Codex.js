@@ -126,7 +126,7 @@ export function Codex() {
       <span className=${cx('cx-title-gap', threadsOpen && 'open')} />
       <span className="cx-thread-title"><${FolderClosed} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span>Implement LAB-15 refresh job</span></span>
       <span className="cx-branch"><${GitBranch} size=${13} strokeWidth=${1.5} aria-hidden="true" />lab-15-refresh${pendingBranch ? ' · pending-R4' : ''}</span>
-      <button className=${cx('cx-relay-pill', needsYou && 'attn')} onClick=${openNote} disabled=${!streamDone}><${Layers} size=${13} strokeWidth=${1.5} aria-hidden="true" />Relay · ${streamDone ? status : 'checking PRD'}</button>
+      <button className=${cx('cx-relay-pill', needsYou && 'attn')} onClick=${openNote} disabled=${!streamDone}><${Layers} size=${13} strokeWidth=${1.5} aria-hidden="true" />Rea · ${streamDone ? status : 'checking PRD'}</button>
     </header>
 
     <div className="cx-body">
@@ -181,7 +181,7 @@ export function Codex() {
       </main>
 
       ${panel &&
-      html`<aside className=${cx('side-panel', panel === 'check' && 'rl')} aria-label="Relay">
+      html`<aside className=${cx('side-panel', panel === 'check' && 'rl')} aria-label="Rea">
         <${CodexPanel} panel=${panel} setPanel=${setPanel} setToast=${setToast} openFile=${() => setFile('spec')} onSentClose=${afterSent} onResend=${resend} onFinish=${finish} />
       </aside>`}
     </div>
@@ -205,7 +205,7 @@ function Step({ children }) {
 function Notice({ isNew, handled, children, onView }) {
   return html`<div className=${cx('cx-notice', isNew && !handled && 'new', handled && 'handled')}>
     <${Layers} size=${14} strokeWidth=${1.5} aria-hidden="true" />
-    <span className="cx-notice-text"><strong>Relay</strong> <span>${children}</span></span>
+    <span className="cx-notice-text"><strong>Rea</strong> <span>${children}</span></span>
     ${handled ? html`<span className="cx-notice-done">Handled</span>` : html`<button className="cx-notice-open" onClick=${onView}>Open in panel</button>`}
   </div>`;
 }
@@ -301,7 +301,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
     ${blocks.slice(0, shown).map((b, i) => html`<div key=${i} className=${cx('stream-block', !streamDone && 'enter')}>${b}</div>`)}
     ${streaming && html`<div className="cx-working"><span className="spinner" /> Working… <span className="cx-hint">click or press Space to skip</span></div>`}
 
-    ${!streaming && past('proposed') && html`<${Step}>Relay · proposal sent to Dana · branch tagged pending-R4<//>`}
+    ${!streaming && past('proposed') && html`<${Step}>Rea · proposal sent to Dana · branch tagged pending-R4<//>`}
 
     ${past('moreEvidence') && (s === 'moreEvidence' || state.danaAsk) &&
     html`<${Fragment}>
@@ -309,7 +309,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
       <${Notice} isNew handled=${s !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>
     <//>`}
 
-    ${afterEvidence && html`<${Step}>Relay · changelog L58–60 added as evidence · resent to Dana<//>`}
+    ${afterEvidence && html`<${Step}>Rea · changelog L58–60 added as evidence · resent to Dana<//>`}
 
     ${s === 'approved' &&
     html`<${Fragment}>
@@ -396,7 +396,7 @@ function SpecFile({ onToast, openNote }) {
           html`<div className="sel-toolbar">
             ${canAdd
               ? html`<button className="btn btn-primary sm" onClick=${addEvidence}><${Paperclip} size=${12} /> Add to R4 evidence <kbd>⌘⇧E</kbd></button>`
-              : html`<span className="muted small">${added ? 'Already on R4 evidence' : 'No open Relay request'}</span>`}
+              : html`<span className="muted small">${added ? 'Already on R4 evidence' : 'No open Rea request'}</span>`}
             <button className="btn btn-ghost sm" onClick=${() => onToast('Codex chat is not simulated in this prototype.')}><${MessageSquare} size=${12} /> Ask Codex</button>
           </div>`}
         <//>`)}
@@ -404,7 +404,7 @@ function SpecFile({ onToast, openNote }) {
     </div>
     ${canAdd && !added && html`<div className="hint">Drag across line numbers to select lines, then add them to R4's evidence.</div>`}
     <div className="section-label"><span>Codex</span></div>
-    <${Step}>Relay · proposal sent to Dana · branch tagged pending-R4<//>
+    <${Step}>Rea · proposal sent to Dana · branch tagged pending-R4<//>
     ${state.danaAsk && html`<${Divider}>${TIMES.moreEvidence}<//>
       <${Notice} isNew handled=${state.stage !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>`}
   </div>`;
@@ -449,7 +449,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <${Layers} size=${16} strokeWidth=${1.5} aria-hidden="true" />
         <span className="rl-head-title">R4 may not match the API</span>
         <span className="rl-chip-blue"><${Link2} size=${13} strokeWidth=${1.5} aria-hidden="true" />via MCP</span>
-        <button className="rl-icon" aria-label="Close Relay" onClick=${close}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
+        <button className="rl-icon" aria-label="Close Rea" onClick=${close}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
       </div>
       <div className="rl-body">
         <${StatusCard} title="Refresh interval" tag="Unresolved" rows=${[
@@ -481,7 +481,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <div className="rl-actions">
           <button className="pill pill-text" onClick=${close}>Save for later</button>
           <span className="grow" />
-          <button className="pill pill-outline" onClick=${() => { close(); setToast('Note dismissed. R4 stays as written; reopen it from the Relay pill.'); }}>Deny</button>
+          <button className="pill pill-outline" onClick=${() => { close(); setToast('Note dismissed. R4 stays as written; reopen it from the Rea pill.'); }}>Dismiss</button>
           <button className="pill pill-primary" onClick=${() => setPanel('propose')}>Propose change</button>
         </div>
       </div>
@@ -490,7 +490,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
 
   if (panel === 'propose') {
     return html`<div className="sp">
-      <${PanelHead} icon=${GitPullRequestArrow} title="Relay · Propose a change to R4" onClose=${close} />
+      <${PanelHead} icon=${GitPullRequestArrow} title="Rea · Propose a change to R4" onClose=${close} />
       <div className="sp-body">
         <${SectionLabel}>Proposed text<//>
         <textarea className="field" rows="3" value=${text} onInput=${(e) => setText(e.target.value)} />
@@ -516,7 +516,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
     const stances = [state.priya.stance, state.kim.stance].filter(Boolean).length;
     const resent = state.stage === 'resent';
     return html`<div className="sp">
-      <${PanelHead} icon=${CheckCircle2} title="Relay · Sent" onClose=${onSentClose} />
+      <${PanelHead} icon=${CheckCircle2} title="Rea · Sent" onClose=${onSentClose} />
       <div className="sp-body">
         <div className="success-card">
           <div className="success-title"><${CheckCircle2} size=${16} /> ${resent ? 'Evidence resent to Dana' : 'Proposal sent to Dana'} <span className="grow" /><span className="muted small">${resent ? TIMES.resent : TIMES.proposed}</span></div>
@@ -544,7 +544,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
     const added = state.evidence.includes('changelog');
     const canSend = state.stage === 'moreEvidence' && (added || reply.trim());
     return html`<div className="sp">
-      <${PanelHead} icon=${MessageSquare} title="Relay · More evidence for R4" onClose=${close} />
+      <${PanelHead} icon=${MessageSquare} title="Rea · More evidence for R4" onClose=${close} />
       <div className="sp-body">
         <div className="ask-card">
           <div className="ask-head"><${Avatar} id="dana" size=${20} /><strong>Dana Ortiz · ${TIMES.moreEvidence} · requested more evidence</strong></div>
@@ -576,7 +576,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
   if (panel === 'changed') {
     const u = state.updates;
     return html`<div className="sp">
-      <${PanelHead} icon=${CheckCircle2} title="Relay · R4 changed · PRD v1.1" onClose=${close} />
+      <${PanelHead} icon=${CheckCircle2} title="Rea · R4 changed · PRD v1.1" onClose=${close} />
       <div className="sp-body">
         <div className="ask-head"><${Avatar} id="dana" size=${20} /><strong>Dana approved your proposal</strong> <span className="muted small">${TIMES.approved}</span></div>
         <${SectionLabel}>R4 now says<//>
@@ -612,7 +612,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
 
   if (panel === 'denied') {
     return html`<div className="sp">
-      <${PanelHead} icon=${X} title="Relay · R4 unchanged" onClose=${close} />
+      <${PanelHead} icon=${X} title="Rea · R4 unchanged" onClose=${close} />
       <div className="sp-body">
         <div className="ask-head"><${Avatar} id="dana" size=${20} /><strong>Dana kept R4 as written</strong> <span className="muted small">${TIMES.denied}</span></div>
         <${SectionLabel}>R4 says<//>

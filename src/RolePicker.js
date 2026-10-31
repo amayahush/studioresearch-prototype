@@ -22,7 +22,7 @@ const PERSPECTIVES = [
   {
     id: 'dana',
     sees: 'The PRD says "Refresh data every 15 minutes."',
-    tool: 'Starts in Relay',
+    tool: 'Starts in Rea',
     toolTone: 'blue',
     task: 'A teammate proposed a change to your PRD. Review it and decide.',
   },
@@ -33,11 +33,11 @@ export function RolePicker() {
 
   return html`<div className="picker">
     <div className="picker-inner">
-      <div className="eyebrow">Relay</div>
+      <div className="eyebrow">Rea · usability test</div>
       <h1>The PRD says the dashboard refreshes every 15 minutes. The data only updates once an hour.</h1>
       <p className="picker-lede">
-        You're on the Line Labor Dashboard team. Three people each hold one piece of the truth, in a different tool, and none of
-        them can see the others. Pick a role to live the story from that seat.
+        You're on the Line Labor Dashboard team. A requirement changed mid-build, and each person holds one piece of the truth in a different tool.
+        This session checks whether <strong>pending changes, evidence, and one human approval</strong> stay clear across those tools. Pick a seat.
       </p>
 
       <div className="perspectives">
@@ -49,7 +49,7 @@ export function RolePicker() {
             <blockquote className="persp-sees">${p.sees}</blockquote>
             <p className="persp-task">${p.task}</p>
             <button className="btn btn-primary btn-block persp-cta" onClick=${() => dispatch({ type: 'START_ROLE', role: p.id })}>
-              Play the ${person.role.toLowerCase()} <${ArrowRight} size=${14} />
+              Start as the ${person.role.toLowerCase()} <${ArrowRight} size=${14} />
             </button>
             <div className="persp-meta">
               <${Avatar} id=${p.id} size=${20} />
@@ -59,7 +59,7 @@ export function RolePicker() {
         })}
       </div>
 
-      <p className="picker-foot muted">Each role plays its own part of the story. What happens elsewhere is shown as it happens.</p>
+      <p className="picker-foot muted">Each role plays its own part of the story. What happens elsewhere is shown as a time skip. Facilitators: press Shift+D.</p>
     </div>
   </div>`;
 }

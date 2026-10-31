@@ -2,9 +2,10 @@ import { html, useState, useEffect, cx, Fragment } from './lib.js';
 import { useStore, TEXT, TIMES, isPending, r4Text, prdVersion } from './store.js';
 import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection } from './ui.js';
 import { MapView, ScreensView, PresentView } from './RelayViews.js';
+import { TimeSkip, EndCard, ApprovalAnim } from './Interstitials.js';
 import {
   ChevronDown, Search, Inbox, CircleUser, FileText, Settings, HelpCircle, Network, Frame, Presentation, X, History, Check, Clock,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, Download,
 } from 'lucide-react';
 
 export const TOOLS = [['Jira', '2m'], ['GitLab', '5m'], ['Figma', '1m'], ['Teams', 'live'], ['SharePoint', '10m'], ['Codex', 'live']];
@@ -28,10 +29,10 @@ export function getReqs(state) {
 }
 
 const VIEWS = [
-  ['doc', 'Doc', FileText],
-  ['map', 'Map', Network],
-  ['screens', 'Screens', Frame],
-  ['present', 'Present', Presentation],
+  ['doc', 'Doc'],
+  ['map', 'Map'],
+  ['screens', 'Screens'],
+  ['present', 'Present'],
 ];
 
 const NAV_KEY = 'relay-sidebar-open';
@@ -50,9 +51,12 @@ export function Relay() {
   const [toast, setToast] = useState('');
   const [exportOpen, setExportOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(loadNavOpen);
+  const [approval, setApproval] = useState(null); // pending updates while ApprovalAnim plays
+  const [endCard, setEndCard] = useState(false);
   const pending = isPending(state);
   const inbox = ['proposed', 'resent'].includes(state.stage) ? 1 : 0;
   const view = state.relayView;
+  const showEvidenceSkip = state.storyCue === 'marcus-evidence';
 
   useEffect(() => {
     if (!toast) return;
@@ -69,6 +73,21 @@ export function Relay() {
   const openInbox = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); if (pending) setSelected('R4'); };
   const openProject = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); setSelected(null); };
   const Body = { doc: DocView, map: MapView, screens: ScreensView, present: PresentView }[view];
+
+  const versionLabel = state.stage === 'approved'
+    ? 'v1.1'
+    : pending
+      ? `${prdVersion(state)} · 1 pending`
+      : prdVersion(state);
+
+  const endSteps = [
+    { time: TIMES.proposed, who: 'Marcus', text: 'proposed hourly refresh with evidence' },
+    { time: TIMES.priya, who: 'Priya', text: 'agreed and will relabel the Overview' },
+    { time: TIMES.moreEvidence, who: 'You', text: 'asked Marcus for more evidence' },
+    { time: TIMES.resent, who: 'Marcus', text: 'added the changelog; Kim agreed' },
+    { time: TIMES.approved, who: 'You', text: 'approved R4 · published PRD v1.1' },
+    { time: 'Next', who: 'Marcus · Priya', text: 'still need to update the refresh job and Overview label', pending: true },
+  ];
 
   return html`<div className="relay">
     <nav className=${cx('rl-side', !navOpen && 'collapsed')} aria-label="Workspace">
@@ -113,45 +132,85 @@ export function Relay() {
 
     <section className="rl-main">
       <header className="rl-top">
-        <strong>Line Labor Dashboard / PRD</strong>
-        <${Tag} tone=${pending ? 'amber' : state.stage === 'approved' ? 'green' : 'neutral'}>${prdVersion(state)}${pending ? ' · 1 pending' : ''}<//>
+        <strong className="rl-title">Line Labor Dashboard</strong>
+        <${Tag} tone=${pending ? 'amber' : state.stage === 'approved' ? 'green' : 'neutral'}>${versionLabel}<//>
         <span className="grow" />
-        <div className="seg">
-          ${VIEWS.map(([id, label, Icon]) => html`<button key=${id} className=${cx('seg-btn', view === id && 'active')} onClick=${() => dispatch({ type: 'SET_VIEW', view: id })}><${Icon} size=${14} /> ${label}</button>`)}
+        <div className="seg" role="group" aria-label="View">
+          ${VIEWS.map(([id, label]) => html`<button key=${id} className=${cx('seg-btn', view === id && 'active')} onClick=${() => dispatch({ type: 'SET_VIEW', view: id })}>${label}</button>`)}
         </div>
         <div className="export-wrap">
-          <button className="btn btn-ghost" onClick=${() => setExportOpen(!exportOpen)}>Export</button>
+          <button className="icon-btn round-pill" aria-label="Export" title="Export" onClick=${() => setExportOpen(!exportOpen)}>
+            <${Download} size=${16} aria-hidden="true" />
+          </button>
           ${exportOpen && html`<div className="menu">
             ${[['PDF', 'Full PRD with evidence'], ['PowerPoint (.pptx)', 'From the Present view'], ['Image (PNG)', 'Current view'], ['Copy link', 'Opens this view']].map(
               ([t, d]) => html`<button key=${t} className="menu-item" onClick=${() => { setExportOpen(false); setToast(`${t}: export is not simulated in this prototype.`); }}><strong>${t}</strong><span className="muted tiny">${d}</span></button>`
             )}
           </div>`}
         </div>
-        <button className="btn" onClick=${() => setToast('Sharing is not simulated in this prototype.')}>Share</button>
-        <${Avatar} id="dana" size=${26} />
+        <button className="btn btn-pill" onClick=${() => setToast('Sharing is not simulated in this prototype.')}>Share</button>
+        <${Avatar} id="dana" size=${28} />
       </header>
-      <${Body} selected=${selected} setSelected=${setSelected} toast=${setToast} />
+      <${Body} selected=${selected} setSelected=${setSelected} toast=${setToast} onApprove=${(updates) => setApproval(updates)} />
     </section>
+    ${showEvidenceSkip && html`<${TimeSkip}
+      from=${TIMES.moreEvidence}
+      to=${TIMES.resent}
+      title="Marcus is gathering more evidence"
+      events=${[
+        { time: TIMES.resent, who: 'marcus', text: 'Marcus added the changelog: data owner confirmed hourly' },
+        { time: TIMES.resent, who: 'kim', text: 'Kim agreed: leaders still see risk before mid-shift' },
+      ]}
+      onDone=${() => {
+        dispatch({ type: 'ADD_EVIDENCE', id: 'changelog' });
+        dispatch({ type: 'RESEND', reply: TEXT.marcusReply });
+        setSelected('R4');
+      }}
+    />`}
+    ${approval && html`<${ApprovalAnim}
+      updates=${approval}
+      onDone=${() => {
+        dispatch({ type: 'APPROVE', updates: approval });
+        setApproval(null);
+        setEndCard(true);
+      }}
+    />`}
+    ${endCard && html`<${EndCard}
+      role="Product manager"
+      title="R4 is decided. The PRD is at v1.1."
+      steps=${endSteps}
+      onClose=${() => setEndCard(false)}
+      onStart=${() => dispatch({ type: 'SET_ROLE', role: null })}
+      onExplore=${() => { setEndCard(false); dispatch({ type: 'SET_VIEW', view: 'map' }); }}
+    />`}
     <${Toast} text=${toast} />
   </div>`;
 }
 
 const SLICES = [['main', 'Main PRD'], ['dev', 'Developer'], ['design', 'Design'], ['sme', 'SME'], ['business', 'Business']];
+const FILTERS = [
+  ['all', 'All requirements'],
+  ['approved', 'Approved'],
+  ['pending', 'Pending'],
+  ['draft', 'Draft'],
+];
 
-function DocView({ selected, setSelected }) {
+function DocView({ selected, setSelected, onApprove }) {
   const { state } = useStore();
   const [slice, setSlice] = useState('main');
   const [filter, setFilter] = useState('all');
+  const [filterOpen, setFilterOpen] = useState(false);
   // Open/closed choices by section key, kept across selections that share a section.
   const [openMap, setOpenMap] = useState({});
   const reqs = getReqs(state);
   const pending = isPending(state);
-  const count = (st) => reqs.filter((r) => r.status === st).length;
+  const count = (st) => (st === 'all' ? reqs.length : reqs.filter((r) => r.status === st).length);
   const visible = reqs.filter((r) => (slice === 'main' || r.slices.includes(slice)) && (filter === 'all' || r.status === filter));
   const epics = [
     ['E1', 'LAB-E1', 'Live labor visibility'],
     ['E2', 'LAB-E2', 'Filtering and drill-down'],
   ];
+  const filterLabel = FILTERS.find(([id]) => id === filter)?.[1] || 'All requirements';
 
   useEffect(() => {
     if (selected === 'R5' && state.r5 === 'discarded') setSelected(null);
@@ -159,18 +218,19 @@ function DocView({ selected, setSelected }) {
 
   return html`<div className="rl-doc-wrap">
     <div className="rl-subbar">
-      <span className="tiny-label">Slice</span>
       ${SLICES.map(([id, label]) => html`<button key=${id} className=${cx('slice', slice === id && 'active')} onClick=${() => setSlice(id)}>
         ${label}${pending && id !== 'sme' && html`<span className="dot amber" />`}
       </button>`)}
       <span className="grow" />
-      <span className="muted small">Show</span>
-      <div className="seg sm">
-        ${[['all', 'All', reqs.length], ['approved', 'Approved', count('approved')], ['pending', 'Pending', count('pending')], ['draft', 'Draft', count('draft')]].map(
-          ([id, label, n]) => html`<button key=${id} className=${cx('seg-btn', filter === id && 'active')} onClick=${() => setFilter(id)}>
-            ${id === 'pending' && html`<span className="dot amber" />`}${id === 'draft' && html`<span className="dot blue" />`}${label} <span className="muted">${n}</span>
-          </button>`
-        )}
+      <div className="filter-wrap">
+        <button className="filter-pill" aria-haspopup="listbox" aria-expanded=${filterOpen} onClick=${() => setFilterOpen(!filterOpen)}>
+          ${filterLabel} <span className="muted">${count(filter)}</span> <${ChevronDown} size=${12} aria-hidden="true" />
+        </button>
+        ${filterOpen && html`<div className="menu filter-menu" role="listbox">
+          ${FILTERS.map(([id, label]) => html`<button key=${id} className=${cx('menu-item', filter === id && 'active')} role="option" aria-selected=${filter === id} onClick=${() => { setFilter(id); setFilterOpen(false); }}>
+            <strong>${label}</strong><span className="muted tiny">${count(id)}</span>
+          </button>`)}
+        </div>`}
       </div>
     </div>
 
@@ -215,6 +275,7 @@ function DocView({ selected, setSelected }) {
           reqs=${reqs}
           openMap=${openMap}
           setOpen=${(key, open) => setOpenMap((m) => ({ ...m, [key]: open }))}
+          onApprove=${onApprove}
         />
       </aside>
     </div>
@@ -265,7 +326,7 @@ const sec = (key, label, open, preview, tone, body) => ({ key, label, open, prev
 
 const SOURCES = html`<div className="chips"><span className="chip static">Kickoff call · Sep 24</span><span className="chip static">Lead notes</span><span className="chip static">Labor spreadsheet</span></div>`;
 
-function DetailPanel({ selected, setSelected, reqs, openMap, setOpen }) {
+function DetailPanel({ selected, setSelected, reqs, openMap, setOpen, onApprove }) {
   const { state, dispatch } = useStore();
   const shell = { openMap, setOpen, onClose: () => setSelected(null) };
 
@@ -298,7 +359,7 @@ function DetailPanel({ selected, setSelected, reqs, openMap, setOpen }) {
     />`;
   }
 
-  if (selected === 'R4') return html`<${R4Panel} ...${shell} />`;
+  if (selected === 'R4') return html`<${R4Panel} ...${shell} onApprove=${onApprove} />`;
   if (selected === 'R5') return html`<${R5Panel} ...${shell} />`;
 
   if (selected === 'problem') {
@@ -370,7 +431,7 @@ function ownersPreview(stances) {
 const fromMarcus = (time, note) => html`<${Avatar} id="marcus" size=${18} /> From Marcus Lee · Developer · via Codex · ${time}${note ? ` · ${note}` : ''}`;
 
 // R4 follows the story stage (frames 06, 07, 07b). Only the layout changed; the flow is the same.
-function R4Panel({ onClose, openMap, setOpen }) {
+function R4Panel({ onClose, openMap, setOpen, onApprove }) {
   const { state, dispatch } = useStore();
   const [mode, setMode] = useState(null); // null | 'request' | 'confirmDeny'
   const [menu, setMenu] = useState(false);
@@ -448,7 +509,7 @@ function R4Panel({ onClose, openMap, setOpen }) {
   ];
   if (resent && mode !== 'request') {
     sections.push(sec('updates', 'One approval also updates', true, `${checked} of 4 tools`, null, html`
-      ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Relay', 'Add a note to Success metrics']].map(
+      ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Rea', 'Add a note to Success metrics']].map(
         ([k, tool, label]) => html`<label key=${k} className="update-row">
           <input type="checkbox" checked=${updates[k]} onChange=${() => setUpdates({ ...updates, [k]: !updates[k] })} />
           <span className="chip static">${tool}</span><span className="small">${label}</span>
@@ -499,7 +560,7 @@ function R4Panel({ onClose, openMap, setOpen }) {
           <button className="menu-item" onClick=${() => { setMenu(false); setMode('confirmDeny'); }}><strong><${X} size=${13} /> Deny</strong><span className="muted tiny">Closes the proposal. R4 stays as written.</span></button>
         </div>`}
       </div>
-      <button className="btn btn-primary" onClick=${() => dispatch({ type: 'APPROVE', updates })}>${resent ? 'Approve and publish v1.1' : 'Approve & publish'}</button>`}
+      <button className="btn btn-primary" onClick=${() => (onApprove ? onApprove(updates) : dispatch({ type: 'APPROVE', updates }))}>${resent ? 'Approve and publish v1.1' : 'Approve & publish'}</button>`}
   />`;
 }
 
@@ -509,7 +570,7 @@ function R5Panel({ onClose, openMap, setOpen }) {
   const text = 'Show a department detail view with an hourly breakdown.';
   const draftedFrom = html`
     <div className="quote-card"><div className="muted tiny">Lead notes · Oct 1 · 2nd shift leads</div><div className="small">"When a department runs hot I want to click in and see which hours did it."</div></div>
-    <div className="muted tiny">Relay drafted R5 from this note. It has not been reviewed.</div>`;
+    <div className="muted tiny">Rea drafted R5 from this note. It has not been reviewed.</div>`;
 
   if (state.r5 === 'accepted') {
     return html`<${Inspector}
@@ -518,7 +579,7 @@ function R5Panel({ onClose, openMap, setOpen }) {
       sections=${[
         sec('requirement', 'Requirement', true, '', null, html`<p className="small">${text}</p>`),
         sec('linked', 'Linked work', false, 'Jira LAB-16 · To do', null, html`<div className="chips"><span className="chip static">Jira LAB-16 · To do</span></div><div className="muted tiny">Created when you accepted the draft.</div>`),
-        sec('history', 'History', false, 'Accepted today', null, html`<div className="insp-line">Drafted by Relay from lead notes · Oct 1</div><div className="insp-line">Accepted by you · today</div>`),
+        sec('history', 'History', false, 'Accepted today', null, html`<div className="insp-line">Drafted by Rea from lead notes · Oct 1</div><div className="insp-line">Accepted by you · today</div>`),
       ]}
     />`;
   }
@@ -526,7 +587,7 @@ function R5Panel({ onClose, openMap, setOpen }) {
   return html`<${Inspector}
     ...${shell}
     tag=${html`<${Tag} tone="blue">Draft · AI<//>`}
-    from=${html`<span className="ai-dot" aria-hidden="true" /> Drafted by Relay from lead notes`}
+    from=${html`<span className="ai-dot" aria-hidden="true" /> Drafted by Rea from lead notes`}
     sections=${[
       sec('draft', 'Draft', true, '', null, html`<p className="small">${text}</p><div className="muted tiny">Drafts never show as facts in Present.</div>`),
       sec('draftedFrom', 'Drafted from', false, 'Lead notes', null, draftedFrom),

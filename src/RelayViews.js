@@ -2,267 +2,104 @@ import { html, useState, useEffect, useRef, cx, Fragment } from './lib.js';
 import { useStore, TEXT, TIMES, EVIDENCE, isPending, r4Text, prdVersion } from './store.js';
 import { Avatar, Tag, SectionLabel } from './ui.js';
 import { DEPARTMENTS, dashboardLabel } from './Figma.js';
-import { X, FileText, Link2, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, FileText, Link2, ChevronDown, ChevronLeft, ChevronRight, Network, Frame } from 'lucide-react';
 
-/* ---------- Map (frame 10) ---------- */
-
-// A focus map you explore by clicking. The focused item sits in the center, its direct links on a
-// ring around it, and things one step further out on a faded outer ring. Lines only radiate from
-// the center, so they don't tangle. Clicking any card moves the center there.
-
-const TYPE_ORDER = ['prd', 'epic', 'req', 'jira', 'gitlab', 'figma', 'evidence', 'goal', 'people', 'cluster', 'untraced'];
-
-const LINKS = [
-  ['prd', 'E1'], ['prd', 'E2'], ['prd', 'goal'], ['prd', '!218'],
-  ['E1', 'R1'], ['E1', 'R2'], ['E1', 'R4'], ['E2', 'R3'], ['E2', 'R5'],
-  ['R1', 'LAB-12'], ['R1', '!205'], ['R1', 'Overview'],
-  ['R2', 'LAB-13'], ['R2', 'Overview'], ['R2', 'goal'],
-  ['R4', 'LAB-15'], ['R4', '!219'], ['R4', 'Overview'], ['R4', 'ev-spec'], ['R4', 'ev-api'], ['R4', 'ev-log'], ['R4', 'goal'], ['R4', 'dana'],
-  ['R3', 'LAB-14'], ['R3', '!212'], ['R3', 'Filters'],
-  ['!205', 'marcus'], ['!219', 'marcus'], ['!212', 'marcus'], ['!218', 'marcus'],
-  ['Overview', 'priya'], ['Filters', 'priya'], ['LAB-13', 'jordan'], ['goal', 'kim'],
-  ['ev-api', 'cl-shift'], ['ev-api', 'cl-comp'],
-];
-
-function graphNodes(state) {
-  const pending = isPending(state), changed = state.stage === 'approved';
-  const n = {
-    prd: { type: 'prd', label: 'Line Labor Dashboard', kind: 'PRD', full: `Line Labor Dashboard PRD ${prdVersion(state)}`, status: 'Owner Dana Ortiz' },
-    E1: { type: 'epic', label: 'LAB-E1 · Live labor visibility', kind: 'Epic', full: 'LAB-E1 · Live labor visibility', status: 'R1, R2, R4 · 1 of 3 done' },
-    E2: { type: 'epic', label: 'LAB-E2 · Filtering', kind: 'Epic', full: 'LAB-E2 · Filtering and drill-down', status: 'R3, R5 · 0 of 2 done' },
-    R1: { type: 'req', label: 'R1 · Hours by dept', kind: 'Requirement', full: 'Show labor hours per department for the current shift.', status: 'Approved' },
-    R2: { type: 'req', label: 'R2 · 85% flag', kind: 'Requirement', full: 'Flag any department above 85% of planned hours.', status: 'Approved' },
-    R4: { type: 'req', label: 'R4 · Refresh rate', kind: 'Requirement', full: r4Text(state), status: changed ? 'Changed in v1.1' : pending ? 'Pending change · Dana decides' : 'Approved', tone: changed ? 'changed' : pending ? 'pending' : '' },
-    R3: { type: 'req', label: 'R3 · Shift filter', kind: 'Requirement', full: 'Let leaders filter by shift (1st, 2nd, 3rd).', status: 'Approved' },
-    R5: { type: 'req', label: 'R5 · Dept detail', kind: 'Requirement', full: 'Show a department detail view with an hourly breakdown.', status: state.r5 === 'accepted' ? 'Approved' : 'Draft · AI from lead notes', draft: state.r5 !== 'accepted' },
-    goal: { type: 'goal', label: 'Goal · mid-shift risk', kind: 'Success metric', full: 'Leaders spot overtime risk by mid-shift.', status: 'Owner Kim Alvarez · depends on R2 and R4' },
-    'LAB-12': { type: 'jira', label: 'LAB-12 · Done', kind: 'Jira ticket', full: 'LAB-12 · Labor hours by department', status: 'Done' },
-    'LAB-13': { type: 'jira', label: 'LAB-13', kind: 'Jira ticket', full: 'LAB-13 · Overtime flag at 85% of planned hours', status: 'In progress · Jordan Kim' },
-    'LAB-14': { type: 'jira', label: 'LAB-14', kind: 'Jira ticket', full: 'LAB-14 · Shift filter', status: 'In progress' },
-    'LAB-15': { type: 'jira', label: 'LAB-15', kind: 'Jira ticket', full: 'LAB-15 · Refresh labor hours from the timekeeping API', status: changed ? 'In progress · description updated for v1.1' : 'In progress' },
-    '!205': { type: 'gitlab', label: '!205 · Merged', kind: 'GitLab merge request', full: '!205 · Department hours endpoint', status: 'Merged · Marcus Lee' },
-    '!212': { type: 'gitlab', label: '!212 · Open', kind: 'GitLab merge request', full: '!212 · Shift filter UI', status: 'Open · Marcus Lee' },
-    '!219': { type: 'gitlab', label: '!219 · lab-15', kind: 'GitLab merge request', full: '!219 · lab-15-refresh: scheduled refresh job', status: `Open · Marcus Lee${pending ? ' · tagged pending-R4' : ''}` },
-    '!218': { type: 'untraced', label: '!218 · no requirement', kind: 'Untraced work', full: '!218 · Cache warm-up script', status: 'Open · Marcus Lee · not linked to any requirement' },
-    Overview: { type: 'figma', label: 'Overview frame', kind: 'Figma frame', full: 'Dashboard / Overview', status: state.labelUpdated ? 'Priya Shah · label shows last sync time' : 'Priya Shah · used by R1, R2 and R4' },
-    Filters: { type: 'figma', label: 'Filters frame', kind: 'Figma frame', full: 'Dashboard / Filters', status: 'Priya Shah' },
-    'ev-spec': { type: 'evidence', label: 'Spec §3.2', kind: 'Evidence on R4', full: EVIDENCE.spec.label, status: EVIDENCE.spec.meta },
-    'ev-api': { type: 'evidence', label: 'API response', kind: 'Evidence on R4', full: 'Sandbox API response · GET /v2/labor/hours', status: EVIDENCE.api.meta },
-    'ev-log': { type: 'evidence', label: 'Changelog L58–60', kind: 'Evidence on R4', full: EVIDENCE.changelog.label, status: EVIDENCE.changelog.meta },
-    marcus: { type: 'people', person: 'marcus', label: 'Marcus Lee', kind: 'Person', full: 'Marcus Lee', status: 'Senior engineer' },
-    jordan: { type: 'people', person: 'jordan', label: 'Jordan Kim', kind: 'Person', full: 'Jordan Kim', status: 'Developer' },
-    priya: { type: 'people', person: 'priya', label: 'Priya Shah', kind: 'Person', full: 'Priya Shah', status: 'Designer · owns Figma Overview' },
-    dana: { type: 'people', person: 'dana', label: 'Dana Ortiz', kind: 'Person', full: 'Dana Ortiz', status: 'Product manager · approver' },
-    kim: { type: 'people', person: 'kim', label: 'Kim Alvarez', kind: 'Person', full: 'Kim Alvarez', status: 'Business lead · owns the success metric' },
-    'cl-shift': { type: 'cluster', label: 'Shift Handoff · R2', kind: 'Other project · same API', full: 'Shift Handoff PRD · R2: Show hours worked this shift', status: changed ? 'Reads the timekeeping API · owner notified of R4 v1.1' : 'Reads the timekeeping API' },
-    'cl-comp': { type: 'cluster', label: 'Compliance Tracker · R6', kind: 'Other project · same API', full: 'Compliance Tracker PRD · R6: Report hours against labor rules daily', status: changed ? 'Reads the timekeeping API · owner notified of R4 v1.1' : 'Reads the timekeeping API' },
-  };
-  if (!state.evidence.includes('changelog')) delete n['ev-log'];
-  if (state.r5 === 'discarded') delete n.R5;
-  return n;
-}
-
-const LAYER_TYPES = { jira: ['jira'], gitlab: ['gitlab'], figma: ['figma'], evidence: ['evidence'], people: ['people'], other: ['cluster'], untraced: ['untraced'], epics: ['epic'] };
-const LAYERS = [['epics', 'Epics', '#c2418a'], ['jira', 'Jira', '#8b93a7'], ['gitlab', 'GitLab', '#8b93a7'], ['figma', 'Figma', '#8b93a7'], ['evidence', 'Evidence', '#e5a33a'], ['people', 'People', '#8b93a7'], ['other', 'Other projects', '#7c8cf8'], ['untraced', 'Untraced work', '#e2574c']];
-
-// Adjacency after hiding layers. A hidden epic is "see-through": the PRD links straight to its requirements.
-function adjacency(nodes, layers) {
-  const hidden = new Set(Object.entries(LAYER_TYPES).filter(([k]) => !layers[k]).flatMap(([, t]) => t));
-  const ok = (id) => nodes[id] && !hidden.has(nodes[id].type);
-  const adj = {};
-  const add = (a, b) => { (adj[a] = adj[a] || new Set()).add(b); (adj[b] = adj[b] || new Set()).add(a); };
-  for (const [a, b] of LINKS) {
-    if (!nodes[a] || !nodes[b]) continue;
-    if (ok(a) && ok(b)) add(a, b);
-  }
-  if (!layers.epics) for (const [a, b] of LINKS) if (a === 'prd' && nodes[b] && nodes[b].type === 'epic') for (const [c, d] of LINKS) if (c === b && ok(d)) add('prd', d);
-  return { adj, ok };
-}
-
-const byType = (nodes) => (a, b) => TYPE_ORDER.indexOf(nodes[a].type) - TYPE_ORDER.indexOf(nodes[b].type);
-
-function focusLayout(focus, nodes, adj, w, h) {
-  const cx0 = w / 2, cy0 = h / 2;
-  const rx2 = w / 2 - 90, ry2 = h / 2 - 30; // outer ring stays inside the stage
-  const rx1 = rx2 * 0.58, ry1 = ry2 * 0.58;
-  const pos = { [focus]: { x: cx0, y: cy0, ring: 0 } };
-  const ring1 = [...(adj[focus] || [])].sort(byType(nodes));
-  ring1.forEach((id, i) => {
-    const a = -Math.PI / 2 + (i * 2 * Math.PI) / ring1.length;
-    pos[id] = { x: cx0 + rx1 * Math.cos(a), y: cy0 + ry1 * Math.sin(a), ring: 1, angle: a };
-  });
-  // Second ring: each new neighbor sits just outside the first-ring card that leads to it,
-  // spaced by how much room cards need at that point of the ellipse (wide at top, short at the sides).
-  const placed = new Set(Object.keys(pos));
-  for (const parent of ring1) {
-    const kids = [...(adj[parent] || [])].filter((k) => !placed.has(k)).sort(byType(nodes));
-    if (!kids.length) continue;
-    kids.forEach((k) => placed.add(k));
-    const a0 = pos[parent].angle;
-    const step = Math.min(0.6, 140 / (rx2 * Math.abs(Math.sin(a0)) + 1), 40 / (ry2 * Math.abs(Math.cos(a0)) + 1));
-    kids.forEach((id, i) => {
-      const a = a0 + (i - (kids.length - 1) / 2) * step;
-      pos[id] = { x: cx0 + rx2 * Math.cos(a), y: cy0 + ry2 * Math.sin(a), ring: 2, angle: a };
-    });
-  }
-  // Keep every card fully inside the stage.
-  for (const p of Object.values(pos)) {
-    p.x = Math.max(80, Math.min(w - 80, p.x));
-    p.y = Math.max(22, Math.min(h - 22, p.y));
-  }
-  return pos;
-}
-
-function useSize(ref) {
-  const [size, setSize] = useState({ w: 900, h: 600 });
-  useEffect(() => {
-    if (!ref.current) return;
-    const ro = new ResizeObserver(([e]) => setSize({ w: e.contentRect.width, h: e.contentRect.height }));
-    ro.observe(ref.current);
-    return () => ro.disconnect();
-  }, []);
-  return size;
-}
-
-const TIP_W = 280;
-function tipPosition(el) {
-  const r = el.getBoundingClientRect();
-  const left = Math.max(12, Math.min(r.left, window.innerWidth - TIP_W - 12));
-  return window.innerHeight - r.bottom < 130 ? { left, bottom: window.innerHeight - r.top + 6 } : { left, top: r.bottom + 6 };
-}
-
-const REQ_PANEL = ['R1', 'R2', 'R3', 'R4'];
+/* ---------- Map (frame 10) · sample-aligned column layout ---------- */
 
 export function MapView({ selected, setSelected }) {
   const { state } = useStore();
-  const stageRef = useRef(null);
-  const { w, h } = useSize(stageRef);
-  const [layers, setLayers] = useState(Object.fromEntries(LAYERS.map(([k]) => [k, true])));
-  const nodes = graphNodes(state);
-  const { adj, ok } = adjacency(nodes, layers);
-  const [trail, setTrail] = useState(() => (selected && nodes[selected] ? ['prd', selected] : ['prd']));
-  const [tip, setTip] = useState(null);
-  let focus = trail[trail.length - 1];
-  if (!ok(focus)) focus = 'prd';
-  const changed = state.stage === 'approved';
+  const [scope, setScope] = useState('r4'); // 'r4' | 'all'
   const pending = isPending(state);
+  const changed = state.stage === 'approved';
+  const hasLog = state.evidence.includes('changelog');
+  const figmaNeeds = changed && !state.labelUpdated;
+  const sel = selected || 'R4';
 
-  // Keep the Doc/Screens selection in sync when the center is a requirement.
-  useEffect(() => { setSelected(REQ_PANEL.includes(focus) || focus === 'R5' ? focus : null); }, [focus]);
+  useEffect(() => {
+    if (!selected) setSelected('R4');
+  }, []);
 
-  const goTo = (id) => {
-    setTip(null);
-    if (id === focus) return;
-    const at = trail.indexOf(id);
-    setTrail(at >= 0 ? trail.slice(0, at + 1) : [...trail, id]);
-  };
-
-  const pos = focusLayout(focus, nodes, adj, w, h);
-  const visible = Object.keys(pos);
-  const edges = [];
-  const seen = new Set();
-  for (const a of visible) for (const b of adj[a] || []) {
-    if (!pos[b]) continue;
-    const key = [a, b].sort().join('|');
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const ringA = pos[a].ring, ringB = pos[b].ring;
-    if (ringA === 2 && ringB === 2) continue; // outer-ring cards only link inward
-    if (ringA === 1 && ringB === 1) continue; // keep the first ring readable: spokes only
-    const r4 = (a === 'R4' || b === 'R4') && (changed ? 'changed' : pending ? 'pending' : '');
-    edges.push({ key, a, b, outer: Math.max(ringA, ringB) === 2, tone: r4 || nodes[a].type === 'evidence' || nodes[b].type === 'evidence' ? r4 || 'evidence' : nodes[a].type === 'cluster' || nodes[b].type === 'cluster' ? 'other' : nodes[a].type === 'untraced' || nodes[b].type === 'untraced' ? 'untraced' : '' });
-  }
-
-  const hover = (id) => (e) => setTip({ n: nodes[id], pos: tipPosition(e.currentTarget) });
+  const work = [
+    { id: 'jira', icon: Network, title: 'Jira LAB-15', body: 'Refresh job · Marcus', tone: '' },
+    { id: 'gitlab', icon: Link2, title: 'GitLab !219', body: 'lab-15-refresh · Marcus', tone: '' },
+    { id: 'figma', icon: Frame, title: 'Figma · Overview', body: figmaNeeds ? '"Last updated" label · Priya' : (state.labelUpdated ? 'Label shows last sync · Priya' : '"Last updated" label · Priya'), tone: figmaNeeds || pending ? 'pending' : '' },
+    { id: 'metric', icon: FileText, title: 'Success metric', body: 'Mid-shift risk · Kim', tone: '' },
+  ];
 
   return html`<div className="rl-split">
-    <div className="fmap-wrap">
-      <div className="map-bar">
-        <nav className="fmap-trail" aria-label="Map path">
-          ${trail.filter((id) => nodes[id]).map((id, i, arr) => html`<${Fragment} key=${id}>
-            ${i > 0 && html`<${ChevronRight} size=${12} className="muted" />`}
-            <button className=${cx('crumb', i === arr.length - 1 && 'current')} onClick=${() => goTo(id)} aria-current=${i === arr.length - 1 ? 'location' : undefined}>${nodes[id].label}</button>
-          <//>`)}
-        </nav>
-        <span className="grow" />
-        ${focus !== 'prd' && html`<button className="btn" onClick=${() => { setTrail(['prd']); }}>Back to PRD</button>`}
-      </div>
-      <div className="map-layers">
-        <span className="tiny-label">Show</span>
-        ${LAYERS.map(([k, label, color]) => html`<button key=${k} className=${cx('layer-chip', !layers[k] && 'off')} aria-pressed=${layers[k]} onClick=${() => setLayers({ ...layers, [k]: !layers[k] })}>
-          <span className="sq" style=${{ background: color }} />${label}
-        </button>`)}
-      </div>
-
-      <div className="fmap-stage" ref=${stageRef}>
-        <div className="fmap-rings" aria-hidden="true">
-          <span style=${{ width: w * 0.58, height: h * 0.6 }} />
-          <span style=${{ width: w * 0.9, height: h * 0.9 }} />
+    <div className="rmap-wrap">
+      <div className="rmap-bar">
+        <div className="seg sm" role="group" aria-label="Map scope">
+          <button className=${cx('seg-btn', scope === 'r4' && 'active')} onClick=${() => setScope('r4')}>What R4 touches</button>
+          <button className=${cx('seg-btn', scope === 'all' && 'active')} onClick=${() => setScope('all')}>Everything</button>
         </div>
-        <svg className="fmap-svg" width=${w} height=${h} aria-hidden="true">
-          ${edges.map((e) => {
-            const A = pos[e.a], B = pos[e.b];
-            return html`<path key=${e.key} className=${cx('fedge', e.outer && 'outer', e.tone)} style=${{ d: `path('M ${A.x} ${A.y} L ${B.x} ${B.y}')` }} />`;
-          })}
-        </svg>
-        ${visible.map((id) => {
-          const n = nodes[id], p = pos[id];
-          return html`<button
-            key=${id}
-            className=${cx('fnode', `t-${n.type}`, `ring${p.ring}`, n.tone, n.draft && 'draft')}
-            style=${{ left: p.x, top: p.y }}
-            onClick=${() => goTo(id)}
-            onMouseEnter=${hover(id)} onMouseLeave=${() => setTip(null)} onFocus=${hover(id)} onBlur=${() => setTip(null)}
-            aria-label=${`${n.kind}: ${n.full}. ${n.status}.${p.ring ? ' Click to center the map here.' : ''}`}
-          >
-            ${p.ring === 0 && html`<span className="fnode-kind">${n.kind}</span>`}
-            <span className="fnode-row">
-              ${n.person ? html`<${Avatar} id=${n.person} size=${p.ring === 0 ? 22 : 18} />` : n.type === 'evidence' ? html`<${FileText} size=${12} />` : n.type === 'cluster' ? html`<${Link2} size=${12} />` : null}
-              <span className="fnode-label">${n.label}</span>
-            </span>
-            ${p.ring === 0 && n.status && html`<span className="fnode-status">${n.status}</span>`}
-          </button>`;
-        })}
+        <span className="grow" />
+        <span className="muted small rmap-note">Same records as the Doc view. Nothing is edited here.</span>
       </div>
+      <div className="rmap-canvas">
+        <svg className="rmap-svg" viewBox="0 0 740 560" aria-hidden="true">
+          <path d="M220 159 C 234 159, 234 146, 248 146" className="rmap-edge evidence" />
+          <path d="M220 189 C 234 189, 234 166, 248 166" className="rmap-edge evidence" />
+          ${hasLog ? html`<path d="M220 219 C 234 219, 234 186, 248 186" className="rmap-edge evidence" />` : null}
+          <path d="M484 130 C 500 130, 500 76, 518 76" className=${cx('rmap-edge', changed ? 'changed' : pending ? 'pending' : '')} />
+          <path d="M484 150 C 500 150, 500 164, 518 164" className=${cx('rmap-edge', changed ? 'changed' : pending ? 'pending' : '')} />
+          <path d="M484 170 C 500 170, 500 252, 518 252" className=${cx('rmap-edge', changed ? 'changed' : pending ? 'pending' : '')} />
+          <path d="M484 190 C 500 190, 500 340, 518 340" className=${cx('rmap-edge', changed ? 'changed' : pending ? 'pending' : '')} />
+          <path d="M120 265 C 120 360, 190 456, 248 456" className="rmap-edge other" />
+        </svg>
 
-      <div className="map-legend">
-        <span><strong>Click any card</strong> to center the map on it.</span>
-        <span><i className="lg-line" /> Direct link</span>
-        <span><i className="lg-line outer" /> One step further</span>
-        <span><i className="lg-line pending" /> Pending change</span>
-        <span><i className="lg-line changed" /> Changed in v1.1</span>
-        <span><i className="lg-line evidence" /> Evidence</span>
-        <span className="muted">Same records as the Doc view. Nothing is edited here.</span>
+        <section className="rmap-node evidence-node" style=${{ left: '20px', top: '104px', width: '200px' }}>
+          <div className="rmap-node-head"><${FileText} size=${14} /><span>Evidence</span></div>
+          <div className="rmap-node-body">
+            <div className="rmap-row on"><${FileText} size=${13} /><span>Spec §3.2</span><span className="muted tiny">Mar 2023</span></div>
+            <div className="rmap-row on"><${Link2} size=${13} /><span>API response</span><span className="muted tiny">PT1H</span></div>
+            <div className=${cx('rmap-row', hasLog && 'on')}><${FileText} size=${13} /><span>Changelog</span><span className="muted tiny">Sep 2026</span></div>
+            <div className="rmap-row"><${FileText} size=${13} /><span>Kickoff call</span><span className="muted tiny">Oct 1</span></div>
+          </div>
+        </section>
+
+        <button className=${cx('rmap-node r4-node', changed && 'changed', pending && 'pending', sel === 'R4' && 'selected')} style=${{ left: '248px', top: '88px', width: '236px' }} onClick=${() => setSelected('R4')}>
+          <div className="rmap-node-head">
+            <span className="mono">R4</span><span>Refresh rate</span>
+            ${changed ? html`<${Tag} tone="green">Changed in v1.1<//>` : pending ? html`<${Tag} tone="amber">Pending<//>` : null}
+          </div>
+          <div className="rmap-node-body pad">
+            <div className="tiny-label">Now</div>
+            <div className="small">${r4Text(state)}</div>
+            <div className="muted tiny" style=${{ marginTop: '8px' }}>${changed ? 'Was every 15 minutes · approved by Dana' : 'Every 15 minutes · approved by Dana'}</div>
+          </div>
+          <div className="rmap-tabs"><span>Reason</span><span>Evidence</span><span className="on">Traced to</span></div>
+        </button>
+
+        ${work.map((w, i) => html`<section key=${w.id} className=${cx('rmap-node', w.tone)} style=${{ left: '518px', top: `${40 + i * 88}px`, width: '190px' }}>
+          <div className="rmap-node-head"><${w.icon} size=${14} /><span>${w.title}</span></div>
+          <div className="rmap-node-body pad"><div className=${cx('small', w.tone === 'pending' && 'amber')}>${w.body}</div></div>
+        </section>`)}
+
+        <section className="rmap-node other-node" style=${{ left: '248px', top: '400px', width: '236px' }}>
+          <div className="rmap-node-head"><${Link2} size=${14} className="blue" /><span>Other PRDs, same source</span></div>
+          <div className="rmap-node-body">
+            <div className="rmap-row"><${FileText} size=${13} /><span>Shift Handoff · R2</span><span className="muted tiny">${changed ? 'notified' : 'shared'}</span></div>
+            <div className="rmap-row"><${FileText} size=${13} /><span>Compliance Tracker · R6</span><span className="muted tiny">${changed ? 'notified' : 'shared'}</span></div>
+          </div>
+        </section>
+
+        ${scope === 'all' && html`<div className="rmap-all muted small">Full PRD map (R1–R5 and untraced work) is summarized here for the symposium. Focus stays on R4 for this test.</div>`}
+
+        <div className="rmap-legend">
+          <span><i className="lg changed"></i> Changed in v1.1</span>
+          <span><i className="lg evidence"></i> Evidence</span>
+          <span><i className="lg other"></i> Other PRDs</span>
+          <span className="grow" />
+          <span>− 100% +</span>
+          <span>Fit</span>
+        </div>
       </div>
     </div>
-    ${tip && html`<div className="map-tip" role="tooltip" style=${tip.pos}>
-      <div className="tiny-label">${tip.n.kind}</div>
-      <div className="map-tip-text">${tip.n.full}</div>
-      <div className="muted tiny">${tip.n.status}</div>
-    </div>`}
     <aside className="rl-panel">
-      ${REQ_PANEL.includes(focus)
-        ? html`<${TracePanel} sel=${focus} onClear=${() => setTrail(['prd'])} />`
-        : html`<${FocusPanel} id=${focus} nodes=${nodes} adj=${adj} onGo=${goTo} />`}
+      <${TracePanel} sel=${sel === 'R4' ? 'R4' : sel} onClear=${() => setSelected('R4')} />
     </aside>
   </div>`;
-}
-
-// Panel for anything that isn't a requirement: what it is, and everything it connects to.
-function FocusPanel({ id, nodes, adj, onGo }) {
-  const n = nodes[id];
-  const links = [...(adj[id] || [])].sort(byType(nodes));
-  const groups = {};
-  for (const l of links) (groups[nodes[l].kind] = groups[nodes[l].kind] || []).push(l);
-  return html`<div className="sp"><div className="sp-body">
-    <div className="tiny-label">${n.kind}</div>
-    <strong>${n.full}</strong>
-    <div className="small muted">${n.status}</div>
-    ${Object.entries(groups).map(([kind, ids]) => html`<${Fragment} key=${kind}>
-      <${SectionLabel}>${kind}<//>
-      ${ids.map((l) => html`<button key=${l} className="link-row small focus-link" onClick=${() => onGo(l)}>${nodes[l].label} <span className="muted tiny">${nodes[l].status}</span></button>`)}
-    <//>`)}
-  </div></div>`;
 }
 
 function TracePanel({ sel, onClear }) {
@@ -467,7 +304,7 @@ function slidesFor(state, audience) {
       name: 'Status', kicker: 'Status', title: `PRD ${prdVersion(state)} · 1 of 3 live-visibility requirements done`,
       body: audience === 'Engineering' ? 'LAB-12 done (GitLab !205 merged). LAB-13, LAB-14, LAB-15 in progress. !218 has no linked requirement.' : 'Live labor visibility is on track. Filtering is in progress. One department-detail requirement is still a draft and is not shown as a fact.',
     },
-    { name: 'Evidence', kicker: 'Evidence', title: 'Where the facts come from', body: 'Every claim in this deck links back to a source record in Relay.', evidence: ev },
+    { name: 'Evidence', kicker: 'Evidence', title: 'Where the facts come from', body: 'Every claim in this deck links back to a source record in Rea.', evidence: ev },
     {
       name: 'Next steps', kicker: 'Next steps', title: approved ? 'Ship the hourly refresh and relabel' : 'Waiting on the R4 decision',
       body: approved
