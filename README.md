@@ -32,7 +32,7 @@ Then open http://localhost:4173. Set `PORT` to use a different port if needed.
 | Dana approves v1.1, which also updates Jira, Figma, Teams and metrics | Product manager | Astra | 07b |
 | R4's decision record: assumed → contradicted → verified | Product manager | Astra | 07 record |
 | Marcus updates the code; Priya relabels the frame | Engineer, Designer | Codex, Figma | 09 |
-| Explore | Any | Astra: Map, Screens, Present | 10–12 |
+| Explore | Any | Astra: Map, Recorder, Screens, Present | 10–12 |
 
 ### Single-role paths
 
@@ -51,4 +51,16 @@ The Figma canvas pans and zooms like Figma: drag empty space or hold Space and d
 - `src/Figma.js`: Priya in Figma with the Astra plugin
 - `src/Astra.js`: Dana in the Astra web app (shell, Doc view, decision panel)
 - `src/AstraViews.js`: Map, Screens and Present views
+- `src/Recorder.js`: Recorder view, a flight data recorder for requirements (see below)
 - `src/RolePicker.js`, `src/TesterBar.js`: start screen and facilitator bar
+
+## Recorder view
+
+A second take on the Map, modeled on an aircraft flight data recorder. The original Map view is unchanged; Recorder is its own tab.
+
+- **Every requirement, every day:** one dot per requirement per day. Above the line is settled (filled = verified, hollow = assumed), below the line is still moving (amber = contested or pending, blue = AI draft). Green marks a requirement that changed and was verified that day. Click any dot to load its record.
+- **Tracks:** what happened to the selected requirement, lane by lane (Conversation, PRD, Code + AI, Design, Decisions). AI actions are outlined in blue and always name the person who reviewed them. Amber bands show record lag: how long the PRD trailed what the build had already found, and how long code and design trailed the approval.
+- **Replay:** drag the scrubber, click a mark, use the arrow keys, or press play. The right panel shows what the requirement said at that moment and who knew what. Anyone who hadn't heard anything since the requirement was contradicted is outlined as **On v1**.
+- **Live:** the record is built from the story state, so it grows as the participant acts in Codex, Figma or Astra. When the playhead is at the newest event it stays there (Recording); otherwise it says Replaying and offers Go live.
+- **Export record** downloads a Markdown decision record up to the playhead.
+- **Pattern across 3 PRDs** is a speculative, FOQA-style trend card. It counts requirements and sources, never people.
