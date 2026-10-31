@@ -5,10 +5,10 @@ import { TesterBar } from './TesterBar.js';
 import { RolePicker } from './RolePicker.js';
 import { Codex } from './Codex.js';
 import { Figma } from './Figma.js';
-import { Relay } from './Relay.js';
+import { Astra } from './Astra.js';
 import { Guide } from './Guide.js';
 
-const STORAGE_KEY = 'relay-prototype-state-v1';
+const STORAGE_KEY = 'astra-prototype-state-v1';
 
 function load() {
   try {
@@ -28,7 +28,7 @@ function App() {
     } catch {}
   }, [state]);
 
-  const screens = { marcus: Codex, priya: Figma, dana: Relay };
+  const screens = { marcus: Codex, priya: Figma, dana: Astra };
   const Screen = screens[state.role];
 
   return html`<${StoreContext.Provider} value=${{ state, dispatch }}>

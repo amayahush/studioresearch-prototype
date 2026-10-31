@@ -17,7 +17,7 @@ const reducedMotion = () => {
 // Time skip (brief §9.7): dims the current shell, ticks the clock forward and lists what happened
 // off screen. It stays until the participant continues: a first click (or Space) shows every event
 // at once, then Continue, Space or Enter closes it.
-export function TimeSkip({ from, to, title, events, onDone }) {
+export function TimeSkip({ from, to, day, title, events, onDone }) {
   const start = toMin(from), end = toMin(to);
   const [now, setNow] = useState(reducedMotion() ? end : start);
   const doneRef = useRef(false);
@@ -28,7 +28,9 @@ export function TimeSkip({ from, to, title, events, onDone }) {
 
   useEffect(() => {
     if (landed) { continueRef.current && continueRef.current.focus(); return; }
-    const t = setTimeout(() => setNow((n) => n + 1), 1100 / Math.max(1, end - start));
+    // About 60 ticks whatever the gap, so a one-week skip lands as fast as a ten-minute one.
+    const step = Math.max(1, Math.ceil((end - start) / 60));
+    const t = setTimeout(() => setNow((n) => Math.min(end, n + step)), (1100 * step) / Math.max(1, end - start));
     return () => clearTimeout(t);
   }, [now]);
 
@@ -42,7 +44,7 @@ export function TimeSkip({ from, to, title, events, onDone }) {
 
   return html`<div className="timeskip" onClick=${advance} role="dialog" aria-modal="true" aria-live="polite" aria-label=${`Time skip to ${to}`}>
     <div className="ts-card">
-      <div className="ts-clock"><${Clock} size=${18} /><span className="mono">${fmt(now)}</span></div>
+      <div className="ts-clock"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" />${day && html`<span>${day} ·</span>`}<span className="mono">${fmt(now)}</span></div>
       <div className="ts-title">${title}</div>
       <div className="ts-events">
         ${events.map((e) => {
@@ -63,7 +65,7 @@ export function TimeSkip({ from, to, title, events, onDone }) {
 }
 
 // End of a role path: a recap of what happened, then where to go next.
-export function EndCard({ role, title, steps, onExplore, onStart, onClose }) {
+export function EndCard({ role, title, steps, onExplore, onStart, onClose, exploreLabel = 'Explore the Astra web app' }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -72,12 +74,12 @@ export function EndCard({ role, title, steps, onExplore, onStart, onClose }) {
 
   return html`<div className="endcard-backdrop" role="dialog" aria-modal="true" aria-labelledby="endcard-title">
     <div className="endcard">
-      <div className="eyebrow">${role} path · complete</div>
+      <div className="tiny-label">${role} path · complete</div>
       <h2 id="endcard-title">${title}</h2>
       <ol className="end-steps">
         ${steps.map((s, i) => html`<li key=${i} className=${cx(s.pending && 'pending')}>
           <span className="mono muted">${s.time}</span>
-          <span className="end-icon">${s.pending ? html`<${Clock} size=${12} />` : html`<${Check} size=${12} />`}</span>
+          <span className="end-icon">${s.pending ? html`<${Clock} size=${12} strokeWidth=${2} />` : html`<${Check} size=${12} strokeWidth=${2} />`}</span>
           <span><strong>${s.who}</strong> ${s.text}</span>
         </li>`)}
       </ol>
@@ -85,7 +87,7 @@ export function EndCard({ role, title, steps, onExplore, onStart, onClose }) {
         <button className="btn btn-ghost" onClick=${onClose}>Stay here</button>
         <span className="grow" />
         <button className="btn" onClick=${onStart}>Back to start</button>
-        <button className="btn btn-primary" onClick=${onExplore}>Explore the Relay web app <${ArrowRight} size=${14} /></button>
+        <button className="btn btn-primary" onClick=${onExplore}>${exploreLabel} <${ArrowRight} size=${14} /></button>
       </div>
     </div>
   </div>`;

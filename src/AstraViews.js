@@ -1,8 +1,8 @@
-import { html, useState, useEffect, useRef, cx, Fragment } from './lib.js';
+import { html, useState, useEffect, useLayoutEffect, useRef, cx, Fragment } from './lib.js';
 import { useStore, TEXT, TIMES, EVIDENCE, isPending, r4Text, prdVersion } from './store.js';
 import { Avatar, Tag, SectionLabel } from './ui.js';
 import { DEPARTMENTS, dashboardLabel } from './Figma.js';
-import { X, FileText, Link2, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, FileText, Link2, ChevronDown, ChevronLeft, ChevronRight, ListTree, Box, GitBranch, Frame, Target, Code } from 'lucide-react';
 
 /* ---------- Map (frame 10) ---------- */
 
@@ -10,11 +10,13 @@ import { X, FileText, Link2, ChevronDown, ChevronLeft, ChevronRight } from 'luci
 // ring around it, and things one step further out on a faded outer ring. Lines only radiate from
 // the center, so they don't tangle. Clicking any card moves the center there.
 
-const TYPE_ORDER = ['prd', 'epic', 'req', 'jira', 'gitlab', 'figma', 'evidence', 'goal', 'people', 'cluster', 'untraced'];
+const TYPE_ORDER = ['prd', 'epic', 'req', 'jira', 'gitlab', 'code', 'figma', 'evidence', 'goal', 'people', 'cluster', 'untraced'];
 
 const LINKS = [
-  ['prd', 'E1'], ['prd', 'E2'], ['prd', 'goal'], ['prd', '!218'],
-  ['E1', 'R1'], ['E1', 'R2'], ['E1', 'R4'], ['E2', 'R3'], ['E2', 'R5'],
+  ['prd', 'E1'], ['prd', 'E2'], ['prd', 'E3'], ['prd', 'goal'], ['prd', '!218'],
+  ['E1', 'R1'], ['E1', 'R2'], ['E1', 'R4'], ['E1', 'R6'], ['E2', 'R3'], ['E2', 'R5'], ['E3', 'R7'], ['E3', 'R8'],
+  ['R6', 'Overview'], ['R7', 'R2'], ['R7', 'kim'], ['R8', 'sam'],
+  ['!219', 'code-job'], ['!219', 'code-ui'], ['Overview', 'code-ui'], ['!205', 'code-dept'], ['!212', 'code-filter'], ['Filters', 'code-filter'],
   ['R1', 'LAB-12'], ['R1', '!205'], ['R1', 'Overview'],
   ['R2', 'LAB-13'], ['R2', 'Overview'], ['R2', 'goal'],
   ['R4', 'LAB-15'], ['R4', '!219'], ['R4', 'Overview'], ['R4', 'ev-spec'], ['R4', 'ev-api'], ['R4', 'ev-log'], ['R4', 'goal'], ['R4', 'dana'],
@@ -34,6 +36,19 @@ function graphNodes(state) {
     R2: { type: 'req', label: 'R2 · 85% flag', kind: 'Requirement', full: 'Flag any department above 85% of planned hours.', status: 'Approved' },
     R4: { type: 'req', label: 'R4 · Refresh rate', kind: 'Requirement', full: r4Text(state), status: changed ? 'Changed in v1.1' : pending ? 'Pending change · Dana decides' : 'Approved', tone: changed ? 'changed' : pending ? 'pending' : '' },
     R3: { type: 'req', label: 'R3 · Shift filter', kind: 'Requirement', full: 'Let leaders filter by shift (1st, 2nd, 3rd).', status: 'Approved' },
+    R6: { type: 'req', label: 'R6 · Crews by lead', kind: 'Requirement · assumed', full: 'Show each crew lead their own departments first.', status: 'Assumed · from a lead sync call, Oct 3' },
+    R7: { type: 'req', label: 'R7 · Overtime alerts', kind: 'Requirement · assumed', full: 'Send the shift lead a Teams alert when a department crosses the overtime threshold.', status: 'Assumed · kickoff 31:20' },
+    R8: { type: 'req', label: 'R8 · Shift history', kind: 'Requirement · assumed', full: 'Keep 90 days of shift history for weekly labor reviews.', status: 'Assumed · SME sync, Oct 4' },
+    E3: { type: 'epic', label: 'LAB-E3 · Alerts and history', kind: 'Epic', full: 'LAB-E3 · Alerts and history', status: 'R7, R8 · no tickets yet' },
+    sam: { type: 'people', person: 'sam', label: 'Sam Reed', kind: 'Person', full: 'Sam Reed', status: 'SME · line operations' },
+    'code-job': { type: 'code', label: 'refreshLaborHours.ts', kind: 'Code · GitLab !219', full: 'src/jobs/refreshLaborHours.ts', status: state.codeUpdated ? 'Matches R4 v1.1' : 'Polls every 15 minutes, as R4 v1 says', code: state.codeUpdated
+      ? [["- export const schedule = '*/15 * * * *'", 'del'], ["+ export const schedule = '5 * * * *'", 'add'], ['  // R4 v1.1: hourly, 5 min after the sync', 'muted'], ['  export async function refreshLaborHours() {']]
+      : [["export const schedule = '*/15 * * * *'", 'hl'], ['// PRD R4 as written', 'muted'], ['export async function refreshLaborHours() {'], ["  const res = await timekeeping.get('/v2/labor/hours')"]] },
+    'code-ui': { type: 'code', label: 'Overview.tsx', kind: 'Code · GitLab !219', full: 'src/ui/Overview.tsx', status: state.codeUpdated ? 'Shows the real last-sync time' : 'Label still says every 15 min', code: state.codeUpdated
+      ? [['- <Label>Updated every 15 min</Label>', 'del'], ['+ <Label>Last synced {lastSync} · next {nextSync}</Label>', 'add']]
+      : [['<Header title="Line labor" />'], ['<Label>Updated every 15 min</Label>', 'hl'], ['<DepartmentBars rows={totals} />']] },
+    'code-dept': { type: 'code', label: 'departmentTotals.ts', kind: 'Code · GitLab !205', full: 'src/api/departmentTotals.ts', status: 'Merged', code: [['export function departmentTotals(rows) {'], ["  return groupBy(rows, 'department')"], ['}']] },
+    'code-filter': { type: 'code', label: 'ShiftFilter.tsx', kind: 'Code · GitLab !212', full: 'src/ui/ShiftFilter.tsx', status: 'Open', code: [['<Select label="Shift"'], ['  options={[1, 2, 3]} />']] },
     R5: { type: 'req', label: 'R5 · Dept detail', kind: 'Requirement', full: 'Show a department detail view with an hourly breakdown.', status: state.r5 === 'accepted' ? 'Approved' : 'Draft · AI from lead notes', draft: state.r5 !== 'accepted' },
     goal: { type: 'goal', label: 'Goal · mid-shift risk', kind: 'Success metric', full: 'Leaders spot overtime risk by mid-shift.', status: 'Owner Kim Alvarez · depends on R2 and R4' },
     'LAB-12': { type: 'jira', label: 'LAB-12 · Done', kind: 'Jira ticket', full: 'LAB-12 · Labor hours by department', status: 'Done' },
@@ -62,8 +77,9 @@ function graphNodes(state) {
   return n;
 }
 
-const LAYER_TYPES = { jira: ['jira'], gitlab: ['gitlab'], figma: ['figma'], evidence: ['evidence'], people: ['people'], other: ['cluster'], untraced: ['untraced'], epics: ['epic'] };
-const LAYERS = [['epics', 'Epics', '#c2418a'], ['jira', 'Jira', '#8b93a7'], ['gitlab', 'GitLab', '#8b93a7'], ['figma', 'Figma', '#8b93a7'], ['evidence', 'Evidence', '#e5a33a'], ['people', 'People', '#8b93a7'], ['other', 'Other projects', '#7c8cf8'], ['untraced', 'Untraced work', '#e2574c']];
+const LAYER_TYPES = { jira: ['jira'], gitlab: ['gitlab', 'code'], figma: ['figma'], evidence: ['evidence'], people: ['people'], other: ['cluster'], untraced: ['untraced'], epics: ['epic'] };
+const LAYERS = [['epics', 'Epics'], ['jira', 'Jira'], ['gitlab', 'GitLab and code'], ['figma', 'Figma'], ['evidence', 'Evidence'], ['people', 'People'], ['other', 'Other PRDs, same source'], ['untraced', 'Untraced work']];
+const TYPE_ICON = { prd: FileText, epic: ListTree, req: FileText, jira: Box, gitlab: GitBranch, code: Code, figma: Frame, evidence: FileText, goal: Target, cluster: Link2, untraced: Code };
 
 // Adjacency after hiding layers. A hidden epic is "see-through": the PRD links straight to its requirements.
 function adjacency(nodes, layers) {
@@ -81,9 +97,9 @@ function adjacency(nodes, layers) {
 
 const byType = (nodes) => (a, b) => TYPE_ORDER.indexOf(nodes[a].type) - TYPE_ORDER.indexOf(nodes[b].type);
 
-function focusLayout(focus, nodes, adj, w, h) {
+function focusLayout(focus, nodes, adj, w, h, measured = {}) {
   const cx0 = w / 2, cy0 = h / 2;
-  const rx2 = w / 2 - 90, ry2 = h / 2 - 30; // outer ring stays inside the stage
+  const rx2 = w / 2 - 105, ry2 = h / 2 - 30; // outer ring stays inside the stage
   const rx1 = rx2 * 0.58, ry1 = ry2 * 0.58;
   const pos = { [focus]: { x: cx0, y: cy0, ring: 0 } };
   const ring1 = [...(adj[focus] || [])].sort(byType(nodes));
@@ -105,11 +121,44 @@ function focusLayout(focus, nodes, adj, w, h) {
       pos[id] = { x: cx0 + rx2 * Math.cos(a), y: cy0 + ry2 * Math.sin(a), ring: 2, angle: a };
     });
   }
-  // Keep every card fully inside the stage.
-  for (const p of Object.values(pos)) {
-    p.x = Math.max(80, Math.min(w - 80, p.x));
-    p.y = Math.max(22, Math.min(h - 22, p.y));
+  // Place cards one at a time (center, then first ring, then outer ring), each in the free spot
+  // nearest to where the ring puts it. Cards never overlap; outer cards with no room are hidden.
+  const box = (id) => {
+    const p = pos[id], chars = nodes[id].label.length;
+    const real = measured[`${id}:${p.ring}`]; // size from the last render, when we have it
+    if (real) return real;
+    const t = nodes[id].type;
+    if (p.ring === 0) return { w: t === 'code' ? 340 : t === 'figma' ? 260 : 220, h: t === 'figma' ? 210 : t === 'code' ? 170 : t === 'req' ? 150 : 104 };
+    if (p.ring === 1 && t === 'figma') return { w: 168, h: 112 };
+    if (p.ring === 1 && t === 'code') return { w: 220, h: 36 + 14 + 18 * Math.min(2, nodes[id].code.length) };
+    return { w: Math.min(160, 50 + chars * 7.2), h: p.ring === 1 ? 36 : 30 };
+  };
+  const GAP = 8, EDGE = 6;
+  const boxes = [];
+  const inside = (x, y, s) => x - s.w / 2 >= EDGE && x + s.w / 2 <= w - EDGE && y - s.h / 2 >= EDGE && y + s.h / 2 <= h - EDGE;
+  const free = (x, y, s) => inside(x, y, s) && boxes.every((b) => Math.abs(b.x - x) >= (b.w + s.w) / 2 + GAP || Math.abs(b.y - y) >= (b.h + s.h) / 2 + GAP);
+  const order = Object.keys(pos).sort((a, b) => pos[a].ring - pos[b].ring);
+  let hidden = 0;
+  for (const id of order) {
+    const p = pos[id], s = box(id);
+    const x0 = Math.max(s.w / 2 + EDGE, Math.min(w - s.w / 2 - EDGE, p.x));
+    const y0 = Math.max(s.h / 2 + EDGE, Math.min(h - s.h / 2 - EDGE, p.y));
+    let spot = free(x0, y0, s) || p.ring === 0 ? [x0, y0] : null;
+    // Spiral outward from the ideal spot until a free one turns up.
+    for (let r = 8; !spot && r < Math.max(w, h); r += 8) {
+      const steps = Math.max(12, Math.round(r / 6));
+      for (let k = 0; k < steps; k++) {
+        const t = (k / steps) * 2 * Math.PI;
+        const x = x0 + r * Math.cos(t), y = y0 + r * 0.7 * Math.sin(t);
+        if (free(x, y, s)) { spot = [x, y]; break; }
+      }
+    }
+    if (!spot && p.ring === 1) spot = [x0, y0]; // never drop a direct link
+    if (!spot) { delete pos[id]; hidden++; continue; }
+    [p.x, p.y] = spot;
+    boxes.push({ x: p.x, y: p.y, ...s });
   }
+  Object.defineProperty(pos, 'hidden', { value: hidden }); // not a card, so not enumerable
   return pos;
 }
 
@@ -128,7 +177,7 @@ const TIP_W = 280;
 function tipPosition(el) {
   const r = el.getBoundingClientRect();
   const left = Math.max(12, Math.min(r.left, window.innerWidth - TIP_W - 12));
-  return window.innerHeight - r.bottom < 130 ? { left, bottom: window.innerHeight - r.top + 6 } : { left, top: r.bottom + 6 };
+  return window.innerHeight - r.bottom < 260 ? { left, bottom: window.innerHeight - r.top + 6 } : { left, top: r.bottom + 6 };
 }
 
 const REQ_PANEL = ['R1', 'R2', 'R3', 'R4'];
@@ -142,6 +191,7 @@ export function MapView({ selected, setSelected }) {
   const { adj, ok } = adjacency(nodes, layers);
   const [trail, setTrail] = useState(() => (selected && nodes[selected] ? ['prd', selected] : ['prd']));
   const [tip, setTip] = useState(null);
+  const [layersOpen, setLayersOpen] = useState(false);
   let focus = trail[trail.length - 1];
   if (!ok(focus)) focus = 'prd';
   const changed = state.stage === 'approved';
@@ -157,7 +207,19 @@ export function MapView({ selected, setSelected }) {
     setTrail(at >= 0 ? trail.slice(0, at + 1) : [...trail, id]);
   };
 
-  const pos = focusLayout(focus, nodes, adj, w, h);
+  // Lay out with estimated card sizes, then measure the real cards and lay out again if they differ.
+  const measured = useRef({});
+  const [, remeasure] = useState(0);
+  const pos = focusLayout(focus, nodes, adj, w, h - 56, measured.current); // keep cards clear of the legend bar
+  useLayoutEffect(() => {
+    let changed = false;
+    for (const el of stageRef.current.querySelectorAll('.fnode')) {
+      const key = el.dataset.key, cur = measured.current[key];
+      const next = { w: el.offsetWidth, h: el.offsetHeight };
+      if (!cur || Math.abs(cur.w - next.w) > 2 || Math.abs(cur.h - next.h) > 2) { measured.current[key] = next; changed = true; }
+    }
+    if (changed) remeasure((n) => n + 1);
+  });
   const visible = Object.keys(pos);
   const edges = [];
   const seen = new Set();
@@ -173,25 +235,32 @@ export function MapView({ selected, setSelected }) {
     edges.push({ key, a, b, outer: Math.max(ringA, ringB) === 2, tone: r4 || nodes[a].type === 'evidence' || nodes[b].type === 'evidence' ? r4 || 'evidence' : nodes[a].type === 'cluster' || nodes[b].type === 'cluster' ? 'other' : nodes[a].type === 'untraced' || nodes[b].type === 'untraced' ? 'untraced' : '' });
   }
 
-  const hover = (id) => (e) => setTip({ n: nodes[id], pos: tipPosition(e.currentTarget) });
+  const hover = (id) => (e) => setTip({ id, n: nodes[id], pos: tipPosition(e.currentTarget) });
+
+  const hidden = LAYERS.filter(([k]) => !layers[k]).length;
 
   return html`<div className="rl-split">
     <div className="fmap-wrap">
       <div className="map-bar">
         <nav className="fmap-trail" aria-label="Map path">
           ${trail.filter((id) => nodes[id]).map((id, i, arr) => html`<${Fragment} key=${id}>
-            ${i > 0 && html`<${ChevronRight} size=${12} className="muted" />`}
+            ${i > 0 && html`<${ChevronRight} size=${12} strokeWidth=${1.5} className="muted" aria-hidden="true" />`}
             <button className=${cx('crumb', i === arr.length - 1 && 'current')} onClick=${() => goTo(id)} aria-current=${i === arr.length - 1 ? 'location' : undefined}>${nodes[id].label}</button>
           <//>`)}
         </nav>
+        ${focus !== 'prd' && html`<button className="btn btn-ghost sm" onClick=${() => { setTrail(['prd']); }}>Back to PRD</button>`}
+        <div className="export-wrap">
+          <button className="rl-filter" aria-haspopup="menu" aria-expanded=${layersOpen} onClick=${() => setLayersOpen(!layersOpen)}>
+            ${hidden ? `Layers · ${hidden} hidden` : 'All layers'}<${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" />
+          </button>
+          ${layersOpen && html`<div className="menu" role="menu">
+            ${LAYERS.map(([k, label]) => html`<button key=${k} role="menuitemcheckbox" aria-checked=${layers[k]} className="menu-item row" onClick=${() => setLayers({ ...layers, [k]: !layers[k] })}>
+              <strong><span className=${cx('menu-check', layers[k] && 'on')} aria-hidden="true">${layers[k] && html`<${Check2} />`}</span>${label}</strong>
+            </button>`)}
+          </div>`}
+        </div>
         <span className="grow" />
-        ${focus !== 'prd' && html`<button className="btn" onClick=${() => { setTrail(['prd']); }}>Back to PRD</button>`}
-      </div>
-      <div className="map-layers">
-        <span className="tiny-label">Show</span>
-        ${LAYERS.map(([k, label, color]) => html`<button key=${k} className=${cx('layer-chip', !layers[k] && 'off')} aria-pressed=${layers[k]} onClick=${() => setLayers({ ...layers, [k]: !layers[k] })}>
-          <span className="sq" style=${{ background: color }} />${label}
-        </button>`)}
+        <span className="map-note">Same records as the Doc view. Nothing is edited here.</span>
       </div>
 
       <div className="fmap-stage" ref=${stageRef}>
@@ -207,38 +276,47 @@ export function MapView({ selected, setSelected }) {
         </svg>
         ${visible.map((id) => {
           const n = nodes[id], p = pos[id];
+          const Icon = TYPE_ICON[n.type];
           return html`<button
             key=${id}
+            data-key=${`${id}:${p.ring}`}
             className=${cx('fnode', `t-${n.type}`, `ring${p.ring}`, n.tone, n.draft && 'draft')}
             style=${{ left: p.x, top: p.y }}
             onClick=${() => goTo(id)}
             onMouseEnter=${hover(id)} onMouseLeave=${() => setTip(null)} onFocus=${hover(id)} onBlur=${() => setTip(null)}
             aria-label=${`${n.kind}: ${n.full}. ${n.status}.${p.ring ? ' Click to center the map here.' : ''}`}
           >
-            ${p.ring === 0 && html`<span className="fnode-kind">${n.kind}</span>`}
             <span className="fnode-row">
-              ${n.person ? html`<${Avatar} id=${n.person} size=${p.ring === 0 ? 22 : 18} />` : n.type === 'evidence' ? html`<${FileText} size=${12} />` : n.type === 'cluster' ? html`<${Link2} size=${12} />` : null}
+              ${n.person ? html`<${Avatar} id=${n.person} size=${p.ring === 0 ? 22 : 18} />` : Icon && html`<${Icon} size=${14} strokeWidth=${1.5} aria-hidden="true" />`}
               <span className="fnode-label">${n.label}</span>
             </span>
-            ${p.ring === 0 && n.status && html`<span className="fnode-status">${n.status}</span>`}
+            ${p.ring === 0 && html`<span className="fnode-body">
+              <span className="fnode-kind">${n.kind}</span>
+              ${n.type === 'req' && html`<span className="fnode-full">${n.full}</span>`}
+              ${n.status && html`<span className="fnode-status">${n.status}</span>`}
+            </span>`}
+            ${p.ring < 2 && n.type === 'figma' && html`<span className="fnode-preview"><${FramePreview} id=${id} width=${p.ring === 0 ? 236 : 144} /></span>`}
+            ${p.ring < 2 && n.code && html`<${CodePreview} lines=${p.ring === 0 ? n.code : n.code.slice(0, 2)} />`}
           </button>`;
         })}
-      </div>
-
-      <div className="map-legend">
-        <span><strong>Click any card</strong> to center the map on it.</span>
-        <span><i className="lg-line" /> Direct link</span>
-        <span><i className="lg-line outer" /> One step further</span>
-        <span><i className="lg-line pending" /> Pending change</span>
-        <span><i className="lg-line changed" /> Changed in v1.1</span>
-        <span><i className="lg-line evidence" /> Evidence</span>
-        <span className="muted">Same records as the Doc view. Nothing is edited here.</span>
+        <div className="map-legend">
+          <span><i className="lg-line" /> Direct link</span>
+          <span><i className="lg-line outer" /> One step further</span>
+          <span><i className="lg-line changed" /> Changed in v1.1</span>
+          <span><i className="lg-line pending" /> Pending change</span>
+          <span><i className="lg-line evidence" /> Evidence</span>
+          <span><i className="lg-line other" /> Other PRDs</span>
+          <span className="grow" />
+          <span>${pos.hidden ? `${pos.hidden} more one step out · ` : ''}Click any card to center the map on it</span>
+        </div>
       </div>
     </div>
     ${tip && html`<div className="map-tip" role="tooltip" style=${tip.pos}>
       <div className="tiny-label">${tip.n.kind}</div>
       <div className="map-tip-text">${tip.n.full}</div>
       <div className="muted tiny">${tip.n.status}</div>
+      ${tip.n.type === 'figma' && html`<${FramePreview} id=${tip.id} width=${256} />`}
+      ${tip.n.code && html`<${CodePreview} lines=${tip.n.code} />`}
     </div>`}
     <aside className="rl-panel">
       ${REQ_PANEL.includes(focus)
@@ -248,61 +326,97 @@ export function MapView({ selected, setSelected }) {
   </div>`;
 }
 
+// The real Figma frames, drawn the same way on the Map and on the Screens canvas.
+function OverviewFrame({ flag }) {
+  const { state } = useStore();
+  return html`<div className="dash-frame static">
+    <div className="dash-title">Line labor · 2nd shift</div>
+    <div className="dash-sub"><span>Bldg 40-22 · 14 departments</span><span className=${cx('dash-label', flag && 'flag')}>${dashboardLabel(state)}</span></div>
+    ${DEPARTMENTS.slice(0, 4).map(([name, pct, hot]) => html`<div key=${name} className="dash-row"><span>${name}</span><div className="bar"><div className=${cx('bar-fill', hot)} style=${{ width: pct + '%' }} /></div><span className="pct">${pct}%</span></div>`)}
+  </div>`;
+}
+const FiltersFrame = () => html`<div className="dash-frame static filters"><span className="dd">Shift: 2nd <${ChevronDown} size=${11} /></span><span className="dd">Department: All <${ChevronDown} size=${11} /></span></div>`;
+
+// A Figma frame scaled down to fit a map card or tooltip.
+const FRAME_SIZE = { Overview: [560, 236], Filters: [480, 84] };
+function FramePreview({ id, width }) {
+  const [w, h] = FRAME_SIZE[id];
+  const k = width / w;
+  return html`<span className="frame-preview" style=${{ width, height: Math.round(h * k) }} aria-hidden="true">
+    <span className="frame-preview-inner" style=${{ width: w, transform: `scale(${k})` }}>${id === 'Overview' ? html`<${OverviewFrame} />` : html`<${FiltersFrame} />`}</span>
+  </span>`;
+}
+
+function CodePreview({ lines }) {
+  return html`<span className="code-preview mono" aria-hidden="true">${lines.map(([t, tone], i) => html`<span key=${i} className=${cx('code-preview-row', tone)}>${t}</span>`)}</span>`;
+}
+
+const Check2 = () => html`<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7" /></svg>`;
+
+// 52px panel header shared by the Map and Screens panels: mono ID, title, status, close.
+function PanelTop({ id, title, tag, onClose }) {
+  return html`<div className="insp-head">
+    ${id && html`<span className="insp-id mono">${id}</span>`}
+    <span className="insp-title">${title}</span>
+    ${tag}
+    ${onClose && html`<button className="icon-btn" onClick=${onClose} aria-label="Clear selection"><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>`}
+  </div>`;
+}
+
 // Panel for anything that isn't a requirement: what it is, and everything it connects to.
 function FocusPanel({ id, nodes, adj, onGo }) {
   const n = nodes[id];
   const links = [...(adj[id] || [])].sort(byType(nodes));
   const groups = {};
   for (const l of links) (groups[nodes[l].kind] = groups[nodes[l].kind] || []).push(l);
-  return html`<div className="sp"><div className="sp-body">
-    <div className="tiny-label">${n.kind}</div>
-    <strong>${n.full}</strong>
-    <div className="small muted">${n.status}</div>
-    ${Object.entries(groups).map(([kind, ids]) => html`<${Fragment} key=${kind}>
-      <${SectionLabel}>${kind}<//>
-      ${ids.map((l) => html`<button key=${l} className="link-row small focus-link" onClick=${() => onGo(l)}>${nodes[l].label} <span className="muted tiny">${nodes[l].status}</span></button>`)}
-    <//>`)}
-  </div></div>`;
+  return html`<div className="sp">
+    <${PanelTop} title=${n.label} tag=${html`<span className="tag">${n.kind}</span>`} />
+    <div className="sp-body">
+      <div className="section-label">${n.kind}</div>
+      <p>${n.full}</p>
+      <div className="small muted">${n.status}</div>
+      ${n.code && html`<div className="code-full mono">${n.code.map(([t, tone], i) => html`<div key=${i} className=${cx('code-preview-row', tone)}>${t}</div>`)}</div>`}
+      ${n.type === 'figma' && html`<${FramePreview} id=${id} width=${288} />`}
+      ${Object.entries(groups).map(([kind, ids]) => html`<${Fragment} key=${kind}>
+        <${SectionLabel}>${kind}<//>
+        ${ids.map((l) => html`<button key=${l} className="link-row focus-link" onClick=${() => onGo(l)}>${nodes[l].label} <span className="muted"> · ${nodes[l].status}</span></button>`)}
+      <//>`)}
+    </div>
+  </div>`;
 }
 
 function TracePanel({ sel, onClear }) {
   const { state } = useStore();
-  if (!sel) return html`<div className="sp"><div className="sp-body">
-    <div className="muted small">Select a requirement to see everything traced to it.</div>
-    <${SectionLabel}>Untraced work<//>
-    <div className="small"><span className="red">GitLab !218</span> · Marcus · has no linked requirement.</div>
-  </div></div>`;
   const pending = isPending(state);
   const traces = {
-    R1: [['Jira LAB-12 · Done'], ['GitLab !205 · Merged · Marcus'], ['Figma · Overview, department bars · Priya']],
-    R2: [['Jira LAB-13 · In progress'], ['Figma · Overview, highlight state · Priya'], ['Ops analyst · Jordan']],
-    R3: [['Jira LAB-14 · In progress'], ['GitLab !212 · Open · Marcus'], ['Figma · Filters · Priya']],
-    R4: [['Jira LAB-15 · Refresh job · Marcus'], ['GitLab !219 · lab-15-refresh · Marcus'], ['Figma · Overview, "last updated" label · Priya'], ['Success metric · mid-shift risk · Kim'], ['Approver · Dana']],
+    R1: [['Jira LAB-12', 'Done'], ['GitLab !205', 'Merged · Marcus'], ['Figma · Overview', 'department bars · Priya']],
+    R2: [['Jira LAB-13', 'In progress'], ['Figma · Overview', 'highlight state · Priya'], ['Ops analyst', 'Jordan']],
+    R3: [['Jira LAB-14', 'In progress'], ['GitLab !212', 'Open · Marcus'], ['Figma · Filters', 'Priya']],
+    R4: [['Jira LAB-15', 'Refresh job · Marcus'], ['GitLab !219', 'lab-15-refresh · Marcus'], ['Figma · Overview', '“Last updated” label · Priya'], ['Success metric', 'mid-shift risk · Kim'], ['Approver', 'Dana']],
   }[sel];
+  const titles = { R1: 'Hours by department', R2: '85% flag', R3: 'Shift filter', R4: 'Refresh rate' };
   const reqText = sel === 'R4' ? r4Text(state) : { R1: 'Show labor hours per department for the current shift.', R2: 'Flag any department above 85% of planned hours.', R3: 'Let leaders filter by shift (1st, 2nd, 3rd).' }[sel];
+  const tag = sel === 'R4' && state.stage === 'approved' ? html`<${Tag} tone="green">Changed in v1.1<//>` : sel === 'R4' && pending ? html`<${Tag} tone="amber">Pending<//>` : null;
+  const stance = (name, st) => (st ? html`<${Tag} tone=${st === 'agreed' ? 'green' : 'neutral'}>${name} · ${st === 'agreed' ? 'Agreed' : 'Disagreed'}<//>` : html`<${Tag}>${name} · no reply yet<//>`);
   return html`<div className="sp">
+    <${PanelTop} id=${sel} title=${titles[sel]} tag=${tag} onClose=${onClear} />
     <div className="sp-body">
-      <div className="tiny-label">Selected <span className="grow" /><button className="link tiny" onClick=${onClear}>Clear</button></div>
-      <strong>${sel}${sel === 'R4' ? ' · Refresh rate' : ''}</strong>
-      ${sel === 'R4' && state.stage === 'approved' && html`<${Tag} tone="green">Changed in v1.1<//>`}
-      ${sel === 'R4' && pending && html`<${Tag} tone="amber">Pending change<//>`}
-      <div className=${cx('small', sel === 'R4' && state.stage === 'approved' && 'green')}>${reqText}</div>
+      <div className="section-label">Requirement</div>
+      <p>${reqText}</p>
+      ${sel === 'R4' && state.stage === 'approved' && html`<div className="small muted">Was every 15 minutes · approved by Dana</div>`}
       <${SectionLabel}>Traced to<//>
-      ${traces.map(([t]) => html`<div key=${t} className="small trace-row">${t}</div>`)}
+      ${traces.map(([t, meta]) => html`<div key=${t} className="trace-row">${t} <span className="muted">· ${meta}</span></div>`)}
       ${sel === 'R4' && html`<${Fragment}>
         <${SectionLabel}>Stances<//>
-        <div className="chips">
-          ${state.priya.stance ? html`<${Tag} tone=${state.priya.stance === 'agreed' ? 'green' : 'red'}>Priya · ${state.priya.stance === 'agreed' ? 'Agreed' : 'Disagreed'}<//>` : html`<span className="tag tag-outline">Priya · no stance</span>`}
-          ${state.kim.stance ? html`<${Tag} tone="green">Kim · Agreed<//>` : html`<span className="tag tag-outline">Kim · no stance</span>`}
-        </div>
+        <div className="chips">${stance('Priya', state.priya.stance)}${stance('Kim', state.kim.stance)}</div>
         <${SectionLabel}>Evidence<//>
         <div className="ev-list">
-          <div className="small"><${FileText} size=${12} className="amber" /> Spec §3.2 <span className="muted tiny">Mar 2023</span></div>
-          <div className="small"><${FileText} size=${12} className="amber" /> Sandbox API response <span className="muted tiny">Oct 8 · PT1H</span></div>
-          ${state.evidence.includes('changelog') && html`<div className="small"><${FileText} size=${12} className="amber" /> Changelog L58–60 <span className="muted tiny">Sep 2026 · reviewed by data owner</span></div>`}
+          <div><${FileText} size=${14} strokeWidth=${1.5} className="muted" aria-hidden="true" /> Spec §3.2 <span className="muted tiny">Mar 2023</span></div>
+          <div><${FileText} size=${14} strokeWidth=${1.5} className="muted" aria-hidden="true" /> Sandbox API response <span className="muted tiny">Oct 8 · PT1H</span></div>
+          ${state.evidence.includes('changelog') && html`<div><${FileText} size=${14} strokeWidth=${1.5} className="muted" aria-hidden="true" /> Changelog L58–60 <span className="muted tiny">Sep 2026 · data owner</span></div>`}
         </div>
         <${SectionLabel}>Also uses this source<//>
-        <div className="small muted">Shift Handoff PRD · R2 and Compliance Tracker · R6 read the same timekeeping API. ${state.stage === 'approved' ? 'Their owners were notified of the v1.1 change.' : 'Their owners will be notified if R4 changes.'}</div>
+        <p className="muted">Shift Handoff R2 and Compliance Tracker R6 read the same timekeeping API. ${state.stage === 'approved' ? 'Their owners were notified of v1.1.' : 'Their owners will be notified if R4 changes.'}</p>
       <//>`}
     </div>
   </div>`;
@@ -380,7 +494,7 @@ export function ScreensView({ selected, setSelected }) {
 
   return html`<div className="rl-split">
     <div className="screens-wrap">
-      <div className="screens-hint muted small">Linked Figma frames carry requirement pins; click a pin to see its requirement. Other frames in the file have none. Drag the canvas to look around.</div>
+      <div className="map-bar"><span className="map-note">Linked Figma frames carry requirement pins; click a pin to see its requirement. Other frames in the file have none. Drag the canvas to look around.</span></div>
       <div className="fcanvas-view" ref=${viewRef} onMouseDown=${onPan}>
         <div className="fcanvas" style=${{ width: CANVAS.w, height: CANVAS.h }}>
           <div className="fc-section" style=${{ left: 1270, top: 420, width: 310, height: 260 }}><span>Archive</span></div>
@@ -389,11 +503,7 @@ export function ScreensView({ selected, setSelected }) {
             <div className="fc-name">Dashboard / Overview <span className="fc-linked">R1 · R2 · R4</span></div>
             <div className="scr-frame">
               ${pin('R4', { top: -12, right: 60 })}${pin('R1', { top: 70, left: -16 })}${pin('R2', { top: 110, right: -16 })}
-              <div className="dash-frame static">
-                <div className="dash-title">Line labor · 2nd shift</div>
-                <div className="dash-sub"><span>Bldg 40-22 · 14 departments</span><span className=${cx('dash-label', selected === 'R4' && 'flag')}>${dashboardLabel(state)}</span></div>
-                ${DEPARTMENTS.slice(0, 4).map(([name, pct, hot]) => html`<div key=${name} className="dash-row"><span>${name}</span><div className="bar"><div className=${cx('bar-fill', hot)} style=${{ width: pct + '%' }} /></div><span className="pct">${pct}%</span></div>`)}
-              </div>
+              <${OverviewFrame} flag=${selected === 'R4'} />
             </div>
           </div>
 
@@ -401,7 +511,7 @@ export function ScreensView({ selected, setSelected }) {
             <div className="fc-name">Dashboard / Filters <span className="fc-linked">R3</span></div>
             <div className="scr-frame">
               ${pin('R3', { top: -12, right: 30 })}
-              <div className="dash-frame static filters"><span className="dd">Shift: 2nd <${ChevronDown} size=${11} /></span><span className="dd">Department: All <${ChevronDown} size=${11} /></span></div>
+              <${FiltersFrame} />
             </div>
           </div>
 
@@ -412,26 +522,29 @@ export function ScreensView({ selected, setSelected }) {
         </div>
       </div>
     </div>
-    <aside className="rl-panel"><div className="sp"><div className="sp-body">
+    <aside className="rl-panel"><div className="sp">
       ${unlinked
         ? html`<${Fragment}>
-            <div className="tiny-label">Selected frame <span className="grow" /><button className="link tiny" onClick=${() => setFrame(null)}>Clear</button></div>
-            <strong>${unlinked.name}</strong>
-            <span className="tag tag-outline">${unlinked.archived ? 'Archived · not linked' : 'Not linked to a requirement'}</span>
-            <div className="small">${unlinked.note}</div>
-            <${SectionLabel}>Last edited<//>
-            <div className="small muted">${unlinked.edited}</div>`
+            <${PanelTop} title=${unlinked.name} tag=${html`<span className="tag">${unlinked.archived ? 'Archived' : 'Not linked'}</span>`} onClose=${() => setFrame(null)} />
+            <div className="sp-body">
+              <div className="section-label">Why it isn't linked</div>
+              <p>${unlinked.note}</p>
+              <${SectionLabel}>Last edited<//>
+              <div className="muted">${unlinked.edited}</div>
+            </div>`
         : info
         ? html`<${Fragment}>
-            <div className="tiny-label">Selected pin <span className="grow" /><button className="link tiny" onClick=${() => setSelected(null)}>Clear</button></div>
-            <strong>${selected}${selected === 'R4' ? ' · Data refresh rate' : ''}</strong>
-            ${selected === 'R4' && state.stage === 'approved' && html`<${Tag} tone="green">Changed in v1.1<//>`}
-            ${selected === 'R4' && pending && html`<${Tag} tone="amber">Pending change<//>`}
-            <div className=${cx('small', selected === 'R4' && state.stage === 'approved' && 'green')}>${info[0]}</div>
-            <${SectionLabel}>On this frame<//>
-            <div className="small">${info[1]}</div>`
-        : html`<div className="muted small">Click a pin to see its requirement, or any other frame to see why it isn't linked.</div>`}
-    </div></div></aside>
+            <${PanelTop} id=${selected} title=${selected === 'R4' ? 'Data refresh rate' : 'Selected pin'} tag=${selected === 'R4' && state.stage === 'approved' ? html`<${Tag} tone="green">Changed in v1.1<//>` : selected === 'R4' && pending ? html`<${Tag} tone="amber">Pending<//>` : null} onClose=${() => setSelected(null)} />
+            <div className="sp-body">
+              <div className="section-label">Requirement</div>
+              <p>${info[0]}</p>
+              <${SectionLabel}>On this frame<//>
+              <p>${info[1]}</p>
+            </div>`
+        : html`<${Fragment}>
+            <${PanelTop} title="Screens" />
+            <div className="sp-body"><p className="muted">Click a pin to see its requirement, or any other frame to see why it isn't linked.</p></div>`}
+    </div></aside>
   </div>`;
 }
 
@@ -447,7 +560,7 @@ function slidesFor(state, audience) {
         kicker: 'Decided this week',
         title: 'Dashboard data updates hourly, not every 15 minutes',
         body: 'The timekeeping system only syncs once an hour, confirmed by its data owner. Leaders still get 3 to 4 readings before mid-shift, so the goal of spotting overtime risk by mid-shift holds. The screen now shows the last sync time so nobody mistakes it for live data.',
-        tags: [['green', 'No schedule impact'], ['neutral', 'Raised by development · approved by Dana']],
+        tags: [['neutral', 'No schedule impact'], ['neutral', 'Raised by development · approved by Dana']],
       }
     : pending
       ? {
@@ -464,14 +577,14 @@ function slidesFor(state, audience) {
     { name: 'Problem', kicker: 'Problem', title: 'Leaders can\'t see overtime risk until it\'s too late', body: 'First-line leaders track labor hours across three spreadsheets. They can\'t see overtime risk until the end of the week, when it\'s too late to rebalance crews.' },
     { name: 'Decision', ...decision, evidence: approved || pending ? ev : [] },
     {
-      name: 'Status', kicker: 'Status', title: `PRD ${prdVersion(state)} · 1 of 3 live-visibility requirements done`,
+      name: 'Status', kicker: 'Status', title: `PRD ${prdVersion(state)} · 1 of 4 live-visibility requirements done`,
       body: audience === 'Engineering' ? 'LAB-12 done (GitLab !205 merged). LAB-13, LAB-14, LAB-15 in progress. !218 has no linked requirement.' : 'Live labor visibility is on track. Filtering is in progress. One department-detail requirement is still a draft and is not shown as a fact.',
     },
-    { name: 'Evidence', kicker: 'Evidence', title: 'Where the facts come from', body: 'Every claim in this deck links back to a source record in Relay.', evidence: ev },
+    { name: 'Evidence', kicker: 'Evidence', title: 'Where the facts come from', body: 'Every claim in this deck links back to a source record in Astra.', evidence: ev },
     {
       name: 'Next steps', kicker: 'Next steps', title: approved ? 'Ship the hourly refresh and relabel' : 'Waiting on the R4 decision',
       body: approved
-        ? `Marcus: refresh job ${state.codeUpdated ? 'updated ✓' : 'to update'}. Priya: label ${state.labelUpdated ? 'updated ✓' : 'to update'}. Kim: confirm mid-shift readings in the first week.`
+        ? `Marcus: refresh job ${state.codeUpdated ? 'updated' : 'to update'}. Priya: label ${state.labelUpdated ? 'updated' : 'to update'}. Kim: confirm mid-shift readings in the first week.`
         : 'Dana to decide on R4. Engineering continues on the pending-R4 branch.',
     },
   ];
@@ -498,20 +611,20 @@ export function PresentView({ toast }) {
   }, [presenting]);
 
   const Slide = () => html`<div className="slide">
-    <div className="slide-kicker mono">${slide.kicker}</div>
+    <div className="slide-kicker">${slide.kicker}</div>
     <h2>${slide.title}</h2>
     <p>${slide.body}</p>
     ${slide.tags && slide.tags.length > 0 && html`<div className="chips">${slide.tags.map(([tone, t]) => html`<${Tag} key=${t} tone=${tone}>${t}<//>`)}</div>`}
     ${slide.evidence && slide.evidence.length > 0 && html`<${Fragment}>
       <div className="tiny-label">Evidence</div>
-      <div className="slide-ev">${slide.evidence.map((e) => html`<div key=${e.label} className="slide-ev-card"><div className="small"><${FileText} size=${12} className="amber" /> ${e.short}</div><div className="muted tiny">${e.meta}</div></div>`)}</div>
+      <div className="slide-ev">${slide.evidence.map((e) => html`<div key=${e.label} className="slide-ev-card"><div className="small"><${FileText} size=${14} strokeWidth=${1.5} className="muted" aria-hidden="true" /> ${e.short}</div><div className="muted tiny">${e.meta}</div></div>`)}</div>
     <//>`}
   </div>`;
 
   return html`<div className="present">
     <div className="present-bar">
-      <span className="muted small">Audience</span>
-      <select className="select" value=${audience} onChange=${(e) => setAudience(e.target.value)}>
+      <label className="muted" htmlFor="audience">Audience</label>
+      <select id="audience" className="select" value=${audience} onChange=${(e) => setAudience(e.target.value)}>
         <option>Leadership</option><option>Engineering</option>
       </select>
       <span className="grow" />
@@ -528,9 +641,9 @@ export function PresentView({ toast }) {
     ${presenting && html`<div className="presenting" onClick=${() => setIdx((i) => Math.min(slides.length - 1, i + 1))}>
       <${Slide} />
       <div className="presenting-bar" onClick=${(e) => e.stopPropagation()}>
-        <button className="icon-btn" onClick=${() => setIdx(Math.max(0, idx - 1))}><${ChevronLeft} size=${16} /></button>
+        <button className="icon-btn" aria-label="Previous slide" onClick=${() => setIdx(Math.max(0, idx - 1))}><${ChevronLeft} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
         <span className="small">${idx + 1} / ${slides.length}</span>
-        <button className="icon-btn" onClick=${() => setIdx(Math.min(slides.length - 1, idx + 1))}><${ChevronRight} size=${16} /></button>
+        <button className="icon-btn" aria-label="Next slide" onClick=${() => setIdx(Math.min(slides.length - 1, idx + 1))}><${ChevronRight} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
         <button className="btn sm" onClick=${() => setPresenting(false)}>Exit (Esc)</button>
       </div>
     </div>`}

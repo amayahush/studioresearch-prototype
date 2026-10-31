@@ -1,6 +1,6 @@
-# Relay prototype: visual design spec
+# Astra prototype: visual design spec
 
-Use this file to restyle the Relay prototype. It covers every screen in the V3 high-fi flow (Figma file `ZFPpMhc3ChZrg3a5t6bAhp`, section `622:3616` "V3 High Fi Wireframes").
+Use this file to restyle the Astra prototype. It covers every screen in the V3 high-fi flow (Figma file `ZFPpMhc3ChZrg3a5t6bAhp`, section `622:3616` "V3 High Fi Wireframes").
 
 The three files in `samples/` are the approved reference screens. Open them in a browser and match them. When this spec and a sample disagree, the sample wins.
 
@@ -10,22 +10,22 @@ The three files in `samples/` are the approved reference screens. Open them in a
 
 ## 1. Two kinds of screens
 
-The prototype shows Relay in two places, and each one gets its own style.
+The prototype shows Astra in two places, and each one gets its own style.
 
 | Kind | What it is | Style | Reference |
 |---|---|---|---|
-| **Codex-hosted** | Marcus is working inside the Codex desktop app, and Relay shows up through MCP | The real Codex desktop app for the shell, and the **Relay style** for the Relay panel and notes | `samples/02-marcus-prd-check-codex.html` |
-| **Relay-native** | Screens of the Relay app itself | **Relay style** throughout | `samples/06-dana-reviews-relay.html`, `samples/10-map-view-relay.html` |
+| **Codex-hosted** | Marcus is working inside the Codex desktop app, and Astra shows up through MCP | The real Codex desktop app for the shell, and the **Astra style** for the Astra panel and notes | `samples/02-marcus-prd-check-codex.html` |
+| **Astra-native** | Screens of the Astra app itself | **Astra style** throughout | `samples/06-dana-reviews-astra.html`, `samples/10-map-view-astra.html` |
 
 Screen mapping:
 
 - **Codex-hosted:** 01, 02, 03, 04, 08a, 08b, 09
-- **Relay-native:** 00 (choose a role), 06, 07, 07b, 10 (Map), 11 (Screens), 12 (Present), plus the Deny and Export overlays
+- **Astra-native:** 00 (choose a role), 06, 07, 07b, 10 (Map), 11 (Screens), 12 (Present), plus the Deny and Export overlays
 - **05 (Priya in Figma):** not decided yet. Leave it as is until Amaya decides.
 
 ---
 
-## 2. Relay style tokens
+## 2. Astra style tokens
 
 These come from Amaya's R4 panel in Figma (`628:7535`), with the font sizes normalized.
 
@@ -35,7 +35,7 @@ These come from Amaya's R4 panel in Figma (`628:7535`), with the font sizes norm
 |---|---|---|
 | `bg-app` | `#191A1A` | App background behind panels |
 | `bg-sidebar` | `#161717` | Left workspace sidebar |
-| `bg-panel` | `#1C1D1D` | Right Relay panel |
+| `bg-panel` | `#1C1D1D` | Right Astra panel |
 | `bg-card` | `#252727` | Cards, epic rows, map nodes |
 | `bg-row` | `#2D2F2F` | Selected row, active segment, highlighted list row |
 | `bg-canvas` | `#141515` + dot grid `#2C2E2E` (1px dots, 16px spacing) | Map canvas only |
@@ -66,7 +66,7 @@ These come from Amaya's R4 panel in Figma (`628:7535`), with the font sizes norm
 | Page or doc title | 16 / 24 | 600 | "Line Labor Dashboard" in the document |
 | Panel title | 14 / 20 | 600 | Header of the right panel, top-bar title |
 | Body | 13 / 20 | 400 | Requirement text, paragraphs, nav items |
-| Small body | 12 / 18 | 400 | Text inside the Relay panel, meta lines, chips, tags |
+| Small body | 12 / 18 | 400 | Text inside the Astra panel, meta lines, chips, tags |
 | Section label | 11 / 16 | 600, uppercase, letter-spacing 0.04em, `text-label` | "WHERE THIS COMES FROM", "LINKED TO R4", "PROBLEM", "REQUIREMENTS" |
 | Mono | 11–12 / 18 | 400 | `R4`, `LAB-E1`, `PT1H`, code |
 
@@ -82,7 +82,7 @@ These come from Amaya's R4 panel in Figma (`628:7535`), with the font sizes norm
   - Text: transparent, no border.
 - **Tags:** 12px, padding 3×8, radius 6, colored background plus colored text, never wrapped.
 - **Chips:** 12px, padding 5×10, radius 8, 1px inset `line-strong` outline, `text-muted`.
-- **Icons:** 14–16px line icons, stroke 1.5, `text-muted`. **No sparkle or "AI magic" icon.** Relay's icon is the stacked-layers glyph.
+- **Icons:** 14–16px line icons, stroke 1.5, `text-muted`. **No sparkle or "AI magic" icon.** Astra's icon is the stacked-layers glyph.
 - **Dividers** between panel sections: 1px `line`, 14px margin above and below.
 
 ---
@@ -90,14 +90,14 @@ These come from Amaya's R4 panel in Figma (`628:7535`), with the font sizes norm
 ## 3. Layout rules (these fixed the overlap bugs)
 
 - **Fixed column widths.** Every side column needs `flex: 0 0 <w>; width: <w>; min-width: 0; overflow: hidden`.
-  - Relay sidebar: **232px**
-  - Relay review / selected panel: **320px**
-  - Relay panel inside Codex: **360px**
+  - Astra sidebar: **232px**
+  - Astra review / selected panel: **320px**
+  - Astra panel inside Codex: **360px**
   - Codex thread list: **228px**
   - Codex icon rail: **46px**
 - **The center column** is `flex: 1; min-width: 0`.
 - **Nothing in a header, tab row, chip or tag wraps.** Use `white-space: nowrap` and, for long names, `overflow: hidden; text-overflow: ellipsis`.
-- **Relay top bar (52px), left to right:**
+- **Astra top bar (52px), left to right:**
   - Title "Line Labor Dashboard" on one line, plus a version tag
   - Spacer
   - View switch (text only: Doc / Map / Screens / Present)
@@ -107,7 +107,7 @@ These come from Amaya's R4 panel in Figma (`628:7535`), with the font sizes norm
 - **Slice row (44px):** slice tabs on the left (amber dot when a slice has a pending change), and **one** "All requirements 5 ▾" dropdown on the right. No SLICE / SHOW labels, and no row of four filter pills.
 - **Panel footers hold at most two buttons, plus one text button if it fits.** In the review footer, "Request evidence" lives inside the **Deny ▾** menu, next to "Approve & publish."
 - **Collapsible left panels.** Add a sidebar-toggle icon button:
-  - Relay: in the sidebar header, next to the workspace name.
+  - Astra: in the sidebar header, next to the workspace name.
   - Codex: in the title bar, right after the traffic lights.
 - **The 1280×832 frame must not scroll horizontally.** Test at that size.
 
@@ -121,7 +121,7 @@ Match the real Codex desktop app (see `samples/02-marcus-prd-check-codex.html`).
 
 | Area | Spec |
 |---|---|
-| **Title bar (40px)** | Traffic lights, sidebar toggle, thread title with folder icon. On the right: the git branch and a small amber "Relay · 1 note" pill when Relay has something. |
+| **Title bar (40px)** | Traffic lights, sidebar toggle, thread title with folder icon. On the right: the git branch and a small amber "Astra · 1 note" pill when Astra has something. |
 | **Icon rail (46px)** | Rail icons, with Marcus's avatar at the bottom. |
 | **Thread list (228px, `#232425`)** | "Codex" heading with bell and search, then New chat. "Projects" holds `labor-dashboard` with its threads indented underneath. "Recents" below that. |
 
@@ -130,17 +130,17 @@ Match the real Codex desktop app (see `samples/02-marcus-prd-check-codex.html`).
 - The agent's steps are plain muted lines.
 - Code and JSON go in rounded cards (`#262626`, radius 14) with a header row (icon, file name, copy).
 - A single line inside code can be highlighted with `rgba(232,170,78,0.14)`.
-- The Relay note in the thread is one compact amber row: "Relay · R4 may not match the API · Open in panel." No large callout.
+- The Astra note in the thread is one compact amber row: "Astra · R4 may not match the API · Open in panel." No large callout.
 
 **The input box**
 - A rounded box (`#2A2A2A`, radius 18) with placeholder text "Work with Codex".
 - Bottom row: +, "Approve for me", model name, mic, round send button.
 
-**Shell font:** the system font stack (`-apple-system, SF Pro`). The Relay panel inside Codex still uses Inter.
+**Shell font:** the system font stack (`-apple-system, SF Pro`). The Astra panel inside Codex still uses Inter.
 
-### The Relay panel inside Codex (360px)
+### The Astra panel inside Codex (360px)
 
-**Header:** Relay icon, "R4 may not match the API", a blue "via MCP" chip and a close button.
+**Header:** Astra icon, "R4 may not match the API", a blue "via MCP" chip and a close button.
 
 **Status card:** an amber 1px outline with radius 14.
 - Top line: clock icon, "Refresh interval" and an "Unresolved" tag.
@@ -160,11 +160,11 @@ Match the real Codex desktop app (see `samples/02-marcus-prd-check-codex.html`).
 
 ---
 
-## 5. Relay-native screens
+## 5. Astra-native screens
 
 ### Doc view (06, 07, 07b)
 
-See `samples/06-dana-reviews-relay.html`.
+See `samples/06-dana-reviews-astra.html`.
 
 - **The document is a document, not code.** Section labels are uppercase 11px, followed by body text.
 - **Requirements are grouped under epic rows.** Each epic row is `bg-card`, 30px tall, with a chevron, the mono ID, the name, and "1 of 3 done" on the right.
@@ -183,7 +183,7 @@ See `samples/06-dana-reviews-relay.html`.
 
 ### Map view (10)
 
-See `samples/10-map-view-relay.html`. The layout comes from the Combined Map board, styled in the Relay dark theme.
+See `samples/10-map-view-astra.html`. The layout comes from the Combined Map board, styled in the Astra dark theme.
 
 **Canvas:** the dot grid. The filter bar says "What R4 touches / Everything", and the note "Same records as the Doc view. Nothing is edited here." sits on the right of that bar.
 
@@ -202,7 +202,7 @@ See `samples/10-map-view-relay.html`. The layout comes from the Combined Map boa
 
 ## 6. Content rules
 
-- **The AI flags, a person defines.** Never title anything "Recommended Proposal" or have Relay write the new requirement on its own. Relay shows the conflict and the evidence. Marcus writes the proposal (Codex can help draft it), and Dana approves it.
+- **The AI flags, a person defines.** Never title anything "Recommended Proposal" or have Astra write the new requirement on its own. Astra shows the conflict and the evidence. Marcus writes the proposal (Codex can help draft it), and Dana approves it.
 - **Fix these typos where they appear:** "Pulling every 15 minutes" should be "**Polling** every 15 minutes", and "PTH1" should be "**PT1H**".
 - **Use one wording for the proposal everywhere:** "Refresh data hourly, 5 minutes after the timekeeping system syncs." Don't call it "Every 60 minutes" on some screens and "hourly" on others.
 

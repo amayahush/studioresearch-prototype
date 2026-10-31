@@ -5,21 +5,35 @@ import { ChevronRight } from 'lucide-react';
 // `legacy` keeps the pre-spec colors on the Figma screens, which aren't restyled yet.
 export function Avatar({ id, size = 22, legacy }) {
   const p = PEOPLE[id];
-  return html`<span className="avatar" style=${{ background: legacy ? p.legacy : p.color, width: size, height: size, fontSize: legacy ? size * 0.4 : size > 24 ? 12 : 10, fontWeight: legacy ? 700 : 600 }} title=${p.name}>${p.initials}</span>`;
+  return html`<span className="avatar" style=${{ background: legacy ? p.legacy : p.color, width: size, height: size, fontSize: legacy ? size * 0.4 : size > 24 ? 12 : 10, fontWeight: legacy ? 700 : 600 }} title=${p.name}>${legacy ? p.initials : p.name[0]}</span>`;
 }
 
 export function Tag({ tone = 'neutral', children, className }) {
   return html`<span className=${cx('tag', `tag-${tone}`, className)}>${children}</span>`;
 }
 
+// Assumption status (decision record spec §2). Verified shows nothing unless it changed in this version.
+const STATUS_CHIP = {
+  assumed: ['amber', () => 'Assumed'],
+  conflicting: ['danger', (n) => `Conflicting · ${n || 2} sources`],
+  contradicted: ['danger', () => 'Contradicted by build'],
+};
+export function StatusChip({ status, sources, changedIn }) {
+  if (status === 'verified') return changedIn ? html`<${Tag} tone="green">Verified · ${changedIn}<//>` : null;
+  const [tone, label] = STATUS_CHIP[status];
+  return html`<${Tag} tone=${tone}>${label(sources)}<//>`;
+}
+
 export function SectionLabel({ children, right }) {
   return html`<div className="section-label"><span>${children}</span>${right}</div>`;
 }
 
-export function Diff({ from, to }) {
-  return html`<div className="diff-text">
-    <div className="del">${from}</div>
-    <div className="ins">${to}</div>
+// A change shown as two labeled rows, never as strikethrough (spec §5).
+export function Diff({ from, to, labels = ['Now', 'Proposed'], legacy }) {
+  if (legacy) return html`<div className="diff-text"><div className="del">${from}</div><div className="ins">${to}</div></div>`;
+  return html`<div className="cmp">
+    <div className="cmp-row was"><span className="cmp-label">${labels[0]}</span><span className="cmp-value">${from}</span></div>
+    <div className="cmp-row"><span className="cmp-label">${labels[1]}</span><span className="cmp-value">${to}</span></div>
   </div>`;
 }
 

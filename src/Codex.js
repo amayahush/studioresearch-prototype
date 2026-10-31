@@ -1,6 +1,6 @@
 import { html, useState, useEffect, useRef, cx, Fragment } from './lib.js';
-import { useStore, TEXT, EVIDENCE, TIMES, prdVersion } from './store.js';
-import { Avatar, Tag, SectionLabel, Diff, EvidenceChip, Toast } from './ui.js';
+import { useStore, TEXT, EVIDENCE, TIMES, R4_INTENT, prdVersion } from './store.js';
+import { Avatar, Tag, SectionLabel, Diff, EvidenceChip, Toast, StatusChip } from './ui.js';
 import { TimeSkip, EndCard } from './Interstitials.js';
 import {
   FileText, FileCode, Code as Code2, GitBranch, X, PanelLeft, GitPullRequestArrow, CheckCircle2, MessageSquare, Paperclip,
@@ -97,7 +97,7 @@ export function Codex() {
 
   const pendingBranch = ['proposed', 'moreEvidence', 'resent'].includes(state.stage);
   const status = {
-    flagged: '1 note',
+    flagged: 'R4 · assumption tested',
     proposed: 'proposal sent',
     moreEvidence: 'Dana replied',
     resent: 'resent to Dana',
@@ -126,7 +126,7 @@ export function Codex() {
       <span className=${cx('cx-title-gap', threadsOpen && 'open')} />
       <span className="cx-thread-title"><${FolderClosed} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span>Implement LAB-15 refresh job</span></span>
       <span className="cx-branch"><${GitBranch} size=${13} strokeWidth=${1.5} aria-hidden="true" />lab-15-refresh${pendingBranch ? ' · pending-R4' : ''}</span>
-      <button className=${cx('cx-relay-pill', needsYou && 'attn')} onClick=${openNote} disabled=${!streamDone}><${Layers} size=${13} strokeWidth=${1.5} aria-hidden="true" />Relay · ${streamDone ? status : 'checking PRD'}</button>
+      <button className=${cx('cx-astra-pill', needsYou && 'attn')} onClick=${openNote} disabled=${!streamDone}><${Layers} size=${13} strokeWidth=${1.5} aria-hidden="true" />Astra · ${streamDone ? status : 'checking PRD'}</button>
     </header>
 
     <div className="cx-body">
@@ -181,7 +181,7 @@ export function Codex() {
       </main>
 
       ${panel &&
-      html`<aside className=${cx('side-panel', panel === 'check' && 'rl')} aria-label="Relay">
+      html`<aside className="side-panel rl" aria-label="Astra">
         <${CodexPanel} panel=${panel} setPanel=${setPanel} setToast=${setToast} openFile=${() => setFile('spec')} onSentClose=${afterSent} onResend=${resend} onFinish=${finish} />
       </aside>`}
     </div>
@@ -205,7 +205,7 @@ function Step({ children }) {
 function Notice({ isNew, handled, children, onView }) {
   return html`<div className=${cx('cx-notice', isNew && !handled && 'new', handled && 'handled')}>
     <${Layers} size=${14} strokeWidth=${1.5} aria-hidden="true" />
-    <span className="cx-notice-text"><strong>Relay</strong> <span>${children}</span></span>
+    <span className="cx-notice-text"><strong>Astra</strong> <span>${children}</span></span>
     ${handled ? html`<span className="cx-notice-done">Handled</span>` : html`<button className="cx-notice-open" onClick=${onView}>Open in panel</button>`}
   </div>`;
 }
@@ -284,7 +284,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
       ['  "next_sync": "2026-10-08T14:00:00"'],
       ['}'],
     ]} />`,
-    html`<${Notice} handled=${s !== 'flagged'} onView=${openNote}>R4 may not match the API.<//>`,
+    html`<${Notice} handled=${s !== 'flagged'} onView=${openNote}>R4 was never checked against this API. Your build just tested it.<//>`,
     html`<${Step}>Writing src/jobs/refreshLaborHours.ts<//>`,
     html`<${Code} title="src/jobs/refreshLaborHours.ts" meta=${html`<span className="green">+5</span>`} lines=${[
       [html`+ export const schedule = <span className="tk-str">'*/15 * * * *'</span>  <span className="muted">// PRD R4 as written</span>`, 'green'],
@@ -301,7 +301,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
     ${blocks.slice(0, shown).map((b, i) => html`<div key=${i} className=${cx('stream-block', !streamDone && 'enter')}>${b}</div>`)}
     ${streaming && html`<div className="cx-working"><span className="spinner" /> Working… <span className="cx-hint">click or press Space to skip</span></div>`}
 
-    ${!streaming && past('proposed') && html`<${Step}>Relay · proposal sent to Dana · branch tagged pending-R4<//>`}
+    ${!streaming && past('proposed') && html`<${Step}>Astra · proposal sent to Dana · branch tagged pending-R4<//>`}
 
     ${past('moreEvidence') && (s === 'moreEvidence' || state.danaAsk) &&
     html`<${Fragment}>
@@ -309,7 +309,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
       <${Notice} isNew handled=${s !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>
     <//>`}
 
-    ${afterEvidence && html`<${Step}>Relay · changelog L58–60 added as evidence · resent to Dana<//>`}
+    ${afterEvidence && html`<${Step}>Astra · changelog L58–60 added as evidence · resent to Dana<//>`}
 
     ${s === 'approved' &&
     html`<${Fragment}>
@@ -353,7 +353,7 @@ function SpecFile({ onToast, openNote }) {
 
   const addEvidence = () => {
     const [a, b] = [Math.min(...sel), Math.max(...sel)];
-    if (b >= 58 && a <= 60) {
+    if (b >= 56 && a <= 61) { // any part of the changelog is enough
       dispatch({ type: 'ADD_EVIDENCE', id: 'changelog' });
       onToast('Changelog L58–60 added to R4 evidence.');
     } else if (b >= 41 && a <= 44) {
@@ -367,7 +367,7 @@ function SpecFile({ onToast, openNote }) {
   useEffect(() => {
     const up = () => {
       setDragging(false);
-      setSel((cur) => (cur && Math.max(...cur) >= 58 && Math.min(...cur) <= 60 ? [Math.min(...cur, 58), Math.max(...cur, 60)] : cur));
+      setSel((cur) => (cur && Math.max(...cur) >= 56 && Math.min(...cur) <= 61 ? [Math.min(...cur, 58), Math.max(...cur, 60)] : cur));
     };
     const key = (e) => {
       if (sel && canAdd && (e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'e') { e.preventDefault(); addEvidence(); }
@@ -396,7 +396,7 @@ function SpecFile({ onToast, openNote }) {
           html`<div className="sel-toolbar">
             ${canAdd
               ? html`<button className="btn btn-primary sm" onClick=${addEvidence}><${Paperclip} size=${12} /> Add to R4 evidence <kbd>⌘⇧E</kbd></button>`
-              : html`<span className="muted small">${added ? 'Already on R4 evidence' : 'No open Relay request'}</span>`}
+              : html`<span className="muted small">${added ? 'Already on R4 evidence' : 'No open Astra request'}</span>`}
             <button className="btn btn-ghost sm" onClick=${() => onToast('Codex chat is not simulated in this prototype.')}><${MessageSquare} size=${12} /> Ask Codex</button>
           </div>`}
         <//>`)}
@@ -404,7 +404,7 @@ function SpecFile({ onToast, openNote }) {
     </div>
     ${canAdd && !added && html`<div className="hint">Drag across line numbers to select lines, then add them to R4's evidence.</div>`}
     <div className="section-label"><span>Codex</span></div>
-    <${Step}>Relay · proposal sent to Dana · branch tagged pending-R4<//>
+    <${Step}>Astra · proposal sent to Dana · branch tagged pending-R4<//>
     ${state.danaAsk && html`<${Divider}>${TIMES.moreEvidence}<//>
       <${Notice} isNew handled=${state.stage !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>`}
   </div>`;
@@ -412,7 +412,7 @@ function SpecFile({ onToast, openNote }) {
 
 // The conflict, facts only (frame 02): what R4 says next to what the API does.
 function StatusCard({ title, tag, rows, children }) {
-  return html`<div className="rl-status">
+  return html`<div className="rl-status pending">
     <div className="rl-status-top"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="grow">${title}</span><${Tag} tone="amber">${tag}<//></div>
     <div className="rl-compare">
       ${rows.map(([label, value, meta, mono]) => html`<div key=${label} className="rl-compare-row">
@@ -425,13 +425,13 @@ function StatusCard({ title, tag, rows, children }) {
   </div>`;
 }
 
-function PanelHead({ icon: Icon, title, right, onClose }) {
-  return html`<div className="sp-head">
-    <${Icon} size=${15} />
-    <strong>${title}</strong>
-    <span className="grow" />
+// Every Astra panel in Codex opens with the Astra layers glyph; status lives in the body, not the icon.
+function PanelHead({ title, right, onClose }) {
+  return html`<div className="rl-head">
+    <${Layers} size=${16} strokeWidth=${1.5} aria-hidden="true" />
+    <span className="rl-head-title">${title}</span>
     ${right}
-    <button className="icon-btn sm" onClick=${onClose} title="Close"><${X} size=${14} /></button>
+    <button className="rl-icon" aria-label="Close Astra" onClick=${onClose}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
   </div>`;
 }
 
@@ -449,31 +449,33 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <${Layers} size=${16} strokeWidth=${1.5} aria-hidden="true" />
         <span className="rl-head-title">R4 may not match the API</span>
         <span className="rl-chip-blue"><${Link2} size=${13} strokeWidth=${1.5} aria-hidden="true" />via MCP</span>
-        <button className="rl-icon" aria-label="Close Relay" onClick=${close}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
+        <button className="rl-icon" aria-label="Close Astra" onClick=${close}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
       </div>
       <div className="rl-body">
         <${StatusCard} title="Refresh interval" tag="Unresolved" rows=${[
           ['PRD says', html`Every <b>15</b> minutes`, 'R4, v1'],
           ['API does', html`Every <b>60</b> minutes`, 'PT1H', true],
-        ]}>Polling every 15 minutes returns the same data 3 out of 4 times. The dashboard would look live when it isn’t.<//>
+        ]}>Polling every 15 minutes returns the same data 3 out of 4 times.<//>
         <div className="rl-divider" />
-        <div className="rl-label">Where this comes from</div>
-        <div className="rl-stack">
-          <div className="rl-source"><${FileText} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="rl-source-meta">Sandbox API response · 1:40 PM</div><div className="rl-source-quote mono">"sync_interval": "PT1H"</div></div></div>
-          <div className="rl-source"><${FileText} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="rl-source-meta">timekeeping-api.md §3.2 · edited Mar 2023</div><div className="rl-source-quote mono">Badge punches are batch-loaded at the top of each hour.</div></div></div>
+        <div className="rl-label-row"><span className="rl-label">Status of R4</span><${StatusChip} status="assumed" /></div>
+        <p className="rl-text">Set at kickoff on Oct 1. Approved in v1 without anyone checking it against the timekeeping API.</p>
+        <div className="rl-divider" />
+        <div className="rl-label">Why R4 exists</div>
+        <div className="why-card">
+          <p className="why-quote">“${R4_INTENT.quote}”</p>
+          <div className="muted">${R4_INTENT.speaker} · ${R4_INTENT.source}</div>
+          <div className="why-goal">Intent: ${R4_INTENT.goal}</div>
         </div>
         <div className="rl-divider" />
-        <div className="rl-label">Linked to R4</div>
-        <div className="chips"><span className="chip static">Jira LAB-15</span><span className="chip static">Figma · Overview</span><span className="chip static">Success metric</span></div>
-        <div className="rl-people">
-          <span className="rl-avatars"><${Avatar} id="priya" size=${22} /><${Avatar} id="kim" size=${22} /><${Avatar} id="jordan" size=${22} /></span>
-          <span className="grow">Priya, Kim, Jordan</span>
+        <div className="rl-label-row"><span className="rl-label">Linked to R4</span>
+          <span className="rl-avatars" title="Priya, Kim, Jordan"><${Avatar} id="priya" size=${22} /><${Avatar} id="kim" size=${22} /><${Avatar} id="jordan" size=${22} /></span>
           <button className="rl-icon round" aria-label="Add or suggest people" aria-expanded=${people} onClick=${() => setPeople(!people)}><${Plus} size=${12} strokeWidth=${1.5} aria-hidden="true" /></button>
         </div>
+        <div className="chips"><span className="chip static">Jira LAB-15</span><span className="chip static">Figma · Overview</span><span className="chip static">Success metric</span></div>
         ${people && html`<div className="rl-note">Suggested: Ravi Patel (owns timekeeping-api.md). Adding people is not simulated.</div>`}
         <div className="rl-divider" />
-        <div className="rl-label">Evidence · attached automatically</div>
-        <div className="chips"><${EvidenceChip} id="spec" /><${EvidenceChip} id="api" /></div>
+        <div className="rl-label">Evidence · where this comes from</div>
+        <div className="chips"><${EvidenceChip} id="api" /><${EvidenceChip} id="spec" /></div>
         <div className="rl-hint"><${Scan} size=${15} strokeWidth=${1.5} aria-hidden="true" />Select code or text to add more evidence</div>
       </div>
       <div className="rl-foot">
@@ -481,7 +483,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <div className="rl-actions">
           <button className="pill pill-text" onClick=${close}>Save for later</button>
           <span className="grow" />
-          <button className="pill pill-outline" onClick=${() => { close(); setToast('Note dismissed. R4 stays as written; reopen it from the Relay pill.'); }}>Deny</button>
+          <button className="pill pill-outline" onClick=${() => { close(); setToast('Note dismissed. R4 stays as written; reopen it from the Astra pill.'); }}>Deny</button>
           <button className="pill pill-primary" onClick=${() => setPanel('propose')}>Propose change</button>
         </div>
       </div>
@@ -490,7 +492,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
 
   if (panel === 'propose') {
     return html`<div className="sp">
-      <${PanelHead} icon=${GitPullRequestArrow} title="Relay · Propose a change to R4" onClose=${close} />
+      <${PanelHead} title="Propose a change to R4" onClose=${close} />
       <div className="sp-body">
         <${SectionLabel}>Proposed text<//>
         <textarea className="field" rows="3" value=${text} onInput=${(e) => setText(e.target.value)} />
@@ -501,12 +503,13 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <div className="chips"><${EvidenceChip} id="spec" /><${EvidenceChip} id="api" /></div>
         <div className="muted small">Hover a chip to preview its source lines.</div>
         <${SectionLabel}>When you submit<//>
-        <div className="kv"><span className="muted">Slices notified</span><span><${Tag} tone="amber">Developer<//> <${Tag} tone="amber">Design<//> <${Tag} tone="amber">Business<//></span></div>
+        <div className="kv"><span className="muted">Slices notified</span><span>Developer · Design · Business</span></div>
         <div className="kv"><span className="muted">Stance from</span><span>Priya · Kim</span></div>
-        <div className="kv"><span className="muted">PRD</span><span className="amber">Unchanged until approved</span></div>
+        <div className="kv"><span className="muted">PRD</span><span>Unchanged until approved</span></div>
       </div>
       <div className="sp-foot">
-        <button className="btn" onClick=${() => setPanel('check')}>Back</button>
+        <button className="btn btn-ghost" onClick=${() => setPanel('check')}>Back</button>
+        <span className="grow" />
         <button className="btn btn-primary" disabled=${!reason.trim() || !text.trim()} onClick=${() => { dispatch({ type: 'PROPOSE', text: text.trim(), reason: reason.trim() }); setPanel('sent'); }}>Submit to Dana</button>
       </div>
     </div>`;
@@ -516,27 +519,27 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
     const stances = [state.priya.stance, state.kim.stance].filter(Boolean).length;
     const resent = state.stage === 'resent';
     return html`<div className="sp">
-      <${PanelHead} icon=${CheckCircle2} title="Relay · Sent" onClose=${onSentClose} />
+      <${PanelHead} title=${resent ? 'Evidence resent to Dana' : 'Proposal sent to Dana'} onClose=${onSentClose} />
       <div className="sp-body">
-        <div className="success-card">
-          <div className="success-title"><${CheckCircle2} size=${16} /> ${resent ? 'Evidence resent to Dana' : 'Proposal sent to Dana'} <span className="grow" /><span className="muted small">${resent ? TIMES.resent : TIMES.proposed}</span></div>
+        <div className="rl-status pending">
+          <div className="rl-status-top"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="grow">Waiting on Dana</span><${Tag} tone="amber">Pending<//></div>
           <div className="steps">
-            <${Tag} tone="green"><${Check} size=${11} /> Sent<//><span className="step-line" />
-            <${Tag} tone=${stances === 2 ? 'green' : 'amber'}>Stances ${stances}/2<//><span className="step-line" />
-            <span className="muted small">Dana decides</span>
+            <span className="step"><${Check} size=${13} strokeWidth=${2} aria-hidden="true" />Sent ${resent ? TIMES.resent : TIMES.proposed}</span><span className="step-line" />
+            <span className="step">Stances ${stances}/2</span><span className="step-line" />
+            <span className="step muted">Dana decides</span>
           </div>
         </div>
         <${SectionLabel}>Proposed<//>
         <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} />
         <${SectionLabel}>Slices notified<//>
-        <div className="chips"><${Tag} tone="amber">Developer<//><${Tag} tone="amber">Design<//><${Tag} tone="amber">Business<//></div>
+        <div className="chips"><span className="chip static">Developer</span><span className="chip static">Design</span><span className="chip static">Business</span></div>
         <div className="muted small">R4 shows as Pending in these slices.</div>
         <${SectionLabel}>Stance requested<//>
         <${StanceRow} id="priya" what="owns Figma Overview" stance=${state.priya.stance} />
         <${StanceRow} id="kim" what="owns the success metric" stance=${state.kim.stance} />
-        <div className="info-row"><${GitBranch} size=${13} /> Branch tagged pending-R4. Keep working.</div>
+        <div className="info-row"><${GitBranch} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Branch tagged pending-R4. Keep working.</div>
       </div>
-      <div className="sp-foot"><button className="btn" onClick=${onSentClose}>Back to code</button></div>
+      <div className="sp-foot"><span className="grow" /><button className="btn" onClick=${onSentClose}>Back to code</button></div>
     </div>`;
   }
 
@@ -544,30 +547,32 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
     const added = state.evidence.includes('changelog');
     const canSend = state.stage === 'moreEvidence' && (added || reply.trim());
     return html`<div className="sp">
-      <${PanelHead} icon=${MessageSquare} title="Relay · More evidence for R4" onClose=${close} />
+      <${PanelHead} title="More evidence for R4" onClose=${close} />
       <div className="sp-body">
-        <div className="ask-card">
-          <div className="ask-head"><${Avatar} id="dana" size=${20} /><strong>Dana Ortiz · ${TIMES.moreEvidence} · requested more evidence</strong></div>
-          <p>${state.danaAsk}</p>
+        <div className=${cx('rl-status', !added && 'pending')}>
+          <div className="person-row"><${Avatar} id="dana" size=${26} /><div className="grow"><div className="strong-500">Dana Ortiz asked for more evidence</div><div className="small muted">Product manager · ${TIMES.moreEvidence}</div></div>${!added && html`<${Tag} tone="amber">Open<//>`}</div>
+          <p className="rl-status-note">${state.danaAsk}</p>
         </div>
         <${SectionLabel}>Evidence on this proposal<//>
         ${added
           ? html`<div className="ev-card added">
-              <div><div className="green small strong">${EVIDENCE.changelog.label}</div><div className="muted tiny">${EVIDENCE.changelog.meta}</div></div>
-              <span className="green small">Added</span>
+              <${FileText} size=${16} strokeWidth=${1.5} aria-hidden="true" />
+              <div className="grow"><div className="small">${EVIDENCE.changelog.label}</div><div className="muted tiny">${EVIDENCE.changelog.meta}</div></div>
+              <span className="added-note small"><${Check} size=${13} strokeWidth=${2} aria-hidden="true" /> Added</span>
             </div>`
           : html`<button className="ev-card dashed" onClick=${openFile}>
-              <${Paperclip} size=${14} />
+              <${Paperclip} size=${16} strokeWidth=${1.5} aria-hidden="true" />
               <div><div className="small">Open timekeeping-api.md</div><div className="muted tiny">Select lines in any file, then "Add to R4 evidence"</div></div>
             </button>`}
-        <div className="ev-card"><${FileText} size=${14} /><div><div className="small">${EVIDENCE.spec.label}</div><div className="muted tiny">${EVIDENCE.spec.meta}</div></div></div>
-        <div className="ev-card"><${FileText} size=${14} /><div><div className="small">Sandbox API response</div><div className="muted tiny">${EVIDENCE.api.meta}</div></div></div>
+        <div className="ev-card"><${FileText} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="small">${EVIDENCE.spec.label}</div><div className="muted tiny">${EVIDENCE.spec.meta}</div></div></div>
+        <div className="ev-card"><${FileText} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="small">Sandbox API response</div><div className="muted tiny">${EVIDENCE.api.meta}</div></div></div>
         <${SectionLabel}>Reply to Dana (optional)<//>
         <textarea className="field" rows="3" placeholder="Add a note for Dana…" value=${reply} onInput=${(e) => setReply(e.target.value)} />
         ${added && html`<button className=${cx('link small', reply && 'hidden')} onClick=${() => setReply(TEXT.marcusReply)}>Use suggested reply</button>`}
       </div>
       <div className="sp-foot">
-        <button className="btn" onClick=${close}>Back</button>
+        <button className="btn btn-ghost" onClick=${close}>Back</button>
+        <span className="grow" />
         <button className="btn btn-primary" disabled=${!canSend} onClick=${() => onResend(reply.trim())}>Resend to Dana</button>
       </div>
     </div>`;
@@ -576,35 +581,36 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
   if (panel === 'changed') {
     const u = state.updates;
     return html`<div className="sp">
-      <${PanelHead} icon=${CheckCircle2} title="Relay · R4 changed · PRD v1.1" onClose=${close} />
+      <${PanelHead} title="R4 changed · PRD v1.1" right=${html`<${Tag} tone="green">Approved<//>`} onClose=${close} />
       <div className="sp-body">
-        <div className="ask-head"><${Avatar} id="dana" size=${20} /><strong>Dana approved your proposal</strong> <span className="muted small">${TIMES.approved}</span></div>
+        <div className="person-row"><${Avatar} id="dana" size=${26} /><div className="grow"><div className="strong-500">Dana approved your proposal</div><div className="small muted">Product manager · ${TIMES.approved}</div></div></div>
+        <${SectionLabel}>Preview · what "Update the code" changes<//>
+        <div className="diff-file">
+          <div className="diff-file-head mono"><${FileCode} size=${14} strokeWidth=${1.5} aria-hidden="true" /> src/jobs/refreshLaborHours.ts</div>
+          <div className="mono diff-del">- schedule = '*/15 * * * *'</div>
+          <div className="mono diff-add">+ schedule = '5 * * * *' // R4 v1.1</div>
+        </div>
+        <div className="diff-file">
+          <div className="diff-file-head mono"><${FileCode} size=${14} strokeWidth=${1.5} aria-hidden="true" /> src/ui/Overview.tsx</div>
+          <div className="mono diff-del">- Updated every 15 min</div>
+          <div className="mono diff-add">+ Last synced {lastSync} · next {nextSync}</div>
+        </div>
+        <div className="muted small">Matches Priya's new label. Nothing is committed until you review the diff.</div>
         <${SectionLabel}>R4 now says<//>
-        <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} />
+        <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} labels=${['Was', 'Now']} />
         <${SectionLabel}>Also updated on approval<//>
         ${[
           [u.jira, 'Jira LAB-15 description'],
           [u.figma, 'Comment on Figma · Overview (Priya)'],
           [u.teams, 'Post in Teams #line-labor'],
           [u.metric, 'Note on Success metrics'],
-        ].filter(([on]) => on).map(([, label]) => html`<div key=${label} className="check-row"><${Check} size=${13} className="green" /> ${label}</div>`)}
-        <${SectionLabel}>Preview · what "Update the code" changes<//>
-        <div className="diff-file">
-          <div className="diff-file-head mono"><${FileCode} size=${12} /> src/jobs/refreshLaborHours.ts</div>
-          <div className="mono diff-del">- schedule = '*/15 * * * *'</div>
-          <div className="mono diff-add">+ schedule = '5 * * * *' // R4 v1.1</div>
-        </div>
-        <div className="diff-file">
-          <div className="diff-file-head mono"><${FileCode} size=${12} /> src/ui/Overview.tsx</div>
-          <div className="mono diff-del">- Updated every 15 min</div>
-          <div className="mono diff-add">+ Last synced {lastSync} · next {nextSync}</div>
-        </div>
-        <div className="muted small">Matches Priya's new label. Nothing is committed until you review the diff.</div>
+        ].filter(([on]) => on).map(([, label]) => html`<div key=${label} className="check-row"><${Check} size=${14} strokeWidth=${2} className="green" aria-hidden="true" /> ${label}</div>`)}
       </div>
       <div className="sp-foot">
         ${state.codeUpdated
-          ? html`<span className="green small grow"><${Check} size=${13} /> Code matches v1.1</span><button className="btn" onClick=${close}>Back to code</button>`
-          : html`<button className="btn" onClick=${() => onFinish(false)}>Not now</button>
+          ? html`<span className="green small grow"><${Check} size=${14} strokeWidth=${2} aria-hidden="true" /> Code matches v1.1</span><button className="btn" onClick=${close}>Back to code</button>`
+          : html`<button className="btn btn-ghost" onClick=${() => onFinish(false)}>Not now</button>
+              <span className="grow" />
               <button className="btn btn-primary" onClick=${() => onFinish(true)}>Update the code to match</button>`}
       </div>
     </div>`;
@@ -612,14 +618,14 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
 
   if (panel === 'denied') {
     return html`<div className="sp">
-      <${PanelHead} icon=${X} title="Relay · R4 unchanged" onClose=${close} />
+      <${PanelHead} title="R4 unchanged" onClose=${close} />
       <div className="sp-body">
-        <div className="ask-head"><${Avatar} id="dana" size=${20} /><strong>Dana kept R4 as written</strong> <span className="muted small">${TIMES.denied}</span></div>
+        <div className="person-row"><${Avatar} id="dana" size=${26} /><div className="grow"><div className="strong-500">Dana kept R4 as written</div><div className="small muted">Product manager · ${TIMES.denied}</div></div></div>
         <${SectionLabel}>R4 says<//>
         <div className="small">${TEXT.r4Old}</div>
         <div className="muted small">Your draft polls every 15 minutes, as written. The branch is no longer tagged pending-R4.</div>
       </div>
-      <div className="sp-foot"><button className="btn" onClick=${close}>Back to code</button></div>
+      <div className="sp-foot"><span className="grow" /><button className="btn" onClick=${close}>Back to code</button></div>
     </div>`;
   }
   return null;
@@ -627,9 +633,9 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
 
 function StanceRow({ id, what, stance }) {
   return html`<div className="stance-row">
-    <${Avatar} id=${id} size=${20} />
-    <span className="small">${id === 'priya' ? 'Priya Shah' : 'Kim Alvarez'} · <span className="muted">${what}</span></span>
+    <${Avatar} id=${id} size=${24} />
+    <span className="small"><span className="strong-500">${id === 'priya' ? 'Priya Shah' : 'Kim Alvarez'}</span> <span className="muted">${what}</span></span>
     <span className="grow" />
-    ${stance ? html`<${Tag} tone=${stance === 'agreed' ? 'green' : 'red'}>${stance === 'agreed' ? 'Agreed' : 'Disagreed'}<//>` : html`<span className="muted tiny"><${Clock} size=${11} /> Waiting</span>`}
+    ${stance ? html`<${Tag} tone=${stance === 'agreed' ? 'green' : 'neutral'}>${stance === 'agreed' ? 'Agreed' : 'Disagreed'}<//>` : html`<${Tag}>No reply yet<//>`}
   </div>`;
 }
