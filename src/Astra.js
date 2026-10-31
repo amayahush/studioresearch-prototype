@@ -130,7 +130,8 @@ export function Astra() {
           { time: '2:24 PM', who: 'marcus', text: 'Marcus updated the refresh job to match v1.1' },
           { time: '2:26 PM', who: 'priya', text: `Priya relabeled the Overview: "${dashboardLabel({ ...state, stage: 'approved', labelUpdated: true })}"` },
         ],
-        onDone: () => { dispatch({ type: 'UPDATE_CODE' }); dispatch({ type: 'UPDATE_LABEL' }); setSelected('R4'); },
+        // R4's decision record is the Recorder: Dana replays it, then signs it off.
+        onDone: () => { dispatch({ type: 'UPDATE_CODE' }); dispatch({ type: 'UPDATE_LABEL' }); setSelected('R4'); dispatch({ type: 'SET_VIEW', view: 'recorder', replay: 'signoff' }); },
       });
     },
     done: () => (ownPath ? setEndCard(true) : setSelected(null)),
@@ -496,6 +497,10 @@ function AssumptionCheck({ reqs, onSelect, onPublish }) {
             <${StatusChip} status=${r.assume} sources=${r.sources} />
           </div>
           <div className="small muted">${r.note}</div>
+          ${r.id === 'R4' && html`<div className="check-pattern">
+            <span className="tiny-label">Pattern from 3 past PRDs</span>
+            <span className="small">Requirements set from a kickoff quote and never checked against a system changed after the build started in 3 of 4 cases.</span>
+          </div>`}
           <div className="check-card-foot">
             ${r.decision
               ? html`<span className="small">Needs a decision from you</span>`

@@ -176,6 +176,8 @@ function ActorMark({ e, size = 22 }) {
 }
 
 const at96 = (x) => `calc(96px + (100% - 96px) * ${x / 100})`;
+const ROLE_NAME = { marcus: 'Marcus, the engineer', priya: 'Priya, the designer', dana: 'Dana, the product manager' };
+const listNames = (a) => (a.length < 2 ? a.join('') : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`).replace(/^you/, 'You');
 const stamp = (e) => `${e.day}${e.time ? ` · ${e.time}` : ''}`;
 
 function exportRecord(reqId, events, at) {
@@ -206,7 +208,7 @@ function exportRecord(reqId, events, at) {
   }
 }
 
-export function RecorderView({ selected, setSelected, toast }) {
+export function RecorderView({ selected, setSelected, toast, story }) {
   const { state, dispatch } = useStore();
   const reqs = getReqs(state);
   const [reqId, setReqId] = useState(selected && reqs.some((r) => r.id === selected) ? selected : 'R4');
@@ -221,12 +223,16 @@ export function RecorderView({ selected, setSelected, toast }) {
 
   useEffect(() => { if (follow) setAt(last); }, [last, follow, reqId]);
   useEffect(() => { setSelected(['R1', 'R2', 'R3', 'R4', 'R5'].includes(reqId) ? reqId : null); }, [reqId]);
+  // Replay modes: 'signoff' (Dana's decision record) and 'session' (end-card replay) play R4 from the start.
+  const mode = state.replay;
+  const you = mode === 'signoff' ? 'dana' : mode === 'session' ? state.startedAs : null;
+  const [held, setHeld] = useState(false); // paused once at the moment R4 was contradicted
   useEffect(() => {
-    if (!playing) return;
-    if (at >= last) { setPlaying(false); setFollow(true); return; }
-    const t = setTimeout(() => setAt((i) => Math.min(last, i + 1)), 950);
+    if (!mode) return;
+    setReqId('R4'); setAt(0); setFollow(false); setHeld(false);
+    const t = setTimeout(() => setPlaying(true), 700);
     return () => clearTimeout(t);
-  }, [playing, at, last]);
+  }, [mode]);
 
   const pick = (id) => { setReqId(id); setFollow(true); setPlaying(false); };
   const seek = (i) => { const n = Math.max(0, Math.min(last, i)); setAt(n); setFollow(n === last); setPlaying(false); };
@@ -246,6 +252,16 @@ export function RecorderView({ selected, setSelected, toast }) {
   const flagIdx = events.findIndex((e) => e.flag);
   const resolvedIdx = events.findIndex((e) => e.resolves);
   const head = xs[at];
+
+  useEffect(() => {
+    if (!playing) return;
+    if (at >= last) { setPlaying(false); setFollow(true); return; }
+    // In a replay, stop once on the flag so the "who knew what" gap can be read.
+    if (mode && req.id === 'R4' && at === flagIdx && !held) { setPlaying(false); setHeld(true); return; }
+    const t = setTimeout(() => setAt((i) => Math.min(last, i + 1)), mode ? 800 : 950);
+    return () => clearTimeout(t);
+  }, [playing, at, last]);
+  const atFlag = mode && req.id === 'R4' && held && at === flagIdx && !playing;
 
   // Record lag: how long the PRD trailed what the team already knew, and how long the work trailed the PRD.
   const bands = [];
@@ -268,8 +284,11 @@ export function RecorderView({ selected, setSelected, toast }) {
   const r4Then = req.id === 'R4' ? (resolvedIdx >= 0 && at >= resolvedIdx ? state.proposal.text : TEXT.r4Old) : req.text;
   const know = knowledge(events, at, flagIdx, resolvedIdx);
   const behindCount = know.filter((k) => k.behind).length;
+  const behindNames = listNames(know.filter((k) => k.behind).sort((a, b) => (b.id === you) - (a.id === you)).map((k) => (k.id === you ? 'you' : PEOPLE[k.id].name.split(' ')[0])));
   const isLive = at === last;
   const statusTag = { assumed: ['amber', 'Assumed'], contradicted: ['amber', 'Contradicted by build'], conflicting: ['amber', 'Conflicting sources'], verified: ['green', 'Verified'], draft: ['blue', 'AI draft'] }[status];
+
+  const doExport = () => toast(exportRecord(req.id, events, at) ? `${req.id} record downloaded, up to ${stamp(cur)}` : 'Export is not available in this browser.');
 
   const onKey = (e) => {
     if (e.key === 'ArrowLeft') { e.preventDefault(); seek(at - 1); }
@@ -299,6 +318,14 @@ export function RecorderView({ selected, setSelected, toast }) {
             <span className="tiny muted">${events.length} events</span>
           </div>
 
+          ${mode && req.id === 'R4' && html`<div className=${cx('rec-callout', atFlag && 'hold')}>
+            ${atFlag
+              ? html`<span><strong>${stamp(cur)}: the build found R4 was wrong.</strong> Only Marcus knew. ${behindNames} were still working from v1.</span>
+                  <button className="btn sm" onClick=${() => { setFollow(false); setPlaying(true); }}>Keep playing</button>`
+              : mode === 'signoff'
+                ? html`<span>${isLive ? 'This is R4\'s full record. Sign it off to close the change.' : 'Replaying R4 before you sign off its record. Watch who knew what, and when.'}</span>`
+                : html`<span>${isLive ? 'That\'s the whole story so far.' : `Replaying what happened while you played ${ROLE_NAME[state.startedAs] || 'your role'}.`} Your own actions are outlined.</span>`}
+          </div>`}
           <div className="rec-tracks" ref=${tracksRef} tabIndex="0" onKeyDown=${onKey} aria-label="Recorder tracks. Use the arrow keys to step, space to play.">
             ${breaks.map((b) => html`<div key=${b.i} className="rec-break" style=${{ left: at96(b.x) }}>${b.show && html`<span>${b.day}</span>`}</div>`)}
             <div className="rec-break first" style=${{ left: at96(0) }}><span>${events[0].day}</span></div>
@@ -307,7 +334,7 @@ export function RecorderView({ selected, setSelected, toast }) {
               <div className="rec-lane-track">
                 ${bands.filter((b) => b.lane === k).map((b) => html`<div key=${b.label} className=${cx('rec-band', b.to != null && 'closed')} style=${bandStyle(b)}>${parseFloat(bandStyle(b).width) >= 20 && html`<span>${b.label}</span>`}</div>`)}
                 ${events.map((e, i) => e.lane === k && html`<button key=${i}
-                  className=${cx('rec-mark', e.tone, e.ai && 'ai', i > at && 'future', i === at && 'now')}
+                  className=${cx('rec-mark', e.tone, e.ai && 'ai', i > at && 'future', i === at && 'now', you && (e.who === you || e.reviewer === you) && 'mine')}
                   style=${{ left: `${xs[i]}%` }}
                   onClick=${() => seek(i)}
                   aria-label=${`${stamp(e)}. ${actorName(e)}: ${e.text}`}
@@ -339,6 +366,7 @@ export function RecorderView({ selected, setSelected, toast }) {
         <div className="rec-pattern">
           <div className="rec-pattern-head"><span className="section-label">Pattern across 3 PRDs</span><${Tag} tone="neutral">Early signal · 4 cases<//></div>
           <p>Requirements set from a kickoff quote and never checked against a system changed after the build started in 3 of 4 cases. Check them before publishing.</p>
+          ${req.id === 'R4' && state.startedAs === 'dana' && html`<p className="small">This pattern was shown on R4 at the assumption check on Oct 1. v1 was published anyway, and R4 changed a week later.</p>`}
           <p className="tiny muted">Counts requirements and sources, never people.</p>
         </div>
       </div>
@@ -362,7 +390,7 @@ export function RecorderView({ selected, setSelected, toast }) {
             <div className="rec-event-who">
               <${ActorMark} e=${cur} />
               <div className="rec-event-meta">
-                <strong>${actorName(cur)}</strong>
+                <strong>${actorName(cur)}${cur.who === you ? ' (you)' : ''}</strong>
                 <span className="tiny muted">${LANES.find(([k]) => k === cur.lane)[1]} · ${stamp(cur)}</span>
               </div>
             </div>
@@ -379,7 +407,7 @@ export function RecorderView({ selected, setSelected, toast }) {
             return html`<div key=${k.id} className=${cx('rec-know', k.behind && 'behind')}>
               <${Avatar} id=${k.id} size=${20} />
               <div className="rec-know-text">
-                <span className="rec-know-name">${p.name}</span>
+                <span className="rec-know-name">${p.name}${k.id === you ? ' (you)' : ''}</span>
                 <span className="tiny muted">${e ? `${e.short} · ${stamp(e)}` : 'Not involved yet'}</span>
               </div>
               ${k.behind ? html`<${Tag} tone="neutral">On v1<//>` : k.caughtUp ? html`<${Tag} tone="green">Current<//>` : null}
@@ -387,11 +415,15 @@ export function RecorderView({ selected, setSelected, toast }) {
           })}
         </div>
         <div className="sp-foot">
-          <button className="btn" onClick=${() => { dispatch({ type: 'SET_VIEW', view: 'doc' }); }}>Open in Doc</button>
-          <span className="grow" />
-          <button className="btn btn-primary" onClick=${() => toast(exportRecord(req.id, events, at) ? `${req.id} record downloaded, up to ${stamp(cur)}` : 'Export is not available in this browser.')}>
-            <${Download} size=${14} strokeWidth=${1.5} aria-hidden="true" />Export record
-          </button>
+          ${mode === 'signoff'
+            ? html`<button className="btn" onClick=${doExport}><${Download} size=${14} strokeWidth=${1.5} aria-hidden="true" />Export</button>
+                <span className="grow" />
+                ${state.recordSigned
+                  ? html`<${Tag} tone="green">Record signed<//>`
+                  : html`<button className="btn btn-primary" onClick=${() => { dispatch({ type: 'SIGN_RECORD' }); story && story.done(); }}>Sign off record</button>`}`
+            : html`<button className="btn" onClick=${() => { dispatch({ type: 'SET_VIEW', view: 'doc' }); }}>Open in Doc</button>
+                <span className="grow" />
+                <button className="btn btn-primary" onClick=${doExport}><${Download} size=${14} strokeWidth=${1.5} aria-hidden="true" />Export record</button>`}
         </div>
       </div>
     </aside>

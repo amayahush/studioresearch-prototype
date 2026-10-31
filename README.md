@@ -30,7 +30,7 @@ Then open http://localhost:4173. Set `PORT` to use a different port if needed.
 | Dana approves (with a reason), denies, or asks for more evidence | Product manager | Astra, Doc view | 06–07 |
 | Marcus drag-selects changelog lines 58–60, adds them as evidence, resends | Engineer | Codex, timekeeping-api.md | 08a–08b |
 | Dana approves v1.1, which also updates Jira, Figma, Teams and metrics | Product manager | Astra | 07b |
-| R4's decision record: assumed → contradicted → verified | Product manager | Astra | 07 record |
+| R4's decision record: Recorder replays R4, pauses at 1:40 PM, Dana signs it off | Product manager | Astra, Recorder | 07 record |
 | Marcus updates the code; Priya relabels the frame | Engineer, Designer | Codex, Figma | 09 |
 | Explore | Any | Astra: Map, Recorder, Screens, Present | 10–12 |
 
@@ -40,7 +40,7 @@ Each role starts fresh at its own point in the story, and other people's actions
 
 - **Engineer:** Codex output streams in → PRD check → propose → time skip (Priya agrees, Dana asks for evidence) → add changelog lines 58–60 → time skip (Kim agrees, Dana approves v1.1) → update the code → end card.
 - **Designer:** the Astra plugin starts closed; its toolbar button pulses → agree or disagree with a note → Keep designing → time skip (Dana asks Marcus for evidence, Marcus adds it, Dana approves v1.1; if Priya disagreed, Dana replies to her note) → Dana's comment on the Overview frame → relabel → end card.
-- **Product manager:** starts on Oct 1 at the assumption check (00) → Publish anyway → time skip to Oct 8 → review R4 (06) → approve with a reason → time skip → R4 decision record → Done → end card.
+- **Product manager:** starts on Oct 1 at the assumption check (00), where R4 shows a pattern from past PRDs → Publish anyway → time skip to Oct 8 → review R4 (06) → approve with a reason → time skip → the Recorder replays R4 and pauses at 1:40 PM (who knew what) → Keep playing → Sign off record → end card.
 
 The Figma canvas pans and zooms like Figma: drag empty space or hold Space and drag, scroll to pan, Cmd/Ctrl + scroll to zoom, and click the zoom percentage to reset.
 
@@ -64,3 +64,9 @@ A second take on the Map, modeled on an aircraft flight data recorder. The origi
 - **Live:** the record is built from the story state, so it grows as the participant acts in Codex, Figma or Astra. When the playhead is at the newest event it stays there (Recording); otherwise it says Replaying and offers Go live.
 - **Export record** downloads a Markdown decision record up to the playhead.
 - **Pattern across 3 PRDs** is a speculative, FOQA-style trend card. It counts requirements and sources, never people.
+
+### Recorder in the story
+
+- **Assumption check (Dana, Oct 1):** R4's card shows a pattern from past PRDs. The Recorder's pattern card later points back to it.
+- **Decision record (Dana, after approving):** the Recorder opens in sign-off mode, replays R4 from the kickoff, and pauses once at 1:40 PM to show who was still on v1. **Sign off record** ends the path.
+- **Engineer and designer end cards:** **Replay what happened** opens the Recorder and replays the session with the participant's own actions outlined.

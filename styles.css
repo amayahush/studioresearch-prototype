@@ -1379,3 +1379,11 @@ button.rd:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .rec-know-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .rec-know-text .tiny { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rec-know-name { font-size: 12px; line-height: 18px; font-weight: 500; }
+
+/* Recorder in the story: replay callout, own actions, pattern at the assumption check */
+.rec-callout { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 12px; border-radius: 10px; background: var(--bg-2); font-size: 12px; line-height: 18px; color: var(--text-2); }
+.rec-callout span { flex: 1; min-width: 0; }
+.rec-callout strong { color: var(--text); font-weight: 600; }
+.rec-callout.hold { box-shadow: inset 0 0 0 1px var(--amber); color: var(--text); }
+.rec-mark.mine::after { content: ''; position: absolute; inset: -4px; border-radius: 5px; box-shadow: 0 0 0 1.5px var(--text); opacity: .55; }
+.check-pattern { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--bg-2); }

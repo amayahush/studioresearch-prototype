@@ -103,6 +103,9 @@ export const initialState = {
   // R5 is an AI draft: 'draft' → 'accepted' | 'discarded'
   r5: 'draft',
   updates: { jira: true, figma: true, teams: true, metric: true },
+  // Recorder replay mode: null, 'signoff' (Dana reviews R4's record before signing) or 'session' (end-card replay)
+  replay: null,
+  recordSigned: false,
   log: [],
 };
 
@@ -134,7 +137,9 @@ export function reducer(state, action) {
         ],
       };
     case 'SET_VIEW':
-      return { ...state, astraView: action.view };
+      return { ...state, astraView: action.view, replay: action.replay || null };
+    case 'SIGN_RECORD':
+      return { ...state, recordSigned: true, log: log(state, 'dana', 'Signed off R4\'s decision record', '2:28 PM') };
     case 'PROPOSE':
       return {
         ...state,
