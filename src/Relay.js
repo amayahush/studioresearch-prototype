@@ -3,11 +3,11 @@ import { useStore, TEXT, TIMES, isPending, r4Text, prdVersion } from './store.js
 import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection } from './ui.js';
 import { MapView, ScreensView, PresentView } from './RelayViews.js';
 import {
-  ChevronDown, Search, Inbox, CircleUser, FileText, Settings, HelpCircle, Network, Frame, Presentation, X, History, Check, Clock,
-  PanelLeftClose, PanelLeftOpen,
+  ChevronDown, Search, Inbox, CircleUser, FileText, Settings, HelpCircle, X, History, Check, Clock, PanelLeft,
+  Box, GitBranch, Frame, MessageSquare, Folder, Code, Upload,
 } from 'lucide-react';
 
-export const TOOLS = [['Jira', '2m'], ['GitLab', '5m'], ['Figma', '1m'], ['Teams', 'live'], ['SharePoint', '10m'], ['Codex', 'live']];
+export const TOOLS = [['Jira', '2m', Box], ['GitLab', '5m', GitBranch], ['Figma', '1m', Frame], ['Teams', 'live', MessageSquare], ['SharePoint', '10m', Folder], ['Codex', 'live', Code]];
 
 export function getReqs(state) {
   const pending = isPending(state);
@@ -27,12 +27,8 @@ export function getReqs(state) {
   return state.r5 === 'discarded' ? reqs.filter((r) => r.id !== 'R5') : reqs;
 }
 
-const VIEWS = [
-  ['doc', 'Doc', FileText],
-  ['map', 'Map', Network],
-  ['screens', 'Screens', Frame],
-  ['present', 'Present', Presentation],
-];
+const VIEWS = [['doc', 'Doc'], ['map', 'Map'], ['screens', 'Screens'], ['present', 'Present']];
+const ICON = { size: 15, strokeWidth: 1.5, 'aria-hidden': 'true' };
 
 const NAV_KEY = 'relay-sidebar-open';
 
@@ -70,65 +66,68 @@ export function Relay() {
   const openProject = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); setSelected(null); };
   const Body = { doc: DocView, map: MapView, screens: ScreensView, present: PresentView }[view];
 
+  const notSimulated = (what) => () => setToast(`${what} is not simulated in this prototype.`);
+
   return html`<div className="relay">
     <nav className=${cx('rl-side', !navOpen && 'collapsed')} aria-label="Workspace">
       ${navOpen
         ? html`<${Fragment}>
             <div className="rl-org-row">
-              <button className="rl-org"><span className="rl-org-name">Manufacturing Systems</span><${ChevronDown} size=${13} /></button>
+              <button className="rl-org" onClick=${notSimulated('Switching workspaces')}><span className="rl-org-name">Manufacturing Systems</span><${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" /></button>
+              <span className="grow" />
               <button className="rl-nav-toggle" onClick=${() => setNavOpen(false)} aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">
-                <${PanelLeftClose} size=${18} aria-hidden="true" />
+                <${PanelLeft} size=${16} strokeWidth=${1.5} aria-hidden="true" />
               </button>
             </div>
-            <div className="rl-search"><${Search} size=${14} /> Search <span className="grow" /><kbd>⌘K</kbd></div>
+            <button className="rl-search" onClick=${notSimulated('Search')}><${Search} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span className="grow">Search</span><span className="rl-kbd">⌘K</span></button>
             <button className="rl-nav" onClick=${openInbox}>
-              <${Inbox} size=${15} /> Inbox <span className="grow" /><span className=${cx('count', inbox && 'hot')}>${inbox}</span>
+              <${Inbox} ...${ICON} /><span className="rl-nav-label">Inbox</span><span className=${cx('rl-count', inbox && 'hot')}>${inbox || ''}</span>
             </button>
-            <div className="rl-nav"><${CircleUser} size=${15} /> My work</div>
+            <button className="rl-nav" onClick=${notSimulated('My work')}><${CircleUser} ...${ICON} /><span className="rl-nav-label">My work</span></button>
             <div className="rl-group">Projects</div>
-            <button className="rl-nav active" onClick=${openProject}><${FileText} size=${15} /> Line Labor Dashboard</button>
-            <div className="rl-nav"><${FileText} size=${15} /> Compliance Tracker</div>
-            <div className="rl-nav"><${FileText} size=${15} /> Shift Handoff</div>
+            <button className="rl-nav active" aria-current="page" onClick=${openProject}><${FileText} ...${ICON} /><span className="rl-nav-label">Line Labor Dashboard</span></button>
+            <button className="rl-nav" onClick=${notSimulated('Other projects')}><${FileText} ...${ICON} /><span className="rl-nav-label">Compliance Tracker</span></button>
+            <button className="rl-nav" onClick=${notSimulated('Other projects')}><${FileText} ...${ICON} /><span className="rl-nav-label">Shift Handoff</span></button>
             <div className="rl-group">Connected tools</div>
-            ${TOOLS.map(([t, ago]) => html`<div key=${t} className="rl-tool"><span className="dot green" /> ${t}<span className="grow" /><span className="mono muted tiny">${ago}</span></div>`)}
+            ${TOOLS.map(([t, ago, Icon]) => html`<div key=${t} className="rl-nav static"><${Icon} ...${ICON} /><span className="rl-nav-label">${t}</span><span className="rl-meta mono">${ago}</span></div>`)}
             <span className="grow" />
-            <div className="rl-nav"><${Settings} size=${15} /> Settings</div>
-            <div className="rl-nav"><${HelpCircle} size=${15} /> Help</div>
+            <button className="rl-nav" onClick=${notSimulated('Settings')}><${Settings} ...${ICON} /><span className="rl-nav-label">Settings</span></button>
+            <button className="rl-nav" onClick=${notSimulated('Help')}><${HelpCircle} ...${ICON} /><span className="rl-nav-label">Help</span></button>
           <//>`
         : html`<div className="rl-rail">
             <button className="rail-btn" onClick=${() => setNavOpen(true)} aria-label="Expand sidebar" aria-expanded="false" data-tip="Expand sidebar">
-              <${PanelLeftOpen} size=${18} aria-hidden="true" />
+              <${PanelLeft} size=${16} strokeWidth=${1.5} aria-hidden="true" />
             </button>
             <span className="rail-divider" />
-            <button className="rail-btn" onClick=${() => setNavOpen(true)} aria-label="Search" data-tip="Search"><${Search} size=${17} aria-hidden="true" /></button>
+            <button className="rail-btn" onClick=${() => setNavOpen(true)} aria-label="Search" data-tip="Search"><${Search} ...${ICON} /></button>
             <button className="rail-btn" onClick=${openInbox} aria-label=${inbox ? `Inbox, ${inbox} waiting` : 'Inbox'} data-tip=${inbox ? `Inbox · ${inbox} waiting` : 'Inbox'}>
-              <${Inbox} size=${17} aria-hidden="true" />${inbox > 0 && html`<span className="rail-badge" />`}
+              <${Inbox} ...${ICON} />${inbox > 0 && html`<span className="rail-badge" />`}
             </button>
-            <button className="rail-btn" aria-label="My work" data-tip="My work"><${CircleUser} size=${17} aria-hidden="true" /></button>
+            <button className="rail-btn" aria-label="My work" data-tip="My work"><${CircleUser} ...${ICON} /></button>
             <button className="rail-btn active" onClick=${openProject} aria-label="Line Labor Dashboard (current project)" aria-current="page" data-tip="Line Labor Dashboard">
-              <${FileText} size=${17} aria-hidden="true" />
+              <${FileText} ...${ICON} />
             </button>
           </div>`}
     </nav>
 
     <section className="rl-main">
       <header className="rl-top">
-        <strong>Line Labor Dashboard / PRD</strong>
+        <span className="rl-top-title">Line Labor Dashboard</span>
         <${Tag} tone=${pending ? 'amber' : state.stage === 'approved' ? 'green' : 'neutral'}>${prdVersion(state)}${pending ? ' · 1 pending' : ''}<//>
         <span className="grow" />
-        <div className="seg">
-          ${VIEWS.map(([id, label, Icon]) => html`<button key=${id} className=${cx('seg-btn', view === id && 'active')} onClick=${() => dispatch({ type: 'SET_VIEW', view: id })}><${Icon} size=${14} /> ${label}</button>`)}
+        <div className="seg" role="group" aria-label="View">
+          ${VIEWS.map(([id, label]) => html`<button key=${id} className=${cx('seg-btn', view === id && 'active')} aria-pressed=${view === id} onClick=${() => dispatch({ type: 'SET_VIEW', view: id })}>${label}</button>`)}
         </div>
         <div className="export-wrap">
-          <button className="btn btn-ghost" onClick=${() => setExportOpen(!exportOpen)}>Export</button>
-          ${exportOpen && html`<div className="menu">
+          <button className="icon-btn rl-export" onClick=${() => setExportOpen(!exportOpen)} aria-label="Export" aria-haspopup="menu" aria-expanded=${exportOpen} title="Export"><${Upload} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
+          ${exportOpen && html`<div className="menu" role="menu">
             ${[['PDF', 'Full PRD with evidence'], ['PowerPoint (.pptx)', 'From the Present view'], ['Image (PNG)', 'Current view'], ['Copy link', 'Opens this view']].map(
-              ([t, d]) => html`<button key=${t} className="menu-item" onClick=${() => { setExportOpen(false); setToast(`${t}: export is not simulated in this prototype.`); }}><strong>${t}</strong><span className="muted tiny">${d}</span></button>`
+              ([t, d]) => html`<button key=${t} role="menuitem" className="menu-item" onClick=${() => { setExportOpen(false); setToast(`${t}: export is not simulated in this prototype.`); }}><strong>${t}</strong><span className="muted tiny">${d}</span></button>`
             )}
           </div>`}
         </div>
         <button className="btn" onClick=${() => setToast('Sharing is not simulated in this prototype.')}>Share</button>
-        <${Avatar} id="dana" size=${26} />
+        <span className="rl-me"><${Avatar} id="dana" size=${28} /></span>
       </header>
       <${Body} selected=${selected} setSelected=${setSelected} toast=${setToast} />
     </section>
@@ -138,20 +137,24 @@ export function Relay() {
 
 const SLICES = [['main', 'Main PRD'], ['dev', 'Developer'], ['design', 'Design'], ['sme', 'SME'], ['business', 'Business']];
 
+const FILTERS = [['all', 'All requirements'], ['approved', 'Approved'], ['pending', 'Pending'], ['draft', 'Draft']];
+
 function DocView({ selected, setSelected }) {
   const { state } = useStore();
   const [slice, setSlice] = useState('main');
   const [filter, setFilter] = useState('all');
+  const [filterOpen, setFilterOpen] = useState(false);
   // Open/closed choices by section key, kept across selections that share a section.
   const [openMap, setOpenMap] = useState({});
   const reqs = getReqs(state);
   const pending = isPending(state);
-  const count = (st) => reqs.filter((r) => r.status === st).length;
+  const count = (st) => (st === 'all' ? reqs.length : reqs.filter((r) => r.status === st).length);
   const visible = reqs.filter((r) => (slice === 'main' || r.slices.includes(slice)) && (filter === 'all' || r.status === filter));
   const epics = [
     ['E1', 'LAB-E1', 'Live labor visibility'],
     ['E2', 'LAB-E2', 'Filtering and drill-down'],
   ];
+  const filterLabel = FILTERS.find(([id]) => id === filter)[1];
 
   useEffect(() => {
     if (selected === 'R5' && state.r5 === 'discarded') setSelected(null);
@@ -159,48 +162,54 @@ function DocView({ selected, setSelected }) {
 
   return html`<div className="rl-doc-wrap">
     <div className="rl-subbar">
-      <span className="tiny-label">Slice</span>
-      ${SLICES.map(([id, label]) => html`<button key=${id} className=${cx('slice', slice === id && 'active')} onClick=${() => setSlice(id)}>
-        ${label}${pending && id !== 'sme' && html`<span className="dot amber" />`}
-      </button>`)}
+      <nav className="slices" aria-label="Slices">
+        ${SLICES.map(([id, label]) => html`<button key=${id} className=${cx('slice', slice === id && 'active')} aria-current=${slice === id ? 'true' : undefined} onClick=${() => setSlice(id)}>
+          ${label}${pending && id !== 'sme' && html`<span className="dot amber" aria-label="has a pending change" />`}
+        </button>`)}
+      </nav>
       <span className="grow" />
-      <span className="muted small">Show</span>
-      <div className="seg sm">
-        ${[['all', 'All', reqs.length], ['approved', 'Approved', count('approved')], ['pending', 'Pending', count('pending')], ['draft', 'Draft', count('draft')]].map(
-          ([id, label, n]) => html`<button key=${id} className=${cx('seg-btn', filter === id && 'active')} onClick=${() => setFilter(id)}>
-            ${id === 'pending' && html`<span className="dot amber" />`}${id === 'draft' && html`<span className="dot blue" />`}${label} <span className="muted">${n}</span>
-          </button>`
-        )}
+      <div className="export-wrap">
+        <button className="rl-filter" aria-haspopup="menu" aria-expanded=${filterOpen} onClick=${() => setFilterOpen(!filterOpen)}>
+          ${filterLabel} <span className="muted">${count(filter)}</span><${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" />
+        </button>
+        ${filterOpen && html`<div className="menu" role="menu">
+          ${FILTERS.map(([id, label]) => html`<button key=${id} role="menuitemradio" aria-checked=${filter === id} className=${cx('menu-item row', filter === id && 'on')} onClick=${() => { setFilter(id); setFilterOpen(false); }}>
+            <strong>${id === 'pending' && html`<span className="dot amber" />`}${id === 'draft' && html`<span className="dot blue" />`}${label}<span className="grow" /><span className="muted">${count(id)}</span></strong>
+          </button>`)}
+        </div>`}
       </div>
     </div>
 
     <div className="rl-split">
       <div className="rl-doc" onClick=${(e) => e.target === e.currentTarget && setSelected(null)}>
-        <button className=${cx('doc-title', (!selected || selected === 'overview') && 'selected')} onClick=${() => setSelected('overview')}>
-          <h1>Line Labor Dashboard</h1>
-          <div className="doc-meta">Owner <strong>Dana Ortiz (PM)</strong> · ${prdVersion(state)} · ${state.stage === 'approved' ? `published Oct 8, ${TIMES.approved}` : 'published Oct 1'} · Sources: kickoff call, lead notes, labor spreadsheet</div>
-        </button>
+        <div className="rl-doc-inner">
+          <button className=${cx('doc-title', (!selected || selected === 'overview') && 'selected')} onClick=${() => setSelected('overview')}>
+            <h1>Line Labor Dashboard</h1>
+            <div className="doc-meta">Owner Dana Ortiz (PM) · ${prdVersion(state)} · ${state.stage === 'approved' ? `published Oct 8, ${TIMES.approved}` : 'published Oct 1'} · Sources: kickoff call, lead notes, labor spreadsheet</div>
+          </button>
 
-        ${(slice === 'main' || slice === 'business') && filter === 'all' && html`<${Fragment}>
-          <div className=${cx('doc-card', selected === 'problem' && 'selected')} onClick=${() => setSelected('problem')}>
-            <div className="doc-card-head"><strong>Problem</strong><span className="grow" /><${Tag} tone="green">Approved<//></div>
-            <p>First-line leaders track labor hours across three spreadsheets. They can't see overtime risk until the end of the week, when it's too late to rebalance crews.</p>
-          </div>
-          <div className=${cx('doc-card', selected === 'goal' && 'selected')} onClick=${() => setSelected('goal')}>
-            <div className="doc-card-head"><strong>Success metric</strong><span className="muted small">Owner: Kim Alvarez</span><span className="grow" /><${Tag} tone="green">Approved<//></div>
-            <p>Leaders spot overtime risk by mid-shift.</p>
-          </div>
-        <//>`}
+          ${(slice === 'main' || slice === 'business') && filter === 'all' && html`<${Fragment}>
+            <div className="doc-divider" />
+            <button className=${cx('doc-sec', selected === 'problem' && 'selected')} onClick=${() => setSelected('problem')}>
+              <div className="doc-sec-head"><span className="section-label">Problem</span><span className="grow" /><${Tag} tone="green">Approved<//></div>
+              <p>First-line leaders track labor hours across three spreadsheets. They can't see overtime risk until the end of the week, when it's too late to rebalance crews.</p>
+            </button>
+            <div className="doc-divider" />
+            <button className=${cx('doc-sec', selected === 'goal' && 'selected')} onClick=${() => setSelected('goal')}>
+              <div className="doc-sec-head"><span className="section-label">Success metric</span><span className="doc-sec-note">· owner Kim Alvarez</span><span className="grow" /><${Tag} tone="green">Approved<//></div>
+              <p>Leaders spot overtime risk by mid-shift.</p>
+            </button>
+          <//>`}
 
-        <div className="doc-card">
-          <div className="doc-card-head"><strong>Requirements</strong><span className="muted small">Grouped by Jira epic</span><span className="grow" />${pending && html`<${Tag} tone="amber">1 pending<//>`}</div>
+          <div className="doc-divider" />
+          <div className="doc-sec-head"><span className="section-label">Requirements</span><span className="doc-sec-note">· grouped by Jira epic</span><span className="grow" />${pending && html`<${Tag} tone="amber">1 pending<//>`}</div>
           ${epics.map(([eid, key, name]) => {
             const items = visible.filter((r) => r.epic === eid);
             if (!items.length) return null;
             const total = reqs.filter((r) => r.epic === eid).length;
             const done = eid === 'E1' ? `1 of ${total} done` : `0 of ${total} done`;
             return html`<div key=${eid} className="epic">
-              <div className="epic-head"><${ChevronDown} size=${13} /> <span className="epic-tag">Epic</span> <span className="mono muted">${key}</span> <strong>${name}</strong><span className="grow" /><span className="muted tiny">${done}</span></div>
+              <div className="epic-head"><${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" /><span className="mono epic-key">${key}</span><span className="epic-name">${name}</span><span className="epic-done">${done}</span></div>
               ${items.map((r) => html`<${ReqRow} key=${r.id} req=${r} selected=${selected === r.id} onSelect=${() => setSelected(selected === r.id ? null : r.id)} />`)}
             </div>`;
           })}
@@ -223,33 +232,35 @@ function DocView({ selected, setSelected }) {
 
 function ReqRow({ req, selected, onSelect }) {
   const pending = req.status === 'pending';
-  return html`<div className=${cx('req', selected && 'selected', pending && 'pending')} onClick=${onSelect}>
-    <span className="req-id">${req.id}</span>
-    <div className="grow">
-      <div className="req-text">${req.text}</div>
-      <div className="req-links">
-        ${req.links.map((l) => html`<span key=${l} className="chip static">${l}</span>`)}
-        ${pending && html`<span className="amber small">Pending · Dana</span><span className="link small">Review</span>`}
+  const draft = req.status === 'draft';
+  return html`<button className=${cx('req', selected && 'selected', pending && 'pending', draft && 'draft')} onClick=${onSelect} aria-pressed=${selected}>
+    <span className="req-id mono">${req.id}</span>
+    <span className="req-main">
+      <span className="req-text">${req.text}</span>
+      <span className="req-links">
+        ${req.links.map((l) => html`<span key=${l} className="doc-chip">${l}</span>`)}
+        ${pending && html`<${Tag} tone="amber">Pending · Dana<//>`}
         ${req.changed && html`<${Tag} tone="green">Changed in v1.1<//>`}
-        ${req.status === 'draft' && html`<span className="chip chip-blue static">Draft · AI from lead notes</span>`}
-      </div>
-    </div>
-  </div>`;
+        ${draft && html`<${Tag} tone="blue">Draft · AI from lead notes<//>`}
+      </span>
+    </span>
+  </button>`;
 }
 
 /* ---------- Inspector ---------- */
 
-// Shared shell: header on top, collapsible sections scroll, actions pinned at the bottom.
+// Shared shell: 52px header (ID, title, status, close), collapsible sections scroll, actions pinned at the bottom.
 function Inspector({ tag, extraTag, title, from, onClose, top, sections, bottom, foot, openMap, setOpen }) {
+  const m = /^(R\d) · (.+)$/.exec(title);
   return html`<div className="sp">
     <div className="insp-head">
-      <div className="insp-title-row">
-        ${tag}${extraTag}<strong className="insp-title">${title}</strong><span className="grow" />
-        ${onClose && html`<button className="icon-btn sm" onClick=${onClose} aria-label="Close details"><${X} size=${14} /></button>`}
-      </div>
-      ${from && html`<div className="insp-from">${from}</div>`}
+      ${m && html`<span className="insp-id mono">${m[1]}</span>`}
+      <span className="insp-title">${m ? m[2] : title}</span>
+      ${extraTag}${tag}
+      ${onClose && html`<button className="icon-btn" onClick=${onClose} aria-label="Close details"><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>`}
     </div>
     <div className="sp-body insp-body">
+      ${from && html`<div className="insp-from">${from}</div>`}
       ${top}
       ${sections.map((s) => {
         const open = s.key in openMap ? openMap[s.key] : s.open;
@@ -333,7 +344,7 @@ function DetailPanel({ selected, setSelected, reqs, openMap, setOpen }) {
   const r = reqs.find((x) => x.id === selected);
   if (!r) return null;
   const meta = {
-    R1: { tag: ['green', 'Done'], title: 'Labor hours per department', pv: ['Done · Merged', 'green'] },
+    R1: { tag: ['neutral', 'Done'], title: 'Labor hours per department', pv: ['Done · Merged', null] },
     R2: { tag: ['neutral', 'In progress'], title: 'Overtime flag', pv: ['In progress', null] },
     R3: { tag: ['neutral', 'In progress'], title: 'Filter by shift', pv: ['Jira · Figma', null] },
   }[r.id];
@@ -352,22 +363,22 @@ function DetailPanel({ selected, setSelected, reqs, openMap, setOpen }) {
 function OwnerRow({ id, stance, quote }) {
   const p = id === 'priya' ? ['Priya Shah', 'Designer'] : ['Kim Alvarez', 'Business lead'];
   return html`<div className="owner-row">
-    <${Avatar} id=${id} size=${22} />
-    <div className="grow"><div className="small"><strong>${p[0]}</strong> <span className="muted">${p[1]}</span></div>${stance && quote && html`<div className="small muted">"${quote}"</div>`}</div>
-    ${stance ? html`<${Tag} tone=${stance === 'agreed' ? 'green' : 'red'}>${stance === 'agreed' ? 'Agreed' : 'Disagreed'}<//>` : html`<${Tag} tone="amber">No reply yet<//>`}
+    <${Avatar} id=${id} size=${24} />
+    <div className="grow"><div className="owner-line"><span className="grow"><span className="strong-500">${p[0]}</span> <span className="muted">${p[1]}</span></span>${stance ? html`<${Tag} tone=${stance === 'agreed' ? 'green' : 'neutral'}>${stance === 'agreed' ? 'Agreed' : 'Disagreed'}<//>` : html`<${Tag}>No reply yet<//>`}</div>${stance && quote && html`<div className="muted">“${quote}”</div>`}</div>
   </div>`;
 }
 
-// Collapsed previews must surface blockers: a missing reply shows in amber, a disagreement in red.
+// Collapsed previews must surface blockers: a missing reply or a disagreement shows in amber.
 function ownersPreview(stances) {
   const agreed = stances.filter((s) => s === 'agreed').length;
   const disagreed = stances.filter((s) => s === 'disagreed').length;
   const waiting = stances.filter((s) => !s).length;
   const parts = [agreed && `${agreed} agreed`, disagreed && `${disagreed} disagreed`, waiting && `${waiting} waiting`].filter(Boolean);
-  return [parts.join(' · '), disagreed ? 'red' : waiting ? 'amber' : 'green'];
+  return [parts.join(' · '), disagreed || waiting ? 'amber' : 'green'];
 }
 
-const fromMarcus = (time, note) => html`<${Avatar} id="marcus" size=${18} /> From Marcus Lee · Developer · via Codex · ${time}${note ? ` · ${note}` : ''}`;
+const person = (id, line, meta) => html`<${Avatar} id=${id} size=${26} /><div className="grow"><div className="strong-500">${line}</div><div className="small muted">${meta}</div></div>`;
+const fromMarcus = (time, note) => person('marcus', note ? `Marcus Lee ${note}` : 'Marcus Lee proposed a change', `Developer · via Codex · ${time}`);
 
 // R4 follows the story stage (frames 06, 07, 07b). Only the layout changed; the flow is the same.
 function R4Panel({ onClose, openMap, setOpen }) {
@@ -384,6 +395,11 @@ function R4Panel({ onClose, openMap, setOpen }) {
     <${OwnerRow} id="priya" stance=${priya.stance} quote=${priyaQuote} />
     <${OwnerRow} id="kim" stance=${state.kim.stance} quote=${TEXT.kimNote} />
     <div className="muted tiny">Informed, no action needed: Jordan Kim, Sam Reed</div>`;
+  const changeCard = html`<div className="rl-status pending">
+    <div className="rl-status-top"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="grow">Refresh interval</span><${Tag} tone="amber">Pending<//></div>
+    <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} />
+    <p className="rl-status-note">${state.proposal.reason}</p>
+  </div>`;
   const history = html`
     <div className="insp-line">v1 · approved by Dana Ortiz · Oct 1</div>
     ${s !== 'flagged' && html`<div className="insp-line">${TIMES.proposed} · Marcus proposed hourly refresh</div>`}
@@ -412,14 +428,14 @@ function R4Panel({ onClose, openMap, setOpen }) {
     return html`<${Inspector}
       ...${shell}
       tag=${html`<${Tag} tone="green">Changed in v1.1<//>`}
-      from=${html`<${Avatar} id="dana" size=${18} /> Approved by you · ${TIMES.approved} · proposed by Marcus Lee`}
+      from=${person('dana', 'You approved this change', `${TIMES.approved} · proposed by Marcus Lee`)}
       sections=${[
-        sec('requirement', 'Requirement', true, '', null, html`<${Diff} from=${TEXT.r4Old} to=${state.proposal.text} />`),
+        sec('requirement', 'Requirement', true, '', null, html`<${Diff} from=${TEXT.r4Old} to=${state.proposal.text} labels=${['Was', 'Now']} />`),
         sec('linked', 'Linked work', false, followWaiting ? `${followWaiting} waiting` : 'All updated', followWaiting ? 'amber' : 'green', html`
           ${[[u.jira, 'Jira LAB-15 description'], [u.figma, 'Comment on Figma · Overview for Priya'], [u.teams, 'Post in Teams #line-labor'], [u.metric, 'Note on Success metrics']]
-            .filter(([on]) => on).map(([, l]) => html`<div key=${l} className="check-row"><${Check} size=${13} className="green" /> ${l}</div>`)}
-          <div className="check-row">${state.codeUpdated ? html`<${Check} size=${13} className="green" />` : html`<${Clock} size=${13} className="amber" />`} Marcus: refresh job ${state.codeUpdated ? 'matches v1.1' : 'not updated yet'}</div>
-          <div className="check-row">${state.labelUpdated ? html`<${Check} size=${13} className="green" />` : html`<${Clock} size=${13} className="amber" />`} Priya: Overview label ${state.labelUpdated ? 'shows last sync time' : 'not updated yet'}</div>`),
+            .filter(([on]) => on).map(([, l]) => html`<div key=${l} className="check-row"><${Check} size=${14} strokeWidth=${2} className="green" /> ${l}</div>`)}
+          <div className="check-row">${state.codeUpdated ? html`<${Check} size=${14} strokeWidth=${2} className="green" />` : html`<${Clock} size=${14} strokeWidth=${1.5} className="amber" />`} Marcus: refresh job ${state.codeUpdated ? 'matches v1.1' : 'not updated yet'}</div>
+          <div className="check-row">${state.labelUpdated ? html`<${Check} size=${14} strokeWidth=${2} className="green" />` : html`<${Clock} size=${14} strokeWidth=${1.5} className="amber" />`} Priya: Overview label ${state.labelUpdated ? 'shows last sync time' : 'not updated yet'}</div>`),
         sec('history', 'History', false, 'v1.1 · Oct 8', null, html`${history}
           <div className="chips">${state.evidence.map((id) => html`<${EvidenceChip} key=${id} id=${id} variant="short" />`)}</div>`),
       ]}
@@ -433,16 +449,14 @@ function R4Panel({ onClose, openMap, setOpen }) {
   const checked = Object.values(updates).filter(Boolean).length;
 
   const sections = [
-    sec('change', 'Change', true, '15 min → hourly', 'amber', html`<${Diff} from=${TEXT.r4Old} to=${state.proposal.text} />`),
-    sec('reason', 'Reason', true, 'API batch-loads hourly', null, html`<p className="small">${state.proposal.reason}</p>`),
-    sec('evidence', 'Evidence', false, `${state.evidence.length + 1} items${hasNew ? ' · 1 new' : ''}`, hasNew ? 'green' : null, html`
+    sec('evidence', 'Evidence', true, `${state.evidence.length + 1} items${hasNew ? ' · 1 new' : ''}`, null, html`
       <div className="chips">
         ${state.evidence.filter((id) => id !== 'changelog').map((id) => html`<${EvidenceChip} key=${id} id=${id} variant="short" tone=${mode === 'request' && id === 'spec' ? 'amber' : null} />`)}
         <span className="chip static">Screen capture</span>
       </div>
-      ${hasNew && html`<div className="chips"><${EvidenceChip} id="changelog" variant="short" tone="green" /> <${Tag} tone="green">New<//></div>`}
+      ${hasNew && html`<div className="chips"><${EvidenceChip} id="changelog" variant="short" /> <${Tag}>New<//></div>`}
       ${resent && state.marcusReply && html`<div className="quote-card"><div className="muted tiny">Marcus · ${TIMES.resent}</div><div className="small">${state.marcusReply}</div></div>`}`),
-    sec('owners', 'Owners of linked work', false, ownersPv, ownersTone, ownersBody),
+    sec('owners', 'Owners of linked work', true, ownersPv, ownersTone, ownersBody),
     sec('affects', 'Also affects', false, 'Success metric · likely holds', null, html`
       <p className="small">"Leaders spot overtime risk by mid-shift." Hourly data still gives 3 to 4 readings before mid-shift, so the metric likely holds. Check with Kim if unsure.</p>`),
   ];
@@ -451,7 +465,7 @@ function R4Panel({ onClose, openMap, setOpen }) {
       ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Relay', 'Add a note to Success metrics']].map(
         ([k, tool, label]) => html`<label key=${k} className="update-row">
           <input type="checkbox" checked=${updates[k]} onChange=${() => setUpdates({ ...updates, [k]: !updates[k] })} />
-          <span className="chip static">${tool}</span><span className="small">${label}</span>
+          <span className="small grow">${label}</span><span className="muted tiny">${tool}</span>
         </label>`
       )}`));
   }
@@ -467,9 +481,9 @@ function R4Panel({ onClose, openMap, setOpen }) {
   if (mode === 'request') {
     return html`<${Inspector}
       ...${head}
-      top=${html`<div className="decision-card">
+      top=${html`${changeCard}<div className="decision-card">
         <div className="tiny-label">Your decision <span className="grow" /><button className="link tiny" onClick=${() => setMode(null)}>Change</button></div>
-        <div className="link-strong"><${History} size=${14} /> Request more evidence</div>
+        <div className="link-strong"><${History} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Request more evidence</div>
       </div>`}
       bottom=${html`<div className="insp-field">
         <label className="tiny-label" htmlFor="ask-marcus">What do you need from Marcus?</label>
@@ -477,6 +491,7 @@ function R4Panel({ onClose, openMap, setOpen }) {
         <div className="muted small">R4 stays pending. Nothing in the PRD changes until you approve.</div>
       </div>`}
       foot=${html`
+        <span className="grow" />
         <button className="btn btn-ghost" onClick=${() => setMode(null)}>Cancel</button>
         <button className="btn btn-primary" disabled=${!ask.trim()} onClick=${() => { dispatch({ type: 'REQUEST_EVIDENCE', ask: ask.trim() }); setMode(null); }}>Send to Marcus</button>`}
     />`;
@@ -484,19 +499,19 @@ function R4Panel({ onClose, openMap, setOpen }) {
 
   return html`<${Inspector}
     ...${head}
-    top=${waiting && html`<div className="waiting-card"><${Clock} size=${14} /><div><strong className="small">Waiting on Marcus</strong><div className="muted small">You asked for more evidence at ${TIMES.moreEvidence}: "${state.danaAsk}"</div></div></div>`}
-    bottom=${mode === 'confirmDeny' && html`<div className="confirm-card">
-      <strong className="small">Deny this change?</strong>
+    top=${html`${waiting && html`<div className="waiting-card"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="strong-500">Waiting on Marcus</div><div className="muted small">You asked for more evidence at ${TIMES.moreEvidence}: “${state.danaAsk}”</div></div></div>`}${changeCard}`}
+    bottom=${mode === 'confirmDeny' && html`<div className="confirm-card" role="alertdialog" aria-label="Deny this change?">
+      <div className="strong-500">Deny this change?</div>
       <div className="muted small">Closes the proposal. R4 stays as written and Marcus is notified.</div>
-      <div className="plg-actions"><button className="btn btn-ghost sm" onClick=${() => setMode(null)}>Cancel</button><button className="btn btn-danger sm" onClick=${() => dispatch({ type: 'DENY' })}>Deny</button></div>
+      <div className="confirm-actions"><button className="btn btn-ghost sm" onClick=${() => setMode(null)}>Cancel</button><button className="btn sm" onClick=${() => dispatch({ type: 'DENY' })}>Deny</button></div>
     </div>`}
     foot=${html`
-      <div className="split-btn">
-        <button className="btn" onClick=${() => setMode('confirmDeny')}>Deny</button>
-        <button className="btn split-caret" onClick=${() => setMenu(!menu)} aria-label="More decisions"><${ChevronDown} size=${14} /></button>
-        ${menu && html`<div className="menu up">
-          <button className="menu-item" disabled=${waiting} onClick=${() => { setMenu(false); setMode('request'); }}><strong><${History} size=${13} /> Request more evidence</strong><span className="muted tiny">Keeps R4 pending and asks Marcus for more.</span></button>
-          <button className="menu-item" onClick=${() => { setMenu(false); setMode('confirmDeny'); }}><strong><${X} size=${13} /> Deny</strong><span className="muted tiny">Closes the proposal. R4 stays as written.</span></button>
+      <span className="grow" />
+      <div className="export-wrap">
+        <button className="btn deny-btn" aria-haspopup="menu" aria-expanded=${menu} onClick=${() => setMenu(!menu)}>Deny <${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" /></button>
+        ${menu && html`<div className="menu up" role="menu">
+          <button role="menuitem" className="menu-item" disabled=${waiting} onClick=${() => { setMenu(false); setMode('request'); }}><strong><${History} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Request more evidence</strong><span className="muted tiny">Keeps R4 pending and asks Marcus for more.</span></button>
+          <button role="menuitem" className="menu-item" onClick=${() => { setMenu(false); setMode('confirmDeny'); }}><strong><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Deny</strong><span className="muted tiny">Closes the proposal. R4 stays as written.</span></button>
         </div>`}
       </div>
       <button className="btn btn-primary" onClick=${() => dispatch({ type: 'APPROVE', updates })}>${resent ? 'Approve and publish v1.1' : 'Approve & publish'}</button>`}
@@ -526,13 +541,14 @@ function R5Panel({ onClose, openMap, setOpen }) {
   return html`<${Inspector}
     ...${shell}
     tag=${html`<${Tag} tone="blue">Draft · AI<//>`}
-    from=${html`<span className="ai-dot" aria-hidden="true" /> Drafted by Relay from lead notes`}
+    from=${html`<span className="ai-dot" aria-hidden="true" /><span className="muted">Drafted by Relay from lead notes. Not reviewed yet.</span>`}
     sections=${[
       sec('draft', 'Draft', true, '', null, html`<p className="small">${text}</p><div className="muted tiny">Drafts never show as facts in Present.</div>`),
       sec('draftedFrom', 'Drafted from', false, 'Lead notes', null, draftedFrom),
       sec('linked', 'Linked work', false, 'None yet', null, html`<div className="insp-line muted">Gets a Jira ticket once accepted.</div>`),
     ]}
     foot=${html`
+      <span className="grow" />
       <button className="btn" onClick=${() => dispatch({ type: 'DISCARD_DRAFT' })}>Discard</button>
       <button className="btn btn-primary" onClick=${() => dispatch({ type: 'ACCEPT_DRAFT' })}>Accept draft</button>`}
   />`;

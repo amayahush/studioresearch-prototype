@@ -8,7 +8,7 @@ const PERSPECTIVES = [
   {
     id: 'marcus',
     sees: 'The timekeeping API says it syncs every hour.',
-    tool: 'Starts in VS Code + Codex',
+    tool: 'Starts in Codex',
     toolTone: 'gray',
     task: 'Your coding agent flagged something while building the refresh job. Check it and decide what to do.',
   },
@@ -23,7 +23,7 @@ const PERSPECTIVES = [
     id: 'dana',
     sees: 'The PRD says "Refresh data every 15 minutes."',
     tool: 'Starts in Relay',
-    toolTone: 'blue',
+    toolTone: 'neutral',
     task: 'A teammate proposed a change to your PRD. Review it and decide.',
   },
 ];
@@ -48,8 +48,8 @@ export function RolePicker() {
             <div><span className=${`tag tag-${p.toolTone}`}>${p.tool}</span></div>
             <blockquote className="persp-sees">${p.sees}</blockquote>
             <p className="persp-task">${p.task}</p>
-            <button className="btn btn-primary btn-block persp-cta" onClick=${() => dispatch({ type: 'START_ROLE', role: p.id })}>
-              Play the ${person.role.toLowerCase()} <${ArrowRight} size=${14} />
+            <button className="btn btn-block persp-cta" onClick=${() => dispatch({ type: 'START_ROLE', role: p.id })}>
+              Play the ${person.role.toLowerCase()} <${ArrowRight} size=${14} strokeWidth=${1.5} aria-hidden="true" />
             </button>
             <div className="persp-meta">
               <${Avatar} id=${p.id} size=${20} />

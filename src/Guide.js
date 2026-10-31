@@ -22,7 +22,7 @@ function stepFor(state) {
       moreEvidence: {
         title: 'Dana wants more evidence',
         body: 'Dana is not convinced yet: the spec section you cited is from 2023. She wants proof the API is still hourly today.',
-        next: 'Open timekeeping-api.md in the file tree. Select changelog lines 58–60, choose "Add to R4 evidence", then "Resend to Dana" in the Relay panel.',
+        next: 'Open timekeeping-api.md from the Relay panel (or click it on the "Read docs/…" step in the thread). Select changelog lines 58–60, choose "Add to R4 evidence", then "Resend to Dana" in the Relay panel.',
       },
       resent: {
         title: 'Dana is reviewing your evidence',
@@ -38,7 +38,7 @@ function stepFor(state) {
           },
       denied: { title: 'Dana kept R4 as written', body: 'The PRD still says every 15 minutes, and your draft already follows it.', next: 'You are done.' },
     };
-    return { ...steps[stage], where: 'VS Code + Codex' };
+    return { ...steps[stage], where: 'Codex' };
   }
 
   if (role === 'priya') {

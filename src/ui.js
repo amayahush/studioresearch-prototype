@@ -16,10 +16,12 @@ export function SectionLabel({ children, right }) {
   return html`<div className="section-label"><span>${children}</span>${right}</div>`;
 }
 
-export function Diff({ from, to }) {
-  return html`<div className="diff-text">
-    <div className="del">${from}</div>
-    <div className="ins">${to}</div>
+// A change shown as two labeled rows, never as strikethrough (spec §5).
+export function Diff({ from, to, labels = ['Now', 'Proposed'], legacy }) {
+  if (legacy) return html`<div className="diff-text"><div className="del">${from}</div><div className="ins">${to}</div></div>`;
+  return html`<div className="cmp">
+    <div className="cmp-row was"><span className="cmp-label">${labels[0]}</span><span className="cmp-value">${from}</span></div>
+    <div className="cmp-row"><span className="cmp-label">${labels[1]}</span><span className="cmp-value">${to}</span></div>
   </div>`;
 }
 

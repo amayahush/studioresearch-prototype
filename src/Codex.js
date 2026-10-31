@@ -181,7 +181,7 @@ export function Codex() {
       </main>
 
       ${panel &&
-      html`<aside className=${cx('side-panel', panel === 'check' && 'rl')} aria-label="Relay">
+      html`<aside className="side-panel rl" aria-label="Relay">
         <${CodexPanel} panel=${panel} setPanel=${setPanel} setToast=${setToast} openFile=${() => setFile('spec')} onSentClose=${afterSent} onResend=${resend} onFinish=${finish} />
       </aside>`}
     </div>
@@ -412,7 +412,7 @@ function SpecFile({ onToast, openNote }) {
 
 // The conflict, facts only (frame 02): what R4 says next to what the API does.
 function StatusCard({ title, tag, rows, children }) {
-  return html`<div className="rl-status">
+  return html`<div className="rl-status pending">
     <div className="rl-status-top"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="grow">${title}</span><${Tag} tone="amber">${tag}<//></div>
     <div className="rl-compare">
       ${rows.map(([label, value, meta, mono]) => html`<div key=${label} className="rl-compare-row">
@@ -425,13 +425,13 @@ function StatusCard({ title, tag, rows, children }) {
   </div>`;
 }
 
-function PanelHead({ icon: Icon, title, right, onClose }) {
-  return html`<div className="sp-head">
-    <${Icon} size=${15} />
-    <strong>${title}</strong>
-    <span className="grow" />
+// Every Relay panel in Codex opens with the Relay layers glyph; status lives in the body, not the icon.
+function PanelHead({ title, right, onClose }) {
+  return html`<div className="rl-head">
+    <${Layers} size=${16} strokeWidth=${1.5} aria-hidden="true" />
+    <span className="rl-head-title">${title}</span>
     ${right}
-    <button className="icon-btn sm" onClick=${onClose} title="Close"><${X} size=${14} /></button>
+    <button className="rl-icon" aria-label="Close Relay" onClick=${onClose}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
   </div>`;
 }
 
@@ -490,7 +490,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
 
   if (panel === 'propose') {
     return html`<div className="sp">
-      <${PanelHead} icon=${GitPullRequestArrow} title="Relay · Propose a change to R4" onClose=${close} />
+      <${PanelHead} title="Propose a change to R4" onClose=${close} />
       <div className="sp-body">
         <${SectionLabel}>Proposed text<//>
         <textarea className="field" rows="3" value=${text} onInput=${(e) => setText(e.target.value)} />
@@ -501,12 +501,13 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <div className="chips"><${EvidenceChip} id="spec" /><${EvidenceChip} id="api" /></div>
         <div className="muted small">Hover a chip to preview its source lines.</div>
         <${SectionLabel}>When you submit<//>
-        <div className="kv"><span className="muted">Slices notified</span><span><${Tag} tone="amber">Developer<//> <${Tag} tone="amber">Design<//> <${Tag} tone="amber">Business<//></span></div>
+        <div className="kv"><span className="muted">Slices notified</span><span>Developer · Design · Business</span></div>
         <div className="kv"><span className="muted">Stance from</span><span>Priya · Kim</span></div>
-        <div className="kv"><span className="muted">PRD</span><span className="amber">Unchanged until approved</span></div>
+        <div className="kv"><span className="muted">PRD</span><span>Unchanged until approved</span></div>
       </div>
       <div className="sp-foot">
-        <button className="btn" onClick=${() => setPanel('check')}>Back</button>
+        <button className="btn btn-ghost" onClick=${() => setPanel('check')}>Back</button>
+        <span className="grow" />
         <button className="btn btn-primary" disabled=${!reason.trim() || !text.trim()} onClick=${() => { dispatch({ type: 'PROPOSE', text: text.trim(), reason: reason.trim() }); setPanel('sent'); }}>Submit to Dana</button>
       </div>
     </div>`;
@@ -516,27 +517,27 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
     const stances = [state.priya.stance, state.kim.stance].filter(Boolean).length;
     const resent = state.stage === 'resent';
     return html`<div className="sp">
-      <${PanelHead} icon=${CheckCircle2} title="Relay · Sent" onClose=${onSentClose} />
+      <${PanelHead} title=${resent ? 'Evidence resent to Dana' : 'Proposal sent to Dana'} onClose=${onSentClose} />
       <div className="sp-body">
-        <div className="success-card">
-          <div className="success-title"><${CheckCircle2} size=${16} /> ${resent ? 'Evidence resent to Dana' : 'Proposal sent to Dana'} <span className="grow" /><span className="muted small">${resent ? TIMES.resent : TIMES.proposed}</span></div>
+        <div className="rl-status pending">
+          <div className="rl-status-top"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="grow">Waiting on Dana</span><${Tag} tone="amber">Pending<//></div>
           <div className="steps">
-            <${Tag} tone="green"><${Check} size=${11} /> Sent<//><span className="step-line" />
-            <${Tag} tone=${stances === 2 ? 'green' : 'amber'}>Stances ${stances}/2<//><span className="step-line" />
-            <span className="muted small">Dana decides</span>
+            <span className="step"><${Check} size=${13} strokeWidth=${2} aria-hidden="true" />Sent ${resent ? TIMES.resent : TIMES.proposed}</span><span className="step-line" />
+            <span className="step">Stances ${stances}/2</span><span className="step-line" />
+            <span className="step muted">Dana decides</span>
           </div>
         </div>
         <${SectionLabel}>Proposed<//>
         <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} />
         <${SectionLabel}>Slices notified<//>
-        <div className="chips"><${Tag} tone="amber">Developer<//><${Tag} tone="amber">Design<//><${Tag} tone="amber">Business<//></div>
+        <div className="chips"><span className="chip static">Developer</span><span className="chip static">Design</span><span className="chip static">Business</span></div>
         <div className="muted small">R4 shows as Pending in these slices.</div>
         <${SectionLabel}>Stance requested<//>
         <${StanceRow} id="priya" what="owns Figma Overview" stance=${state.priya.stance} />
         <${StanceRow} id="kim" what="owns the success metric" stance=${state.kim.stance} />
-        <div className="info-row"><${GitBranch} size=${13} /> Branch tagged pending-R4. Keep working.</div>
+        <div className="info-row"><${GitBranch} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Branch tagged pending-R4. Keep working.</div>
       </div>
-      <div className="sp-foot"><button className="btn" onClick=${onSentClose}>Back to code</button></div>
+      <div className="sp-foot"><span className="grow" /><button className="btn" onClick=${onSentClose}>Back to code</button></div>
     </div>`;
   }
 
@@ -544,30 +545,32 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
     const added = state.evidence.includes('changelog');
     const canSend = state.stage === 'moreEvidence' && (added || reply.trim());
     return html`<div className="sp">
-      <${PanelHead} icon=${MessageSquare} title="Relay · More evidence for R4" onClose=${close} />
+      <${PanelHead} title="More evidence for R4" onClose=${close} />
       <div className="sp-body">
-        <div className="ask-card">
-          <div className="ask-head"><${Avatar} id="dana" size=${20} /><strong>Dana Ortiz · ${TIMES.moreEvidence} · requested more evidence</strong></div>
-          <p>${state.danaAsk}</p>
+        <div className=${cx('rl-status', !added && 'pending')}>
+          <div className="person-row"><${Avatar} id="dana" size=${26} /><div className="grow"><div className="strong-500">Dana Ortiz asked for more evidence</div><div className="small muted">Product manager · ${TIMES.moreEvidence}</div></div>${!added && html`<${Tag} tone="amber">Open<//>`}</div>
+          <p className="rl-status-note">${state.danaAsk}</p>
         </div>
         <${SectionLabel}>Evidence on this proposal<//>
         ${added
           ? html`<div className="ev-card added">
-              <div><div className="green small strong">${EVIDENCE.changelog.label}</div><div className="muted tiny">${EVIDENCE.changelog.meta}</div></div>
-              <span className="green small">Added</span>
+              <${FileText} size=${16} strokeWidth=${1.5} aria-hidden="true" />
+              <div className="grow"><div className="small">${EVIDENCE.changelog.label}</div><div className="muted tiny">${EVIDENCE.changelog.meta}</div></div>
+              <span className="added-note small"><${Check} size=${13} strokeWidth=${2} aria-hidden="true" /> Added</span>
             </div>`
           : html`<button className="ev-card dashed" onClick=${openFile}>
-              <${Paperclip} size=${14} />
+              <${Paperclip} size=${16} strokeWidth=${1.5} aria-hidden="true" />
               <div><div className="small">Open timekeeping-api.md</div><div className="muted tiny">Select lines in any file, then "Add to R4 evidence"</div></div>
             </button>`}
-        <div className="ev-card"><${FileText} size=${14} /><div><div className="small">${EVIDENCE.spec.label}</div><div className="muted tiny">${EVIDENCE.spec.meta}</div></div></div>
-        <div className="ev-card"><${FileText} size=${14} /><div><div className="small">Sandbox API response</div><div className="muted tiny">${EVIDENCE.api.meta}</div></div></div>
+        <div className="ev-card"><${FileText} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="small">${EVIDENCE.spec.label}</div><div className="muted tiny">${EVIDENCE.spec.meta}</div></div></div>
+        <div className="ev-card"><${FileText} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="small">Sandbox API response</div><div className="muted tiny">${EVIDENCE.api.meta}</div></div></div>
         <${SectionLabel}>Reply to Dana (optional)<//>
         <textarea className="field" rows="3" placeholder="Add a note for Dana…" value=${reply} onInput=${(e) => setReply(e.target.value)} />
         ${added && html`<button className=${cx('link small', reply && 'hidden')} onClick=${() => setReply(TEXT.marcusReply)}>Use suggested reply</button>`}
       </div>
       <div className="sp-foot">
-        <button className="btn" onClick=${close}>Back</button>
+        <button className="btn btn-ghost" onClick=${close}>Back</button>
+        <span className="grow" />
         <button className="btn btn-primary" disabled=${!canSend} onClick=${() => onResend(reply.trim())}>Resend to Dana</button>
       </div>
     </div>`;
@@ -576,26 +579,26 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
   if (panel === 'changed') {
     const u = state.updates;
     return html`<div className="sp">
-      <${PanelHead} icon=${CheckCircle2} title="Relay · R4 changed · PRD v1.1" onClose=${close} />
+      <${PanelHead} title="R4 changed · PRD v1.1" right=${html`<${Tag} tone="green">Approved<//>`} onClose=${close} />
       <div className="sp-body">
-        <div className="ask-head"><${Avatar} id="dana" size=${20} /><strong>Dana approved your proposal</strong> <span className="muted small">${TIMES.approved}</span></div>
+        <div className="person-row"><${Avatar} id="dana" size=${26} /><div className="grow"><div className="strong-500">Dana approved your proposal</div><div className="small muted">Product manager · ${TIMES.approved}</div></div></div>
         <${SectionLabel}>R4 now says<//>
-        <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} />
+        <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} labels=${['Was', 'Now']} />
         <${SectionLabel}>Also updated on approval<//>
         ${[
           [u.jira, 'Jira LAB-15 description'],
           [u.figma, 'Comment on Figma · Overview (Priya)'],
           [u.teams, 'Post in Teams #line-labor'],
           [u.metric, 'Note on Success metrics'],
-        ].filter(([on]) => on).map(([, label]) => html`<div key=${label} className="check-row"><${Check} size=${13} className="green" /> ${label}</div>`)}
+        ].filter(([on]) => on).map(([, label]) => html`<div key=${label} className="check-row"><${Check} size=${14} strokeWidth=${2} className="green" aria-hidden="true" /> ${label}</div>`)}
         <${SectionLabel}>Preview · what "Update the code" changes<//>
         <div className="diff-file">
-          <div className="diff-file-head mono"><${FileCode} size=${12} /> src/jobs/refreshLaborHours.ts</div>
+          <div className="diff-file-head mono"><${FileCode} size=${14} strokeWidth=${1.5} aria-hidden="true" /> src/jobs/refreshLaborHours.ts</div>
           <div className="mono diff-del">- schedule = '*/15 * * * *'</div>
           <div className="mono diff-add">+ schedule = '5 * * * *' // R4 v1.1</div>
         </div>
         <div className="diff-file">
-          <div className="diff-file-head mono"><${FileCode} size=${12} /> src/ui/Overview.tsx</div>
+          <div className="diff-file-head mono"><${FileCode} size=${14} strokeWidth=${1.5} aria-hidden="true" /> src/ui/Overview.tsx</div>
           <div className="mono diff-del">- Updated every 15 min</div>
           <div className="mono diff-add">+ Last synced {lastSync} · next {nextSync}</div>
         </div>
@@ -603,8 +606,9 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
       </div>
       <div className="sp-foot">
         ${state.codeUpdated
-          ? html`<span className="green small grow"><${Check} size=${13} /> Code matches v1.1</span><button className="btn" onClick=${close}>Back to code</button>`
-          : html`<button className="btn" onClick=${() => onFinish(false)}>Not now</button>
+          ? html`<span className="green small grow"><${Check} size=${14} strokeWidth=${2} aria-hidden="true" /> Code matches v1.1</span><button className="btn" onClick=${close}>Back to code</button>`
+          : html`<button className="btn btn-ghost" onClick=${() => onFinish(false)}>Not now</button>
+              <span className="grow" />
               <button className="btn btn-primary" onClick=${() => onFinish(true)}>Update the code to match</button>`}
       </div>
     </div>`;
@@ -612,14 +616,14 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
 
   if (panel === 'denied') {
     return html`<div className="sp">
-      <${PanelHead} icon=${X} title="Relay · R4 unchanged" onClose=${close} />
+      <${PanelHead} title="R4 unchanged" onClose=${close} />
       <div className="sp-body">
-        <div className="ask-head"><${Avatar} id="dana" size=${20} /><strong>Dana kept R4 as written</strong> <span className="muted small">${TIMES.denied}</span></div>
+        <div className="person-row"><${Avatar} id="dana" size=${26} /><div className="grow"><div className="strong-500">Dana kept R4 as written</div><div className="small muted">Product manager · ${TIMES.denied}</div></div></div>
         <${SectionLabel}>R4 says<//>
         <div className="small">${TEXT.r4Old}</div>
         <div className="muted small">Your draft polls every 15 minutes, as written. The branch is no longer tagged pending-R4.</div>
       </div>
-      <div className="sp-foot"><button className="btn" onClick=${close}>Back to code</button></div>
+      <div className="sp-foot"><span className="grow" /><button className="btn" onClick=${close}>Back to code</button></div>
     </div>`;
   }
   return null;
@@ -627,9 +631,9 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
 
 function StanceRow({ id, what, stance }) {
   return html`<div className="stance-row">
-    <${Avatar} id=${id} size=${20} />
-    <span className="small">${id === 'priya' ? 'Priya Shah' : 'Kim Alvarez'} · <span className="muted">${what}</span></span>
+    <${Avatar} id=${id} size=${24} />
+    <span className="small"><span className="strong-500">${id === 'priya' ? 'Priya Shah' : 'Kim Alvarez'}</span> <span className="muted">${what}</span></span>
     <span className="grow" />
-    ${stance ? html`<${Tag} tone=${stance === 'agreed' ? 'green' : 'red'}>${stance === 'agreed' ? 'Agreed' : 'Disagreed'}<//>` : html`<span className="muted tiny"><${Clock} size=${11} /> Waiting</span>`}
+    ${stance ? html`<${Tag} tone=${stance === 'agreed' ? 'green' : 'neutral'}>${stance === 'agreed' ? 'Agreed' : 'Disagreed'}<//>` : html`<${Tag}>No reply yet<//>`}
   </div>`;
 }

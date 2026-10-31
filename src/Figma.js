@@ -270,7 +270,7 @@ function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
     body = html`<${Fragment}>
       <div className="plg-sec">
         <div className="plg-title-row"><strong>R4 · Data refresh rate</strong>${approved ? html`<${Tag} tone="green">Changed in v1.1<//>` : html`<${Tag} tone="amber">Pending<//>`}</div>
-        <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} />
+        <${Diff} legacy from=${TEXT.r4Old} to=${state.proposal.text} />
         <div className="plg-by"><${Avatar} legacy id="marcus" size=${18} /> Marcus Lee · via Codex · ${TIMES.proposed}${approved ? ' · approved by Dana' : ''}</div>
         <button className="plg-reason" onClick=${() => setShowReason(!showReason)}>
           <span className="link">Reason and evidence</span> <span className="muted tiny">${state.evidence.length} sources</span>

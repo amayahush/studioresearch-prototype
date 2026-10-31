@@ -42,7 +42,7 @@ export function TimeSkip({ from, to, title, events, onDone }) {
 
   return html`<div className="timeskip" onClick=${advance} role="dialog" aria-modal="true" aria-live="polite" aria-label=${`Time skip to ${to}`}>
     <div className="ts-card">
-      <div className="ts-clock"><${Clock} size=${18} /><span className="mono">${fmt(now)}</span></div>
+      <div className="ts-clock"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="mono">${fmt(now)}</span></div>
       <div className="ts-title">${title}</div>
       <div className="ts-events">
         ${events.map((e) => {
@@ -72,12 +72,12 @@ export function EndCard({ role, title, steps, onExplore, onStart, onClose }) {
 
   return html`<div className="endcard-backdrop" role="dialog" aria-modal="true" aria-labelledby="endcard-title">
     <div className="endcard">
-      <div className="eyebrow">${role} path · complete</div>
+      <div className="tiny-label">${role} path · complete</div>
       <h2 id="endcard-title">${title}</h2>
       <ol className="end-steps">
         ${steps.map((s, i) => html`<li key=${i} className=${cx(s.pending && 'pending')}>
           <span className="mono muted">${s.time}</span>
-          <span className="end-icon">${s.pending ? html`<${Clock} size=${12} />` : html`<${Check} size=${12} />`}</span>
+          <span className="end-icon">${s.pending ? html`<${Clock} size=${12} strokeWidth=${2} />` : html`<${Check} size=${12} strokeWidth=${2} />`}</span>
           <span><strong>${s.who}</strong> ${s.text}</span>
         </li>`)}
       </ol>
