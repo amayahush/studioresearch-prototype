@@ -65,7 +65,7 @@ export function TimeSkip({ from, to, day, title, events, onDone }) {
 }
 
 // End of a role path: a recap of what happened, then where to go next.
-export function EndCard({ role, title, steps, onExplore, onStart, onClose, exploreLabel = 'Explore the Rea web app' }) {
+export function EndCard({ role, title, steps, onExplore, onStart, onClose, exploreLabel = 'Explore the Astra web app' }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);

@@ -107,7 +107,7 @@ export function Figma() {
       <div className="fg-world" style=${{ transform: `translate(calc(-50% + ${view.x}px), calc(-50% + ${view.y}px)) scale(${view.z})` }}>
       <div className="fg-frame-wrap">
         <div className="fg-frame-meta"><span>Dashboard / Overview</span><span>1280 × 832</span></div>
-        ${tagged && html`<button className=${cx('fg-pending-tag', needsLabel && 'changed')} onClick=${() => { setPluginOpen(true); setSeenStage(state.stage); }} aria-label="Open the Rea plugin for R4">${needsLabel ? 'R4 · changed in v1.1' : 'R4 · pending · was assumed'}</button>`}
+        ${tagged && html`<button className=${cx('fg-pending-tag', needsLabel && 'changed')} onClick=${() => { setPluginOpen(true); setSeenStage(state.stage); }} aria-label="Open the Astra plugin for R4">${needsLabel ? 'R4 · changed in v1.1' : 'R4 · pending · was assumed'}</button>`}
         <div className=${cx('dash-frame', selected === 'frame' && 'selected')}>
           <div className="dash-title">Line labor · 2nd shift</div>
           <div className="dash-sub">
@@ -127,7 +127,7 @@ export function Figma() {
             <${Avatar} legacy id="dana" size=${24} />
           </button>
           ${commentOpen && html`<div className="fg-comment-pop" role="dialog" aria-label="Comment thread">
-            <div className="fg-comment-head"><${Avatar} legacy id="dana" size=${20} /><strong>Dana Ortiz</strong><span className="muted tiny">via Rea · ${TIMES.approved}</span>${state.labelUpdated && html`<span className="grow" /><${Tag} tone="green"><${Check} size=${11} /> Resolved<//>`}</div>
+            <div className="fg-comment-head"><${Avatar} legacy id="dana" size=${20} /><strong>Dana Ortiz</strong><span className="muted tiny">via Astra · ${TIMES.approved}</span>${state.labelUpdated && html`<span className="grow" /><${Tag} tone="green"><${Check} size=${11} /> Resolved<//>`}</div>
             ${disagreed && html`<p className="small muted">Thanks for flagging this. The data owner confirmed hourly sync, and the label fix covers your concern.</p>`}
             <p className="small">R4 is hourly now (PRD v1.1). Can the label show the last sync time instead of "Updated every 15 min"?</p>
             ${!state.labelUpdated && html`<div className="plg-actions"><button className="btn btn-primary sm" onClick=${relabel}>Relabel to "Last synced · next"</button></div>`}
@@ -145,8 +145,8 @@ export function Figma() {
         <button className="tool"><${Type} size=${15} /></button>
         <button className="tool"><${MessageCircle} size=${15} /></button>
         <span className="tool-sep" />
-        <button className=${cx('tool relay', pluginOpen && 'on')} onClick=${openPlugin} aria-label="Rea plugin" aria-expanded=${pluginOpen}>
-          <${Link2} size=${14} /> Rea ${attention && html`<span className=${cx('dot amber', pulse && 'pulse')} />`}
+        <button className=${cx('tool astra', pluginOpen && 'on')} onClick=${openPlugin} aria-label="Astra plugin" aria-expanded=${pluginOpen}>
+          <${Link2} size=${14} /> Astra ${attention && html`<span className=${cx('dot amber', pulse && 'pulse')} />`}
         </button>
         <button className="tool"><${Code2} size=${15} /></button>
       </div>
@@ -162,7 +162,7 @@ export function Figma() {
       </div>
     </aside>
 
-    ${pluginOpen && html`<${RelayPlugin} onClose=${() => (pending && state.priya.stance ? afterStance() : setPluginOpen(false))} onSelectLayer=${() => setSelected('label')} onKeepDesigning=${afterStance} onRelabel=${relabel} />`}
+    ${pluginOpen && html`<${AstraPlugin} onClose=${() => (pending && state.priya.stance ? afterStance() : setPluginOpen(false))} onSelectLayer=${() => setSelected('label')} onKeepDesigning=${afterStance} onRelabel=${relabel} />`}
     ${skip && html`<${TimeSkip} ...${skip} onDone=${() => { skip.onDone(); setSkip(null); }} />`}
     ${endCard && html`<${EndCard}
       role="Designer"
@@ -243,7 +243,7 @@ function useCanvasNav(onBackgroundClick) {
   return { canvasRef, view, resetView: () => setView({ x: 0, y: 0, z: 1 }), startPan, panning, spaceDown };
 }
 
-function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
+function AstraPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
   const { state, dispatch } = useStore();
   const [note, setNote] = useState('');
   const [showReason, setShowReason] = useState(false);
@@ -256,7 +256,7 @@ function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
     body = html`<div className="plg-empty">
       <${Check} size=${18} strokeWidth=${1.5} className="muted" />
       <div className="strong-500">Nothing pending on your frames</div>
-      <div className="muted small">Rea tags layers here when a linked requirement may change.</div>
+      <div className="muted small">Astra tags layers here when a linked requirement may change.</div>
       <div className="plg-linked muted tiny">Linked: R1 → Department bars · R3 → Filters · R4 → Last updated label</div>
     </div>`;
   } else if (state.stage === 'denied') {
@@ -316,7 +316,7 @@ function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
   }
 
   return html`<div className="plugin">
-    <div className="plg-head"><${Layers} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="plg-name">Rea</span><span className="muted small">plugin</span><span className="grow" /><button className="icon-btn sm" aria-label="Minimize plugin" onClick=${onClose}><${Minus} size=${14} strokeWidth=${1.5} /></button><button className="icon-btn sm" aria-label="Close plugin" onClick=${onClose}><${X} size=${14} strokeWidth=${1.5} /></button></div>
+    <div className="plg-head"><${Layers} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="plg-name">Astra</span><span className="muted small">plugin</span><span className="grow" /><button className="icon-btn sm" aria-label="Minimize plugin" onClick=${onClose}><${Minus} size=${14} strokeWidth=${1.5} /></button><button className="icon-btn sm" aria-label="Close plugin" onClick=${onClose}><${X} size=${14} strokeWidth=${1.5} /></button></div>
     ${body}
   </div>`;
 }

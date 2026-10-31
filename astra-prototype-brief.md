@@ -1,22 +1,22 @@
-# Relay · High-fidelity prototype build brief
+# Astra · High-fidelity prototype build brief
 
 > For Claude Code. Put this file in an empty project folder, then say:
-> "Read relay-prototype-brief.md. Ask me the questions in section 12 first, then build Phase 1."
+> "Read astra-prototype-brief.md. Ask me the questions in section 12 first, then build Phase 1."
 > Build one phase at a time and stop for review after each phase. Do not build everything in one pass.
 
 ---
 
-## 1. What Relay is
+## 1. What Astra is
 
-Relay is a concept product from my GD 503 Project 2 (NC State MGXD). It is an AI-assisted PRD tool for teams that build with coding agents.
+Astra is a concept product from my GD 503 Project 2 (NC State MGXD). It is an AI-assisted PRD tool for teams that build with coding agents.
 
 - An AI drafts the PRD from conversations (kickoff calls, notes, spreadsheets). The PM owns final approval.
 - Every stakeholder sees a role-filtered **slice** of the PRD (Developer, Design, SME, Business).
-- Relay reaches people **inside the tools they already use** via MCP: Codex in VS Code for developers, a Figma plugin for designers, the Relay web app for the PM.
+- Astra reaches people **inside the tools they already use** via MCP: Codex in VS Code for developers, a Figma plugin for designers, the Astra web app for the PM.
 - When someone learns something that conflicts with the PRD, they **propose** a change with a reason and evidence. The change shows as **Pending** everywhere it matters ("don't build on this yet") until the PM approves, denies, or asks for more evidence.
 - One approval updates the PRD and the linked work (Jira, Figma, Teams).
 
-The research finding behind it: requirements are discovered through iteration, but agent workflows assume they are specified upfront. Official records lag behind what was decided in conversation. Relay is about keeping requirements clear **as they change**, with a human (the PM) always making the call.
+The research finding behind it: requirements are discovered through iteration, but agent workflows assume they are specified upfront. Official records lag behind what was decided in conversation. Astra is about keeping requirements clear **as they change**, with a human (the PM) always making the call.
 
 ## 2. What this prototype is for
 
@@ -49,16 +49,16 @@ If the Figma MCP is not available, ask me to export PNGs of each frame into `/re
 | 02 | Marcus · PRD check | `583:2779` | Marcus · VS Code + Codex |
 | 03 | Marcus · Propose a change to R4 | `583:2904` | Marcus · VS Code + Codex |
 | 04 | Marcus · Proposal sent | `583:3018` | Marcus · VS Code + Codex |
-| 05 | Priya · Pending change in Figma | `583:3125` | Priya · Figma + Relay plugin |
-| 06 | Dana · Reviews the proposal | `583:3233` | Dana · Relay web app |
-| 07 | Dana · Requests more evidence | `583:3421` | Dana · Relay web app |
-| 07b | Dana · Evidence updated, approves v1.1 | `611:3506` | Dana · Relay web app |
+| 05 | Priya · Pending change in Figma | `583:3125` | Priya · Figma + Astra plugin |
+| 06 | Dana · Reviews the proposal | `583:3233` | Dana · Astra web app |
+| 07 | Dana · Requests more evidence | `583:3421` | Dana · Astra web app |
+| 07b | Dana · Evidence updated, approves v1.1 | `611:3506` | Dana · Astra web app |
 | 08a | Marcus · Selects changelog lines as evidence | `607:3444` | Marcus · VS Code + Codex |
 | 08b | Marcus · Evidence added, resend | `583:3593` | Marcus · VS Code + Codex |
 | 09 | Marcus · R4 changed, preview the code update | `583:3713` | Marcus · VS Code + Codex |
-| 10 | Map view | `583:3829` | Any · Relay web app |
-| 11 | Screens view | `583:4013` | Any · Relay web app |
-| 12 | Present view | `583:4148` | Any · Relay web app |
+| 10 | Map view | `583:3829` | Any · Astra web app |
+| 11 | Screens view | `583:4013` | Any · Astra web app |
+| 12 | Present view | `583:4148` | Any · Astra web app |
 | ov | Overlay · Deny menu | `591:3466` | Dana |
 | ov | Overlay · Export menu | `606:3489` | Any (opens from Export) |
 
@@ -67,7 +67,7 @@ Each frame also has a "WHAT CHANGED" note below it in Figma. Read those notes; t
 ## 4. Tech stack
 
 - **Vite + React + TypeScript**
-- **Tailwind CSS** with the Relay tokens below mapped as theme colors
+- **Tailwind CSS** with the Astra tokens below mapped as theme colors
 - **Motion for React** (formerly Framer Motion): `npm install motion`, import from `"motion/react"`
 - **lucide-react** for icons (the Figma icon names match Lucide: `git-pull-request-arrow`, `circle-check`, `sparkles`, `triangle-alert`, `git-branch`, `git-fork`, `paperclip`, `crosshair`, `history`, etc.)
 - **Zustand** (or a single `useReducer` context) for the shared story state
@@ -77,7 +77,7 @@ Keep it a static site. No server, no database.
 
 ## 5. Design tokens
 
-From the Figma variables (collection `relay/*`). Dark theme only.
+From the Figma variables (collection `astra/*`). Dark theme only.
 
 | Token | Hex | Use |
 |---|---|---|
@@ -106,10 +106,10 @@ Typography, radii, and spacing were not exported as variables. Pull them from `g
 
 - Render every screen inside a fixed **1280 × 832 stage**, scaled to fit the browser window (CSS transform scale, centered, letterboxed on `bg`). This keeps it pixel-faithful on any symposium monitor.
 - Three reusable shells:
-  1. **VS Code + Codex shell** (01 to 04, 08a, 08b, 09): file tree (210px), Codex terminal pane, optional Relay side panel (360px), tab bar with branch name, "Ask Codex" input, status bar ("codex agent · Relay via MCP · Line Labor PRD v1 · read-only" plus a colored PRD status dot).
-  2. **Figma UI3 shell** (05): file/layers panel (240px), canvas, bottom toolbar with a Relay plugin button, properties panel (240px), floating Relay plugin window.
-  3. **Relay web app shell** (06, 07, 07b, 10 to 12): sidebar (212px: workspace switcher, search, Inbox, My work, Projects, Connected tools with freshness like "2m" or "live", Settings, Help), top bar (breadcrumb, version chip, view switcher Doc / Map / Screens / Present, Export, Share, avatar), slice tabs with status filter, main work area, right detail panel (350px).
-- Shared components: Chip (variants per status + tool chips like "Jira LAB-15"), Avatar, Button (primary, secondary, split button with menu), Panel header/body/footer, Evidence row, Stance row, Code block, Diff row, Popover, Menu, Time divider, Relay hint line (◆ glyph + text + "view"), Stepper.
+  1. **VS Code + Codex shell** (01 to 04, 08a, 08b, 09): file tree (210px), Codex terminal pane, optional Astra side panel (360px), tab bar with branch name, "Ask Codex" input, status bar ("codex agent · Astra via MCP · Line Labor PRD v1 · read-only" plus a colored PRD status dot).
+  2. **Figma UI3 shell** (05): file/layers panel (240px), canvas, bottom toolbar with a Astra plugin button, properties panel (240px), floating Astra plugin window.
+  3. **Astra web app shell** (06, 07, 07b, 10 to 12): sidebar (212px: workspace switcher, search, Inbox, My work, Projects, Connected tools with freshness like "2m" or "live", Settings, Help), top bar (breadcrumb, version chip, view switcher Doc / Map / Screens / Present, Export, Share, avatar), slice tabs with status filter, main work area, right detail panel (350px).
+- Shared components: Chip (variants per status + tool chips like "Jira LAB-15"), Avatar, Button (primary, secondary, split button with menu), Panel header/body/footer, Evidence row, Stance row, Code block, Diff row, Popover, Menu, Time divider, Astra hint line (◆ glyph + text + "view"), Stepper.
 
 ## 7. The story data
 
@@ -148,23 +148,23 @@ Put all of this in one `story.ts` data file so copy is editable in one place. Ex
 
 ## 8. Screens, interactions, and role paths
 
-The start screen sends the participant down one role path. Other people's actions happen "off screen" and are shown with a **time skip** transition (section 9). At the end of every path, offer "Explore the Relay web app" which opens the Map, Screens, and Present views in their v1.1 state.
+The start screen sends the participant down one role path. Other people's actions happen "off screen" and are shown with a **time skip** transition (section 9). At the end of every path, offer "Explore the Astra web app" which opens the Map, Screens, and Present views in their v1.1 state.
 
 ### 00 · Start
 
-- Eyebrow "RELAY · USABILITY TEST", headline about the 15 minute vs hourly conflict, three role cards (Marcus, Priya, Dana), each with "Starts in [tool]", a one-line task, and a Start button.
+- Eyebrow "ASTRA · USABILITY TEST", headline about the 15 minute vs hourly conflict, three role cards (Marcus, Priya, Dana), each with "Starts in [tool]", a one-line task, and a Start button.
 - See my feedback in section 10 before building this one.
 
 ### Marcus path: 00 → 01 → 02 → 03 → 04 → (skip) → 08a → 08b → (skip) → 09 → end
 
 **01 · Codex spots a gap**
-- Marcus's prompt is already sent. Codex output **streams in line by line**: reading PRD context, reading the API doc, calling the sandbox API, the JSON response, then the Relay hint "◆ Relay · R4 may not match the API. 1 note · view · Alt P", then writing the file, writing tests, "Draft ready · 2 files changed · not committed".
+- Marcus's prompt is already sent. Codex output **streams in line by line**: reading PRD context, reading the API doc, calling the sandbox API, the JSON response, then the Astra hint "◆ Astra · R4 may not match the API. 1 note · view · Alt P", then writing the file, writing tests, "Draft ready · 2 files changed · not committed".
 - The conflicting lines (`sync_interval: PT1H` and the `*/15` schedule comment) get a subtle pending-colored highlight.
-- Status bar dot turns pending: "Relay · 1 note".
+- Status bar dot turns pending: "Astra · 1 note".
 - Click "view" or press Alt+P → 02.
 
 **02 · PRD check panel**
-- Codex pane narrows (1070 → 710px) as the Relay panel slides in from the right.
+- Codex pane narrows (1070 → 710px) as the Astra panel slides in from the right.
 - Facts only, side by side: "PRD R4 SAYS Every 15 min" vs "TIMEKEEPING API Every 60 min". Sources with quoted lines. "Linked to R4" chips and people with a "+" to add someone. "Evidence · attached automatically" chips. Disclaimer "AI can make mistakes. Check the evidence."
 - Footer: Dismiss (secondary, left), Propose PRD change (primary, right). Dismiss closes the panel and leaves the hint (decide with me what Dismiss leads to in the test).
 
@@ -181,7 +181,7 @@ The start screen sends the participant down one role path. Other people's action
 - Back to code → time skip ("2:08 PM · Dana asked for more evidence") → 08a.
 
 **08a · Selects changelog lines as evidence**
-- A new highlighted Relay notice with a "New" chip: "Relay · Dana asked for more evidence on R4 · view". Status bar "Relay · Dana replied".
+- A new highlighted Astra notice with a "New" chip: "Astra · Dana asked for more evidence on R4 · view". Status bar "Astra · Dana replied".
 - Panel shows Dana's message and current evidence. Reply field placeholder.
 - The participant opens `timekeeping-api.md` (from the file tree or a link in the panel), **drag-selects lines 58 to 60**, and a floating selection toolbar appears: "Add to R4 evidence ⌘⇧E" and "Ask Codex". Make selection forgiving: clicking a line number or dragging across any part of 58 to 60 should snap to the full range.
 - Add to R4 evidence → 08b.
@@ -192,15 +192,15 @@ The start screen sends the participant down one role path. Other people's action
 - Attach reply and resend → time skip ("2:21 PM · Dana approved R4") → 09.
 
 **09 · R4 changed, preview the code update**
-- Older notices muted, newest highlighted: "Relay · R4 changed in PRD v1.1. Your draft doesn't match · view". Status bar shows PRD v1.1.
+- Older notices muted, newest highlighted: "Astra · R4 changed in PRD v1.1. Your draft doesn't match · view". Status bar shows PRD v1.1.
 - Panel: "Dana approved your proposal 2:21 PM", R4 now says (old struck through, new text), "Also updated on approval" checklist, and a **diff preview** of the 2 files.
 - Update the code to match → the diff applies in the Codex pane, then an end card. Not now → end card.
 
 ### Priya path: 00 → 05 → end (see section 12, this path is thin)
 
 **05 · Pending change in Figma**
-- Figma UI3 look. No banner. The Relay toolbar button has a pulsing pending dot; the "Last updated label" layer has an R4 chip; the canvas shows an "R4 · pending" pin on the frame.
-- Clicking the Relay toolbar button opens the plugin window: "R4 · Data refresh rate · Pending", old vs new text, "Marcus Lee · via Codex · 1:52 PM", expandable "Reason and evidence · 2 sources ›", "IN THIS FRAME: 'Updated every 15 min' label · Select" (Select highlights that layer on the canvas and in the layers panel), "Keep designing. Edits to this layer are tagged pending R4."
+- Figma UI3 look. No banner. The Astra toolbar button has a pulsing pending dot; the "Last updated label" layer has an R4 chip; the canvas shows an "R4 · pending" pin on the frame.
+- Clicking the Astra toolbar button opens the plugin window: "R4 · Data refresh rate · Pending", old vs new text, "Marcus Lee · via Codex · 1:52 PM", expandable "Reason and evidence · 2 sources ›", "IN THIS FRAME: 'Updated every 15 min' label · Select" (Select highlights that layer on the canvas and in the layers panel), "Keep designing. Edits to this layer are tagged pending R4."
 - Bottom block "Your stance is requested · You own this frame": optional note for Dana, Disagree / Agree.
 - Agree or Disagree → confirmation state in the plugin → end card.
 
@@ -250,7 +250,7 @@ Principles:
 Specific moments:
 1. **Codex streaming (01):** lines appear one by one with a short stagger (about 150 to 300ms each, a bit longer for "Called sandbox…" to feel like a network call). JSON and code blocks reveal line by line. Spinner glyph on the active line, then ✓.
 2. **Conflict highlight (01):** after the JSON lands, `sync_interval` and the `*/15` comment get a pending underline/glow that fades in. The ◆ glyph does a small rotate-in; the status bar dot cross-fades to pending.
-3. **Panel open (01 → 02):** Codex pane width animates with a layout animation while the Relay panel springs in from the right. Compare cards: values count or flip into place.
+3. **Panel open (01 → 02):** Codex pane width animates with a layout animation while the Astra panel springs in from the right. Compare cards: values count or flip into place.
 4. **Evidence hover preview (03, 06):** popover scales 0.96 → 1 and fades, 120ms delay on enter, instant on leave.
 5. **Submit (03 → 04):** button shows a brief loading state then a check; the stepper fills "Sent" and pulses the next step. The branch name in the tab bar morphs to "· pending-R4".
 6. **Pending propagation:** whenever R4 becomes Pending, animate its chip from Approved to Pending (color tween plus a single soft pulse). In the Figma shell, the toolbar dot pulses slowly (2s loop, low amplitude) until the plugin is opened.
@@ -267,7 +267,7 @@ Specific moments:
 ## 10. My open feedback from the Figma board (implement these)
 
 1. **Start screen (00):** "Make buttons more central to the role versus name." The role (Senior engineer, Designer, Product manager) and what that person does should lead each card and the Start button, more than the person's name. Example button label: "Start as the developer" (ask me to confirm wording).
-2. **Start screen (00):** "Put this on a higher level (not just on the solution level) or allowing users to experience the story from this perspective." The start screen should frame the *problem story* (a requirement that changes mid-build and who it affects), not just jump into my solution. Propose 2 options for me to pick, for example: (a) a short animated intro that shows the conflict traveling between Marcus, Priya, and Dana before the role picker, or (b) a "Watch the whole relay" option that plays all three roles in sequence alongside the three single-role starts. Show me both as quick drafts before building fully.
+2. **Start screen (00):** "Put this on a higher level (not just on the solution level) or allowing users to experience the story from this perspective." The start screen should frame the *problem story* (a requirement that changes mid-build and who it affects), not just jump into my solution. Propose 2 options for me to pick, for example: (a) a short animated intro that shows the conflict traveling between Marcus, Priya, and Dana before the role picker, or (b) a "Watch the whole astra" option that plays all three roles in sequence alongside the three single-role starts. Show me both as quick drafts before building fully.
 3. **VS Code shell (01 and all Marcus screens):** "Option to close the left side panel with the icon." Add a toggle (an icon button in the tab bar or an activity-bar icon) that collapses the file tree, animated, with the Codex pane expanding to fill.
 
 ## 11. Facilitator tools, testing, and deployment
@@ -291,7 +291,7 @@ Do not guess on these. Ask me in one short list at the start:
 3. **Spec wording for §3.2 line 43:** the hover preview in 03 says "Clients should not poll faster." while the editor in 08a/08b says "Clients should not poll more often than hourly." Pick one.
 4. **07 footer buttons:** layer names say Reject / Approve and publish v1.1, but 06 and 07b use the Deny split button. Confirm what 07's footer actually shows (I believe it is Cancel / Send to Marcus).
 5. **Draft count:** the status filter says Draft 1 (R5 is an AI draft per my 06 note), but R5 shows no Draft chip. Should R5 get a Draft chip?
-6. **Priya's path is one screen.** Marcus has 8 screens and Dana has 3 plus an overlay. Should Priya's path continue after she agrees (for example a time skip to the v1.1 approval, then the Figma comment Relay posted, then the Screens view showing her relabeled frame)? Propose a 2 to 3 step extension for my approval; do not add it without asking.
+6. **Priya's path is one screen.** Marcus has 8 screens and Dana has 3 plus an overlay. Should Priya's path continue after she agrees (for example a time skip to the v1.1 approval, then the Figma comment Astra posted, then the Screens view showing her relabeled frame)? Propose a 2 to 3 step extension for my approval; do not add it without asking.
 7. **What does Dismiss on 02 do** in the test? Close the panel and keep the hint, or end the path?
 8. **Typography** (if not readable from Figma): confirm fonts.
 

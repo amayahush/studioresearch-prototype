@@ -22,7 +22,7 @@ const PERSPECTIVES = [
   {
     id: 'dana',
     sees: 'The PRD says "Refresh data every 15 minutes."',
-    tool: 'Starts in Rea',
+    tool: 'Starts in Astra',
     toolTone: 'neutral',
     task: 'A teammate proposed a change to your PRD. Review it and decide.',
   },
@@ -33,7 +33,7 @@ export function RolePicker() {
 
   return html`<div className="picker">
     <div className="picker-inner">
-      <div className="eyebrow">Rea</div>
+      <div className="eyebrow">Astra</div>
       <h1>The PRD says the dashboard refreshes every 15 minutes. The data only updates once an hour.</h1>
       <p className="picker-lede">
         You're on the Line Labor Dashboard team. Three people each hold one piece of the truth, in a different tool, and none of
@@ -44,7 +44,7 @@ export function RolePicker() {
         ${PERSPECTIVES.map((p) => {
           const person = PEOPLE[p.id];
           return html`<article key=${p.id} className="persp-card">
-            <div className="persp-role">${person.role}</div>
+            <div className="persp-role">${person.role.replace(/\b\w/g, (c) => c.toUpperCase())}</div>
             <div><span className=${`tag tag-${p.toolTone}`}>${p.tool}</span></div>
             <blockquote className="persp-sees">${p.sees}</blockquote>
             <p className="persp-task">${p.task}</p>

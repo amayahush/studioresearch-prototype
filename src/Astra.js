@@ -2,7 +2,7 @@ import { html, useState, useEffect, cx, Fragment } from './lib.js';
 import { useStore, TEXT, TIMES, R4_INTENT, isPending, r4Text, r4Status, prdVersion } from './store.js';
 import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection, StatusChip } from './ui.js';
 import { TimeSkip, EndCard } from './Interstitials.js';
-import { MapView, ScreensView, PresentView } from './RelayViews.js';
+import { MapView, ScreensView, PresentView } from './AstraViews.js';
 import { dashboardLabel } from './Figma.js';
 import {
   ChevronDown, Search, Inbox, CircleUser, FileText, Settings, HelpCircle, X, History, Check, Clock, PanelLeft,
@@ -67,7 +67,7 @@ export const unverified = (reqs) => reqs.filter((r) => r.assume !== 'verified').
 const VIEWS = [['doc', 'Doc'], ['map', 'Map'], ['screens', 'Screens'], ['present', 'Present']];
 const ICON = { size: 15, strokeWidth: 1.5, 'aria-hidden': 'true' };
 
-const NAV_KEY = 'relay-sidebar-open';
+const NAV_KEY = 'astra-sidebar-open';
 
 function loadNavOpen() {
   try {
@@ -77,7 +77,7 @@ function loadNavOpen() {
   }
 }
 
-export function Relay() {
+export function Astra() {
   const { state, dispatch } = useStore();
   const [selected, setSelected] = useState(isPending(state) ? 'R4' : null);
   const [skip, setSkip] = useState(null);
@@ -87,7 +87,7 @@ export function Relay() {
   const [navOpen, setNavOpen] = useState(loadNavOpen);
   const pending = isPending(state);
   const inbox = ['proposed', 'resent'].includes(state.stage) ? 1 : 0;
-  const view = state.relayView;
+  const view = state.astraView;
 
   useEffect(() => {
     if (!toast) return;
@@ -146,7 +146,7 @@ export function Relay() {
 
   const notSimulated = (what) => () => setToast(`${what} is not simulated in this prototype.`);
 
-  return html`<div className="relay">
+  return html`<div className="astra">
     <nav className=${cx('rl-side', !navOpen && 'collapsed')} aria-label="Workspace">
       ${navOpen
         ? html`<${Fragment}>
@@ -606,7 +606,7 @@ function R4Panel({ onClose, openMap, setOpen, story }) {
   ];
   if (resent && mode !== 'request') {
     sections.push(sec('updates', 'One approval also updates', true, `${checked} of 4 tools`, null, html`
-      ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Rea', 'Add a note to Success metrics']].map(
+      ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Astra', 'Add a note to Success metrics']].map(
         ([k, tool, label]) => html`<label key=${k} className="update-row">
           <input type="checkbox" checked=${updates[k]} onChange=${() => setUpdates({ ...updates, [k]: !updates[k] })} />
           <span className="small grow">${label}</span><span className="muted tiny">${tool}</span>
@@ -672,7 +672,7 @@ function R5Panel({ onClose, openMap, setOpen, req }) {
   const text = 'Show a department detail view with an hourly breakdown.';
   const draftedFrom = html`
     <div className="quote-card"><div className="muted tiny">Lead notes · Oct 1 · 2nd shift leads</div><div className="small">"When a department runs hot I want to click in and see which hours did it."</div></div>
-    <div className="muted tiny">Rea drafted R5 from this note. It has not been reviewed.</div>`;
+    <div className="muted tiny">Astra drafted R5 from this note. It has not been reviewed.</div>`;
 
   if (state.r5 === 'accepted') {
     return html`<${Inspector}
@@ -681,7 +681,7 @@ function R5Panel({ onClose, openMap, setOpen, req }) {
       sections=${[
         sec('requirement', 'Requirement', true, '', null, html`<p className="small">${text}</p>`),
         sec('linked', 'Linked work', false, 'Jira LAB-16 · To do', null, html`<div className="chips"><span className="chip static">Jira LAB-16 · To do</span></div><div className="muted tiny">Created when you accepted the draft.</div>`),
-        sec('history', 'History', false, 'Accepted today', null, html`<div className="insp-line">Drafted by Rea from lead notes · Oct 1</div><div className="insp-line">Accepted by you · today</div>`),
+        sec('history', 'History', false, 'Accepted today', null, html`<div className="insp-line">Drafted by Astra from lead notes · Oct 1</div><div className="insp-line">Accepted by you · today</div>`),
       ]}
     />`;
   }
@@ -689,7 +689,7 @@ function R5Panel({ onClose, openMap, setOpen, req }) {
   return html`<${Inspector}
     ...${shell}
     tag=${html`<${Tag} tone="blue">Draft · AI<//>`}
-    from=${html`<span className="ai-dot" aria-hidden="true" /><span className="muted">Drafted by Rea from lead notes. Not reviewed yet.</span>`}
+    from=${html`<span className="ai-dot" aria-hidden="true" /><span className="muted">Drafted by Astra from lead notes. Not reviewed yet.</span>`}
     sections=${[
       sec('draft', 'Draft', true, '', null, html`<p className="small">${text}</p><div className="muted tiny">Drafts never show as facts in Present.</div>`),
       statusSection(req),

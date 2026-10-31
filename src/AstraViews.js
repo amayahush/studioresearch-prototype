@@ -580,7 +580,7 @@ function slidesFor(state, audience) {
       name: 'Status', kicker: 'Status', title: `PRD ${prdVersion(state)} · 1 of 4 live-visibility requirements done`,
       body: audience === 'Engineering' ? 'LAB-12 done (GitLab !205 merged). LAB-13, LAB-14, LAB-15 in progress. !218 has no linked requirement.' : 'Live labor visibility is on track. Filtering is in progress. One department-detail requirement is still a draft and is not shown as a fact.',
     },
-    { name: 'Evidence', kicker: 'Evidence', title: 'Where the facts come from', body: 'Every claim in this deck links back to a source record in Rea.', evidence: ev },
+    { name: 'Evidence', kicker: 'Evidence', title: 'Where the facts come from', body: 'Every claim in this deck links back to a source record in Astra.', evidence: ev },
     {
       name: 'Next steps', kicker: 'Next steps', title: approved ? 'Ship the hourly refresh and relabel' : 'Waiting on the R4 decision',
       body: approved

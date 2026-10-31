@@ -84,7 +84,7 @@ export const TIMES = {
 
 export const initialState = {
   role: null,
-  relayView: 'doc',
+  astraView: 'doc',
   // unpublished (Dana, before v1) → flagged → proposed → moreEvidence → resent → approved | denied
   stage: 'flagged',
   // Which role this story was started as; exploring another tool later doesn't change it.
@@ -134,7 +134,7 @@ export function reducer(state, action) {
         ],
       };
     case 'SET_VIEW':
-      return { ...state, relayView: action.view };
+      return { ...state, astraView: action.view };
     case 'PROPOSE':
       return {
         ...state,
