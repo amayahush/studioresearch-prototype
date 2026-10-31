@@ -49,7 +49,7 @@ export function RolePicker() {
             <blockquote className="persp-sees">${p.sees}</blockquote>
             <p className="persp-task">${p.task}</p>
             <button className="btn btn-block persp-cta" onClick=${() => dispatch({ type: 'START_ROLE', role: p.id })}>
-              Play the ${person.role.toLowerCase()} <${ArrowRight} size=${14} strokeWidth=${1.5} aria-hidden="true" />
+              Play the ${person.role.replace(/\b\w/g, (c) => c.toUpperCase())} <${ArrowRight} size=${14} strokeWidth=${1.5} aria-hidden="true" />
             </button>
             <div className="persp-meta">
               <${Avatar} id=${p.id} size=${20} />

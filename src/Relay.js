@@ -233,6 +233,7 @@ function DocView({ selected, setSelected, story }) {
   const [slice, setSlice] = useState('main');
   const [filter, setFilter] = useState('all');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [closedEpics, setClosedEpics] = useState({});
   // Open/closed choices by section key, kept across selections that share a section.
   const [openMap, setOpenMap] = useState({});
   const reqs = getReqs(state);
@@ -273,7 +274,7 @@ function DocView({ selected, setSelected, story }) {
     <div className="rl-split">
       <div className="rl-doc" onClick=${(e) => e.target === e.currentTarget && setSelected(null)}>
         <div className="rl-doc-inner">
-          <button className=${cx('doc-title', (!selected || selected === 'overview') && 'selected')} onClick=${() => setSelected('overview')}>
+          <button className="doc-title" aria-pressed=${!selected || selected === 'overview'} onClick=${() => setSelected('overview')}>
             <h1>Line Labor Dashboard</h1>
             <div className="doc-meta">Owner Dana Ortiz (PM) · ${prdVersion(state)} · ${state.stage === 'approved' ? `published Oct 8, ${TIMES.approved}` : state.stage === 'unpublished' ? 'not published yet' : 'published Oct 1'} · Sources: kickoff call, lead notes, labor spreadsheet</div>
           </button>
@@ -298,9 +299,10 @@ function DocView({ selected, setSelected, story }) {
             if (!items.length) return null;
             const total = reqs.filter((r) => r.epic === eid).length;
             const done = eid === 'E1' ? `1 of ${total} done` : `0 of ${total} done`;
-            return html`<div key=${eid} className="epic">
-              <div className="epic-head"><${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" /><span className="mono epic-key">${key}</span><span className="epic-name">${name}</span><span className="epic-done">${done}</span></div>
-              ${items.map((r) => html`<${ReqRow} key=${r.id} req=${r} selected=${selected === r.id} onSelect=${() => setSelected(selected === r.id ? null : r.id)} />`)}
+            const open = !closedEpics[eid];
+            return html`<div key=${eid} className=${cx('epic', !open && 'closed')}>
+              <button className="epic-head" aria-expanded=${open} onClick=${() => setClosedEpics({ ...closedEpics, [eid]: open })}><${ChevronDown} size=${12} strokeWidth=${1.5} className="epic-chev" aria-hidden="true" /><span className="mono epic-key">${key}</span><span className="epic-name">${name}</span><span className="epic-done">${done}</span></button>
+              ${open && items.map((r) => html`<${ReqRow} key=${r.id} req=${r} selected=${selected === r.id} onSelect=${() => setSelected(selected === r.id ? null : r.id)} />`)}
             </div>`;
           })}
           ${visible.length === 0 && html`<div className="muted small">No requirements match this slice and filter.</div>`}
@@ -444,7 +446,6 @@ function DetailPanel({ selected, setSelected, reqs, openMap, setOpen, story }) {
   const work = r.links.length ? r.links.join(' · ').replace(/Jira |GitLab /g, '') : 'None yet';
   return html`<${Inspector}
     ...${shell}
-    tag=${html`<${StatusChip} status=${r.assume} sources=${r.sources} />`}
     title=${`${r.id} · ${r.name}`}
     sections=${[
       sec('requirement', 'Requirement', true, '', null, html`<p>${r.text}</p>`),
@@ -706,6 +707,7 @@ function R5Panel({ onClose, openMap, setOpen, req }) {
 function DecisionRecord({ onClose, onDone }) {
   const { state } = useStore();
   const [toast, setToast] = useState('');
+  const [signed, setSigned] = useState(false);
   const stances = [state.priya.stance && 'Priya Shah', state.kim.stance && 'Kim Alvarez'].filter(Boolean);
   const events = [
     { at: 'Oct 1', actor: 'AI', text: 'Drafted “every 15 min” from kickoff 18:40', chip: 'assumed' },
@@ -747,7 +749,9 @@ function DecisionRecord({ onClose, onDone }) {
     <div className="sp-foot">
       <span className="grow" />
       <button className="btn" onClick=${() => setToast('Exporting the trail is not simulated in this prototype.')}>Export trail</button>
-      <button className="btn btn-primary" onClick=${onDone}>Done</button>
+      ${signed
+        ? html`<${Tag} tone="green">Approved<//>`
+        : html`<button className="btn btn-primary" onClick=${() => { setSigned(true); onDone(); }}>Approve</button>`}
     </div>
   </div>`;
 }

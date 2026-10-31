@@ -567,7 +567,7 @@ button.rl-nav:hover { background: var(--bg-3); color: var(--text); }
 .rl-doc h1 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; }
 .doc-title, .doc-sec { display: block; width: 100%; margin: 0 -8px; padding: 6px 8px; width: calc(100% + 16px); border-radius: 10px; text-align: left; }
 .doc-title:hover, .doc-sec:hover { background: var(--bg-1); }
-.doc-title.selected, .doc-sec.selected { background: var(--bg-3); }
+.doc-sec.selected { background: var(--bg-3); }
 .doc-meta { margin-top: 2px; color: var(--text-2); font-size: 12px; line-height: 18px; }
 .doc-divider { height: 1px; background: var(--line); margin: 14px 0; }
 .doc-sec p { margin-top: 6px; }
@@ -602,21 +602,25 @@ button.rl-nav:hover { background: var(--bg-3); color: var(--text); }
 .csec-body { display: flex; flex-direction: column; gap: 10px; padding: 0 0 14px 21px; }
 .csec-body p { font-size: 12px; line-height: 18px; }
 .epic { display: grid; gap: 2px; margin-top: 8px; }
-.epic-head { height: 30px; padding: 0 12px; border-radius: 8px; background: var(--bg-2); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.epic-head { width: 100%; height: 30px; padding: 0 12px; border-radius: 8px; background: var(--bg-2); display: flex; align-items: center; gap: 8px; white-space: nowrap; text-align: left; }
+.epic-head:hover { background: var(--bg-3); }
+.epic-head:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.epic-chev { transition: transform 0.2s ease; }
+.epic.closed .epic-chev { transform: rotate(-90deg); }
 .epic-head svg { flex: none; color: var(--text-2); }
 .epic-key { font-size: 11px; color: var(--muted); }
 .epic-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
 .epic-done { font-size: 11px; color: var(--muted); }
 .req { width: 100%; display: flex; gap: 12px; padding: 10px 12px; border-radius: 10px; text-align: left; }
 .req:hover { background: var(--bg-1); }
-.req.selected { background: var(--bg-3); }
-.req.pending { background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--amber); }
-.req.pending.selected { background: var(--bg-3); }
-.req.verified { background: var(--green-soft); box-shadow: inset 0 0 0 1px var(--green); }
+.req.selected { background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--line-2); }
+.req.pending { box-shadow: inset 0 0 0 1px var(--amber); }
+.req.pending:hover { background: var(--bg-1); }
+.req.pending.selected { background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--amber); }
 .req-review { font-size: 12px; line-height: 18px; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
 .doc-info { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 14px; padding: 10px 12px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line); color: var(--text-2); font-size: 12px; line-height: 18px; }
 .req-id { width: 22px; flex: none; font-size: 11px; line-height: 20px; color: var(--muted); }
-.req.pending .req-id, .req.selected .req-id { color: var(--text); }
+.req.selected .req-id { color: var(--text); }
 .req-main { flex: 1; min-width: 0; display: block; }
 .req-text { display: block; }
 .req.draft .req-text { color: var(--text-2); font-style: italic; }
@@ -918,7 +922,8 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .fedge.changed { stroke: var(--green); opacity: 1; }
 /* Nodes are cards: header row (icon + title); the centered node adds a body. */
 .fnode { position: absolute; z-index: 2; transform: translate(-50%, -50%); display: flex; flex-direction: column; max-width: 160px; border-radius: 12px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line-2); font-size: 12px; line-height: 18px; text-align: left; transition: left 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease, box-shadow 0.15s ease; animation: fade-in 0.35s ease both; }
-.fnode:hover { box-shadow: inset 0 0 0 1px var(--text-2); opacity: 1; z-index: 4; }
+.fnode:not(.ring0):hover { box-shadow: inset 0 0 0 1px var(--text-2); opacity: 1; z-index: 4; }
+.fnode.ring0 { cursor: default; }
 .fnode:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .fnode-row { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; height: 36px; padding: 0 12px; }
 .fnode-row svg { flex-shrink: 0; color: var(--text-2); }
@@ -1148,3 +1153,116 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .code-preview-row.hl { background: rgba(232, 170, 78, 0.14); }
 .code-preview-row.add { color: #A9D8B8; }
 .code-preview-row.del { color: var(--red); }
+
+/* ---------- Rea plugin inside Figma: Rea design system, not the frozen Figma tokens ---------- */
+.figma .plugin {
+  --bg: #191A1A; --bg-1: #1C1D1D; --bg-2: #252727; --bg-3: #2D2F2F; --line: #333535; --line-2: #3A3C3C;
+  --text: #E6E8EC; --text-2: #9BA2AD; --muted: #878E99; --accent: #E6E8EC; --accent-soft: #2D2F2F;
+  --amber: #E8AA4E; --amber-soft: #372D1E; --green: #5DC79A; --green-soft: #1C2F27; --red: #F08473; --red-soft: #2D2F2F; --blue: #8EA6FF;
+  top: 56px; right: 18px; width: 340px; background: var(--bg-1); border: 0; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--line-2), 0 18px 40px rgba(0,0,0,.55);
+  color: var(--text); font: 13px/20px var(--sans);
+}
+.figma .plugin .mono { font-family: var(--mono); }
+.figma .plugin .muted { color: var(--text-2); }
+.figma .plugin .small { font-size: 12px; line-height: 18px; }
+.figma .plugin .tiny { font-size: 11px; line-height: 16px; }
+.figma .plugin .strong { font-weight: 600; }
+.figma .plugin .center { text-align: center; }
+.figma .plugin .grow { flex: 1; }
+.figma .plugin .amber { color: var(--amber); }
+.figma .plugin .green { color: var(--green); }
+.figma .plugin .red { color: var(--red); }
+.figma .plugin svg.green { color: var(--green); } .figma .plugin svg.amber { color: var(--amber); } .figma .plugin svg.muted { color: var(--text-2); }
+
+/* ---------- primitives (Relay style, spec §2) ---------- */
+/* Buttons are pills: outline by default, one primary per view, text buttons for the rest. */
+.figma .plugin .btn { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 16px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line-2); background: transparent; color: var(--text); font-size: 13px; line-height: 20px; font-weight: 500; white-space: nowrap; }
+.figma .plugin .btn:hover:not(:disabled) { background: var(--bg-3); }
+.figma .plugin .btn.sm { height: 28px; padding: 0 12px; font-size: 12px; line-height: 18px; }
+.figma .plugin .btn-primary { background: var(--text); color: #0F1114; box-shadow: none; }
+.figma .plugin .btn-primary:hover:not(:disabled) { background: #fff; }
+.figma .plugin .btn-ghost { box-shadow: none; }
+.figma .plugin .btn-danger { box-shadow: inset 0 0 0 1px var(--line-2); }
+.figma .plugin .btn-figma { background: var(--figma-blue); color: #fff; height: 26px; padding: 0 12px; border-radius: 6px; font-size: 12px; box-shadow: none; }
+.figma .plugin .btn-block { width: 100%; }
+.figma .plugin .btn:focus-visible, .figma .plugin .icon-btn:focus-visible, .figma .plugin .chip:focus-visible, .figma .plugin .link:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.figma .plugin .icon-btn { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; color: var(--text-2); }
+.figma .plugin .icon-btn:hover { background: var(--bg-3); color: var(--text); }
+.figma .plugin .icon-btn.sm { width: 24px; height: 24px; }
+.figma .plugin .icon-btn.round { width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--line-2); }
+.figma .plugin .link { color: var(--text); display: inline-flex; align-items: center; gap: 4px; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
+.figma .plugin .link:hover { text-decoration-color: currentColor; }
+.figma .plugin .link.amber { color: var(--amber); }
+.figma .plugin .link-strong { color: var(--text); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+.figma .plugin .avatar { display: inline-grid; place-items: center; border-radius: 50%; color: #fff; font-weight: 600; flex-shrink: 0; }
+/* Tags carry status only: amber pending, green approved/changed, blue AI draft; everything else is neutral. */
+.figma .plugin .tag { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 12px; line-height: 16px; font-weight: 400; background: var(--bg-3); color: var(--text-2); white-space: nowrap; }
+.figma .plugin .tag-amber { background: var(--amber-soft); color: var(--amber); }
+.figma .plugin .tag-green { background: var(--green-soft); color: var(--green); }
+.figma .plugin .tag-blue { background: #1E2537; color: var(--blue); }
+.figma .plugin .tag-danger { background: var(--bg-3); color: var(--red); }
+.figma .plugin .tag-red, .figma .plugin .tag-neutral, .figma .plugin .tag-gray, .figma .plugin .tag-purple { background: var(--bg-3); color: var(--text-2); }
+.figma .plugin .tag-outline { background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--text-2); }
+.figma .plugin .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.figma .plugin .dot.amber { background: var(--amber); } .figma .plugin .dot.green { background: var(--green); } .figma .plugin .dot.blue { background: var(--blue); }
+
+.figma .plugin .chip { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-2); font-size: 12px; line-height: 16px; color: var(--text-2); background: transparent; white-space: nowrap; }
+.figma .plugin button.chip:hover { color: var(--text); box-shadow: inset 0 0 0 1px var(--text-2); }
+.figma .plugin .chip.static { cursor: default; }
+.figma .plugin .chip-amber { box-shadow: inset 0 0 0 1px var(--amber); color: var(--text); }
+.figma .plugin .chip-green { box-shadow: inset 0 0 0 1px var(--green); color: var(--text); }
+.figma .plugin .chip-blue { box-shadow: none; background: #1E2537; color: var(--blue); }
+.figma .plugin .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+.figma .plugin .section-label, .figma .plugin .tiny-label { display: flex; align-items: center; gap: 6px; font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.figma .plugin .section-label { margin-top: 6px; }
+.figma .plugin .field { width: 100%; background: var(--bg); border: 0; box-shadow: inset 0 0 0 1px var(--line-2); border-radius: 10px; padding: 9px 12px; resize: vertical; font-size: 13px; line-height: 20px; }
+.figma .plugin .field:focus, .figma .plugin .field.focus { outline: none; box-shadow: inset 0 0 0 1px var(--text-2); }
+.figma .plugin .select { background: transparent; border: 0; box-shadow: inset 0 0 0 1px var(--line-2); border-radius: 999px; height: 34px; padding: 0 12px; }
+
+/* Edits show as a Now / Proposed comparison, never strikethrough (spec §5). */
+.figma .plugin .cmp { border-radius: 10px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line); }
+.figma .plugin .cmp-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; }
+.figma .plugin .cmp-row + .cmp-row { border-top: 1px solid var(--line); }
+.figma .plugin .cmp-label { width: 64px; flex: none; font-size: 12px; line-height: 20px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.figma .plugin .cmp-value { flex: 1; min-width: 0; font-size: 13px; line-height: 20px; }
+.figma .plugin .cmp-row.was .cmp-value { color: var(--text-2); }
+
+.figma .plugin .ev-wrap { position: relative; display: inline-flex; }
+.figma .plugin .ev-pop { position: fixed; z-index: 120; width: 290px; max-width: calc(100vw - 24px); pointer-events: none; background: var(--bg-2); border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line-2), 0 12px 30px rgba(0,0,0,.5); padding: 10px; }
+.figma .plugin .ev-pop-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; line-height: 18px; margin-bottom: 6px; }
+.figma .plugin .ev-pop-code { margin: 0; background: var(--bg); border-radius: 8px; padding: 6px 0; font: 11px/18px var(--mono); }
+.figma .plugin .ev-pop-foot { font-size: 11px; line-height: 16px; margin-top: 6px; }
+.figma .plugin .code-line { padding: 0 8px; white-space: pre; }
+.figma .plugin .code-line.hl { background: rgba(232, 170, 78, 0.14); }
+.figma .plugin .code-line .ln, .figma .plugin .file-line .ln { display: inline-block; width: 28px; color: var(--muted); user-select: none; }
+
+.figma .plugin .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: #0F1114; padding: 8px 16px; border-radius: 999px; font-weight: 500; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,.4); white-space: nowrap; }
+
+.figma .plugin .menu { position: absolute; z-index: 40; top: calc(100% + 6px); right: 0; min-width: 260px; background: var(--bg-2); border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line-2), 0 14px 34px rgba(0,0,0,.5); padding: 4px; }
+.figma .plugin .menu.up { top: auto; bottom: calc(100% + 6px); }
+.figma .plugin .menu-item { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 8px 10px; border-radius: 8px; }
+.figma .plugin .menu-item strong { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+.figma .plugin .menu-item:hover:not(:disabled) { background: var(--bg-3); }
+.figma .plugin .menu-item.on { background: var(--bg-3); }
+
+
+.figma .plugin .plg-head { height: 48px; gap: 8px; padding: 0 10px 0 14px; border-bottom: 1px solid var(--line); }
+.figma .plugin .plg-name { font-size: 14px; line-height: 20px; font-weight: 600; }
+.figma .plugin .plg-sec { padding: 14px 16px; gap: 10px; border-bottom: 1px solid var(--line); }
+.figma .plugin .plg-title { font-size: 14px; line-height: 20px; font-weight: 600; }
+.figma .plugin .plg-title .mono { font-size: 12px; font-weight: 400; margin-right: 4px; }
+.figma .plugin .plg-by { gap: 10px; font-size: 12px; line-height: 18px; color: var(--text); }
+.figma .plugin .plg-reason { width: 100%; gap: 8px; padding: 8px 0 0; background: none; border-radius: 0; border-top: 1px solid var(--line); color: var(--text-2); }
+.figma .plugin .plg-reason-body { gap: 8px; font-size: 12px; line-height: 18px; }
+.figma .plugin .plg-layer { gap: 8px; font-size: 12px; line-height: 18px; }
+.figma .plugin .plg-stance { padding: 14px 16px; gap: 10px; background: none; border-top: 0; }
+.figma .plugin .plg-actions { gap: 8px; }
+.figma .plugin .plg-actions .btn { flex: 1; }
+.figma .plugin .plg-you { display: flex; align-items: center; gap: 8px; }
+.figma .plugin .plg-empty { padding: 20px 16px; gap: 6px; }
+.figma .plugin .field { background: var(--bg); }
+.figma .fg-pending-tag { cursor: pointer; border: 0; font: inherit; font-size: 11px; }
+.figma .fg-pending-tag:hover { filter: brightness(1.1); }
+.figma .fg-pending-tag:focus-visible { outline: 2px solid var(--figma-blue); outline-offset: 2px; }

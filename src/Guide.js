@@ -22,7 +22,7 @@ function stepFor(state) {
       moreEvidence: {
         title: 'Dana wants more evidence',
         body: 'Dana is not convinced yet: the spec section you cited is from 2023. She wants proof the API is still hourly today.',
-        next: 'Open timekeeping-api.md from the Rea panel (or click it on the "Read docs/…" step in the thread). Select changelog lines 58–60, choose "Add to R4 evidence", then "Resend to Dana" in the Rea panel.',
+        next: 'Open timekeeping-api.md from the Rea panel (or click it on the "Read docs/…" step in the thread). Select any of the changelog lines, choose "Add to R4 evidence", then "Resend to Dana" in the Rea panel.',
       },
       resent: {
         title: 'Dana is reviewing your evidence',
@@ -75,7 +75,7 @@ function stepFor(state) {
         body: 'He attached a changelog entry where the data owner confirmed the hourly sync in Sept 2026. Both owners now agree.',
         next: 'Check the new evidence, pick what else to update, write a reason, then "Approve and publish v1.1".',
       },
-      approved: { title: 'R4 is verified in PRD v1.1', body: 'Your approval updated the PRD and the linked work. The decision record on the right keeps who checked what, and why it changed.', next: 'Read the decision record, then choose Done. Try the Map to see the code and Figma frames R4 touches.' },
+      approved: { title: 'R4 is verified in PRD v1.1', body: 'Your approval updated the PRD and the linked work. The decision record on the right keeps who checked what, and why it changed.', next: 'Read the decision record, then choose Approve. Try the Map to see the code and Figma frames R4 touches.' },
       denied: { title: 'You kept R4 as written', body: 'The proposal is closed and Marcus was notified.', next: 'You are done.' },
     };
     return { ...steps[stage], where: 'Rea web app' };

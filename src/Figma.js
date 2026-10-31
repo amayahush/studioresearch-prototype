@@ -3,7 +3,7 @@ import { TimeSkip, EndCard } from './Interstitials.js';
 import { useStore, TEXT, TIMES, isPending } from './store.js';
 import { Avatar, Tag, SectionLabel, Diff, EvidenceChip } from './ui.js';
 import {
-  Link2, X, Minus, ChevronRight, ChevronDown, Hash, MousePointer2, Square, PenTool, Type, MessageCircle, Code2, Play, Search, Plus, Check,
+  Link2, Layers, X, Minus, ChevronRight, ChevronDown, Hash, MousePointer2, Square, PenTool, Type, MessageCircle, Code2, Play, Search, Plus, Check,
 } from 'lucide-react';
 
 export const DEPARTMENTS = [
@@ -107,7 +107,7 @@ export function Figma() {
       <div className="fg-world" style=${{ transform: `translate(calc(-50% + ${view.x}px), calc(-50% + ${view.y}px)) scale(${view.z})` }}>
       <div className="fg-frame-wrap">
         <div className="fg-frame-meta"><span>Dashboard / Overview</span><span>1280 × 832</span></div>
-        ${tagged && html`<div className=${cx('fg-pending-tag', needsLabel && 'changed')}>${needsLabel ? 'R4 · changed in v1.1' : 'R4 · pending · was assumed'}</div>`}
+        ${tagged && html`<button className=${cx('fg-pending-tag', needsLabel && 'changed')} onClick=${() => { setPluginOpen(true); setSeenStage(state.stage); }} aria-label="Open the Rea plugin for R4">${needsLabel ? 'R4 · changed in v1.1' : 'R4 · pending · was assumed'}</button>`}
         <div className=${cx('dash-frame', selected === 'frame' && 'selected')}>
           <div className="dash-title">Line labor · 2nd shift</div>
           <div className="dash-sub">
@@ -254,14 +254,14 @@ function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
   let body;
   if (state.stage === 'flagged') {
     body = html`<div className="plg-empty">
-      <${Check} size=${18} className="green" />
-      <div><strong>Nothing pending on your frames</strong></div>
+      <${Check} size=${18} strokeWidth=${1.5} className="muted" />
+      <div className="strong-500">Nothing pending on your frames</div>
       <div className="muted small">Rea tags layers here when a linked requirement may change.</div>
       <div className="plg-linked muted tiny">Linked: R1 → Department bars · R3 → Filters · R4 → Last updated label</div>
     </div>`;
   } else if (state.stage === 'denied') {
     body = html`<div className="plg-sec">
-      <div className="plg-title-row"><strong>R4 · Data refresh rate</strong><${Tag}>Unchanged<//></div>
+      <div className="plg-title-row"><span className="plg-title"><span className="mono muted">R4</span> Data refresh rate</span><${Tag}>Unchanged<//></div>
       <div className="small">${TEXT.r4Old}</div>
       <div className="muted small">Dana kept R4 as written. Your label stays.</div>
     </div>`;
@@ -269,13 +269,13 @@ function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
     const approved = state.stage === 'approved';
     body = html`<${Fragment}>
       <div className="plg-sec">
-        <div className="plg-title-row"><strong>R4 · Data refresh rate</strong>${approved ? html`<${Tag} tone="green">Changed in v1.1<//>` : html`<${Tag} tone="amber">Pending<//>`}</div>
-        <${Diff} legacy from=${TEXT.r4Old} to=${state.proposal.text} />
+        <div className="plg-title-row"><span className="plg-title"><span className="mono muted">R4</span> Data refresh rate</span>${approved ? html`<${Tag} tone="green">Changed in v1.1<//>` : html`<${Tag} tone="amber">Pending<//>`}</div>
+        <div className="plg-by"><${Avatar} id="marcus" size=${22} /><span><span className="strong-500">Marcus Lee</span> <span className="muted">via Codex · ${TIMES.proposed}${approved ? ' · approved by Dana' : ''}</span></span></div>
+        <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} labels=${approved ? ['Was', 'Now'] : ['Now', 'Proposed']} />
         ${!approved && html`<div className="small muted">This requirement was approved as an assumption. Marcus's build tested it.</div>`}
-        <div className="plg-by"><${Avatar} legacy id="marcus" size=${18} /> Marcus Lee · via Codex · ${TIMES.proposed}${approved ? ' · approved by Dana' : ''}</div>
-        <button className="plg-reason" onClick=${() => setShowReason(!showReason)}>
-          <span className="link">Reason and evidence</span> <span className="muted tiny">${state.evidence.length} sources</span>
-          <span className="grow" />${showReason ? html`<${ChevronDown} size=${13} />` : html`<${ChevronRight} size=${13} />`}
+        <button className="plg-reason" aria-expanded=${showReason} onClick=${() => setShowReason(!showReason)}>
+          <span className="tiny-label">Reason and evidence</span><span className="grow" /><span className="muted small">${state.evidence.length} sources</span>
+          ${showReason ? html`<${ChevronDown} size=${14} strokeWidth=${1.5} />` : html`<${ChevronRight} size=${14} strokeWidth=${1.5} />`}
         </button>
         ${showReason && html`<div className="plg-reason-body">
           <p className="small">${state.proposal.reason}</p>
@@ -289,7 +289,7 @@ function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
       </div>
       ${pending && (!stance || changing
         ? html`<div className="plg-stance">
-            <div className="plg-title-row"><strong className="amber">Your stance is requested</strong><span className="muted tiny">You own this frame</span></div>
+            <div className="plg-title-row"><span className="tiny-label">Your stance is requested</span><span className="muted small">You own this frame</span></div>
             <input className="field" placeholder="Note for Dana (optional)" value=${note} onInput=${(e) => setNote(e.target.value)} />
             <button className=${cx('link tiny', note && 'hidden')} onClick=${() => setNote(TEXT.priyaNote)}>Use suggested note</button>
             <div className="plg-actions">
@@ -298,16 +298,16 @@ function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
             </div>
           </div>`
         : html`<div className="plg-stance done">
-            <div className="plg-title-row"><span className=${stance === 'agreed' ? 'green' : 'red'}><${Check} size=${13} /> You ${stance} · ${TIMES.priya}</span><button className="link tiny" onClick=${() => setChanging(true)}>Change</button></div>
+            <div className="plg-title-row"><span className="plg-you"><${Tag} tone=${stance === 'agreed' ? 'green' : 'neutral'}>You ${stance}<//><span className="muted small">${TIMES.priya}</span></span><button className="link small" onClick=${() => setChanging(true)}>Change</button></div>
             ${state.priya.note && html`<div className="muted small">"${state.priya.note}"</div>`}
             <div className="muted tiny">Dana decides. You'll see the result here.</div>
             <div className="plg-actions"><button className="btn btn-primary" onClick=${onKeepDesigning}>Keep designing</button></div>
           </div>`)}
       ${approved && html`<div className="plg-stance ${state.labelUpdated ? 'done' : ''}">
         ${state.labelUpdated
-          ? html`<div className="green small"><${Check} size=${13} /> Label now shows the real sync time. Matches the code.</div>`
+          ? html`<div className="plg-you"><${Tag} tone="green">Label updated<//><span className="muted small">Shows the real sync time. Matches the code.</span></div>`
           : html`<${Fragment}>
-              <div className="plg-title-row"><strong className="amber">Dana commented on Overview</strong><span className="muted tiny">${TIMES.approved}</span></div>
+              <div className="plg-title-row"><span className="tiny-label">Dana commented on Overview</span><span className="muted small">${TIMES.approved}</span></div>
               <div className="small">"R4 is hourly now. Can the label show the last sync time instead of '15 min'?"</div>
               <div className="plg-actions"><button className="btn btn-primary" onClick=${onRelabel}>Relabel to "Last synced · next"</button></div>
             <//>`}
@@ -316,7 +316,7 @@ function RelayPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
   }
 
   return html`<div className="plugin">
-    <div className="plg-head"><${Link2} size=${13} /><strong>Rea</strong><span className="muted tiny">plugin</span><span className="grow" /><button className="icon-btn sm" onClick=${onClose}><${Minus} size=${13} /></button><button className="icon-btn sm" onClick=${onClose}><${X} size=${13} /></button></div>
+    <div className="plg-head"><${Layers} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="plg-name">Rea</span><span className="muted small">plugin</span><span className="grow" /><button className="icon-btn sm" aria-label="Minimize plugin" onClick=${onClose}><${Minus} size=${14} strokeWidth=${1.5} /></button><button className="icon-btn sm" aria-label="Close plugin" onClick=${onClose}><${X} size=${14} strokeWidth=${1.5} /></button></div>
     ${body}
   </div>`;
 }

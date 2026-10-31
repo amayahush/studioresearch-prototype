@@ -353,7 +353,7 @@ function SpecFile({ onToast, openNote }) {
 
   const addEvidence = () => {
     const [a, b] = [Math.min(...sel), Math.max(...sel)];
-    if (b >= 58 && a <= 60) {
+    if (b >= 56 && a <= 61) { // any part of the changelog is enough
       dispatch({ type: 'ADD_EVIDENCE', id: 'changelog' });
       onToast('Changelog L58–60 added to R4 evidence.');
     } else if (b >= 41 && a <= 44) {
@@ -367,7 +367,7 @@ function SpecFile({ onToast, openNote }) {
   useEffect(() => {
     const up = () => {
       setDragging(false);
-      setSel((cur) => (cur && Math.max(...cur) >= 58 && Math.min(...cur) <= 60 ? [Math.min(...cur, 58), Math.max(...cur, 60)] : cur));
+      setSel((cur) => (cur && Math.max(...cur) >= 56 && Math.min(...cur) <= 61 ? [Math.min(...cur, 58), Math.max(...cur, 60)] : cur));
     };
     const key = (e) => {
       if (sel && canAdd && (e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'e') { e.preventDefault(); addEvidence(); }
@@ -584,15 +584,6 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
       <${PanelHead} title="R4 changed · PRD v1.1" right=${html`<${Tag} tone="green">Approved<//>`} onClose=${close} />
       <div className="sp-body">
         <div className="person-row"><${Avatar} id="dana" size=${26} /><div className="grow"><div className="strong-500">Dana approved your proposal</div><div className="small muted">Product manager · ${TIMES.approved}</div></div></div>
-        <${SectionLabel}>R4 now says<//>
-        <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} labels=${['Was', 'Now']} />
-        <${SectionLabel}>Also updated on approval<//>
-        ${[
-          [u.jira, 'Jira LAB-15 description'],
-          [u.figma, 'Comment on Figma · Overview (Priya)'],
-          [u.teams, 'Post in Teams #line-labor'],
-          [u.metric, 'Note on Success metrics'],
-        ].filter(([on]) => on).map(([, label]) => html`<div key=${label} className="check-row"><${Check} size=${14} strokeWidth=${2} className="green" aria-hidden="true" /> ${label}</div>`)}
         <${SectionLabel}>Preview · what "Update the code" changes<//>
         <div className="diff-file">
           <div className="diff-file-head mono"><${FileCode} size=${14} strokeWidth=${1.5} aria-hidden="true" /> src/jobs/refreshLaborHours.ts</div>
@@ -605,6 +596,15 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
           <div className="mono diff-add">+ Last synced {lastSync} · next {nextSync}</div>
         </div>
         <div className="muted small">Matches Priya's new label. Nothing is committed until you review the diff.</div>
+        <${SectionLabel}>R4 now says<//>
+        <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} labels=${['Was', 'Now']} />
+        <${SectionLabel}>Also updated on approval<//>
+        ${[
+          [u.jira, 'Jira LAB-15 description'],
+          [u.figma, 'Comment on Figma · Overview (Priya)'],
+          [u.teams, 'Post in Teams #line-labor'],
+          [u.metric, 'Note on Success metrics'],
+        ].filter(([on]) => on).map(([, label]) => html`<div key=${label} className="check-row"><${Check} size=${14} strokeWidth=${2} className="green" aria-hidden="true" /> ${label}</div>`)}
       </div>
       <div className="sp-foot">
         ${state.codeUpdated

@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react';
 // `legacy` keeps the pre-spec colors on the Figma screens, which aren't restyled yet.
 export function Avatar({ id, size = 22, legacy }) {
   const p = PEOPLE[id];
-  return html`<span className="avatar" style=${{ background: legacy ? p.legacy : p.color, width: size, height: size, fontSize: legacy ? size * 0.4 : size > 24 ? 12 : 10, fontWeight: legacy ? 700 : 600 }} title=${p.name}>${p.initials}</span>`;
+  return html`<span className="avatar" style=${{ background: legacy ? p.legacy : p.color, width: size, height: size, fontSize: legacy ? size * 0.4 : size > 24 ? 12 : 10, fontWeight: legacy ? 700 : 600 }} title=${p.name}>${legacy ? p.initials : p.name[0]}</span>`;
 }
 
 export function Tag({ tone = 'neutral', children, className }) {
