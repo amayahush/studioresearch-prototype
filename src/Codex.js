@@ -192,6 +192,7 @@ export function Codex() {
       steps=${endSteps}
       onClose=${() => setEndCard(false)}
       onStart=${() => dispatch({ type: 'SET_ROLE', role: null })}
+      onReplay=${() => { dispatch({ type: 'SET_VIEW', view: 'recorder', replay: 'session' }); dispatch({ type: 'SET_ROLE', role: 'dana' }); }}
       onExplore=${() => { dispatch({ type: 'SET_VIEW', view: 'map' }); dispatch({ type: 'SET_ROLE', role: 'dana' }); }}
     />`}
     <${Toast} text=${toast} />

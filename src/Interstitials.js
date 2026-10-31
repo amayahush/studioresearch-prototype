@@ -65,7 +65,7 @@ export function TimeSkip({ from, to, day, title, events, onDone }) {
 }
 
 // End of a role path: a recap of what happened, then where to go next.
-export function EndCard({ role, title, steps, onExplore, onStart, onClose, exploreLabel = 'Explore the Astra web app' }) {
+export function EndCard({ role, title, steps, onExplore, onStart, onClose, onReplay, exploreLabel = 'Explore the Astra web app' }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -87,6 +87,7 @@ export function EndCard({ role, title, steps, onExplore, onStart, onClose, explo
         <button className="btn btn-ghost" onClick=${onClose}>Stay here</button>
         <span className="grow" />
         <button className="btn" onClick=${onStart}>Back to start</button>
+        ${onReplay && html`<button className="btn" onClick=${onReplay}>Replay what happened</button>`}
         <button className="btn btn-primary" onClick=${onExplore}>${exploreLabel} <${ArrowRight} size=${14} /></button>
       </div>
     </div>

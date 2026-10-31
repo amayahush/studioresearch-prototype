@@ -170,6 +170,7 @@ export function Figma() {
       steps=${endSteps}
       onClose=${() => setEndCard(false)}
       onStart=${() => dispatch({ type: 'SET_ROLE', role: null })}
+      onReplay=${() => { dispatch({ type: 'SET_VIEW', view: 'recorder', replay: 'session' }); dispatch({ type: 'SET_ROLE', role: 'dana' }); }}
       onExplore=${() => { dispatch({ type: 'SET_VIEW', view: 'screens' }); dispatch({ type: 'SET_ROLE', role: 'dana' }); }}
     />`}
   </div>`;

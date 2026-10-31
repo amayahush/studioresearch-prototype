@@ -3,6 +3,7 @@ import { useStore, TEXT, TIMES, R4_INTENT, isPending, r4Text, r4Status, prdVersi
 import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection, StatusChip } from './ui.js';
 import { TimeSkip, EndCard } from './Interstitials.js';
 import { MapView, ScreensView, PresentView } from './AstraViews.js';
+import { RecorderView } from './Recorder.js';
 import { dashboardLabel } from './Figma.js';
 import {
   ChevronDown, Search, Inbox, CircleUser, FileText, Settings, HelpCircle, X, History, Check, Clock, PanelLeft,
@@ -64,7 +65,7 @@ export function getReqs(state) {
 
 export const unverified = (reqs) => reqs.filter((r) => r.assume !== 'verified').length;
 
-const VIEWS = [['doc', 'Doc'], ['map', 'Map'], ['screens', 'Screens'], ['present', 'Present']];
+const VIEWS = [['doc', 'Doc'], ['map', 'Map'], ['recorder', 'Recorder'], ['screens', 'Screens'], ['present', 'Present']];
 const ICON = { size: 15, strokeWidth: 1.5, 'aria-hidden': 'true' };
 
 const NAV_KEY = 'astra-sidebar-open';
@@ -103,7 +104,7 @@ export function Astra() {
 
   const openInbox = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); if (pending) setSelected('R4'); };
   const openProject = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); setSelected(null); };
-  const Body = { doc: DocView, map: MapView, screens: ScreensView, present: PresentView }[view];
+  const Body = { doc: DocView, map: MapView, recorder: RecorderView, screens: ScreensView, present: PresentView }[view];
   const ownPath = state.startedAs === 'dana';
 
   // Dana's path (brief §8): 00 publish v1 → skip a week → 06 review → skip → 07 decision record → end card.
@@ -129,7 +130,8 @@ export function Astra() {
           { time: '2:24 PM', who: 'marcus', text: 'Marcus updated the refresh job to match v1.1' },
           { time: '2:26 PM', who: 'priya', text: `Priya relabeled the Overview: "${dashboardLabel({ ...state, stage: 'approved', labelUpdated: true })}"` },
         ],
-        onDone: () => { dispatch({ type: 'UPDATE_CODE' }); dispatch({ type: 'UPDATE_LABEL' }); setSelected('R4'); },
+        // R4's decision record is the Recorder: Dana replays it, then signs it off.
+        onDone: () => { dispatch({ type: 'UPDATE_CODE' }); dispatch({ type: 'UPDATE_LABEL' }); setSelected('R4'); dispatch({ type: 'SET_VIEW', view: 'recorder', replay: 'signoff' }); },
       });
     },
     done: () => (ownPath ? setEndCard(true) : setSelected(null)),
@@ -495,6 +497,10 @@ function AssumptionCheck({ reqs, onSelect, onPublish }) {
             <${StatusChip} status=${r.assume} sources=${r.sources} />
           </div>
           <div className="small muted">${r.note}</div>
+          ${r.id === 'R4' && html`<div className="check-pattern">
+            <span className="tiny-label">Pattern from 3 past PRDs</span>
+            <span className="small">Requirements set from a kickoff quote and never checked against a system changed after the build started in 3 of 4 cases.</span>
+          </div>`}
           <div className="check-card-foot">
             ${r.decision
               ? html`<span className="small">Needs a decision from you</span>`
