@@ -1294,3 +1294,104 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .figma .fg-pending-tag { cursor: pointer; border: 0; font: inherit; font-size: 11px; }
 .figma .fg-pending-tag:hover { filter: brightness(1.1); }
 .figma .fg-pending-tag:focus-visible { outline: 2px solid var(--figma-blue); outline-offset: 2px; }
+
+/* ---------- Recorder map (src/RecorderMap.js) ----------
+   Cards, rows and people use the same states as the Doc view: hover and "touched by this event"
+   are a --bg-3 fill; touched adds the --line-2 edge used by a selected requirement. Nothing flashes. */
+.rec { flex: 1; min-height: 0; display: flex; flex-direction: column; font-size: 12px; line-height: 18px; }
+.rec .map-bar .seg { margin-left: 2px; }
+.rec .seg-btn .dot { width: 6px; height: 6px; border-radius: 50%; }
+.rec-menu { left: 0; right: auto; }
+.rec-menu .menu-item strong .mono { margin-right: 6px; }
+.rec-trail { display: inline-flex; align-items: center; gap: 4px; color: var(--text-2); }
+.rec-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--r-app); }
+.rec-cols { position: relative; height: 100%; display: grid; grid-template-columns: minmax(220px, 260px) minmax(320px, 1fr) minmax(250px, 300px); column-gap: 72px; align-items: center; padding: 20px 28px; animation: rec-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes rec-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rec-col { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; max-height: 100%; }
+.rec-col.mid { align-items: center; gap: 0; }
+.rec-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.rec-conn { fill: none; stroke: var(--r-line-strong); stroke-width: 1.5; transition: opacity 0.35s ease; }
+.rec-conn.quiet { opacity: 0.4; }
+.rec-trace { fill: none; stroke: var(--text-2); stroke-width: 1.75; stroke-dasharray: 1; stroke-dashoffset: 1; animation: rec-draw 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+@keyframes rec-draw { to { stroke-dashoffset: 0; } }
+
+.rec-card { background: var(--r-card); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--r-line); overflow: hidden; text-align: left; transition: background-color 0.25s ease, box-shadow 0.25s ease, opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.rec-card.clickable { cursor: pointer; }
+.rec-card.clickable:hover, button.rec-row:hover, .rec-person:hover { box-shadow: inset 0 0 0 1px var(--text-2); }
+.rec-card.touched, .rec-row.touched, .rec-person.touched { background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--text-2); }
+.rec-card.ghost, .rec-row.ghost { opacity: 0.35; }
+.rec-card.ghost { transform: scale(0.985); }
+.rec-card-head { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-bottom: 1px solid var(--r-line); }
+.rec-card-head > svg { color: var(--text-2); flex-shrink: 0; }
+.rec-card-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-card-status { padding: 8px 12px; color: var(--text-2); transition: color 0.25s ease; }
+.rec-card-status .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rec-chip-line { margin-top: 6px; }
+.rec-center-text.pre { white-space: pre-line; color: var(--text-2); }
+.rec-card > :last-child { border-bottom: 0; }
+.rec-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 36px; padding: 7px 12px; border-top: 1px solid var(--r-line); text-align: left; transition: background-color 0.25s ease, box-shadow 0.25s ease, opacity 0.4s ease; }
+.rec-card-head + .rec-row { border-top: 0; }
+.rec-row > svg { color: var(--text-2); flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
+.rec-row-main { flex: 1; min-width: 0; display: grid; }
+.rec-row-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-row-sub { font-size: 11px; line-height: 16px; color: var(--muted); transition: color 0.25s ease; }
+.rec-meta { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.rec-meta .blue { color: var(--blue); }
+
+.rec-center { width: 340px; box-shadow: inset 0 0 0 1.5px var(--text-2), 0 0 0 4px var(--bg-3); }
+.rec-center.touched { box-shadow: inset 0 0 0 1.5px var(--text), 0 0 0 4px var(--bg-3); }
+.rec-center .rec-card-head { min-height: 46px; }
+.rec-center .rec-card-title { font-size: 14px; }
+.rec-center-body { display: grid; gap: 8px; padding: 12px; min-height: 124px; align-content: start; }
+.rec-center-text { font-size: 13px; line-height: 20px; color: var(--text); }
+.rec-seg { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+.rec-seg .seg-btn { justify-content: center; }
+.rec-center-foot { display: flex; gap: 16px; padding: 8px 12px; border-top: 1px solid var(--r-line); }
+.rec-crumbs { display: flex; align-items: center; gap: 2px; min-height: 26px; margin-bottom: 10px; }
+
+.rec-people { width: 340px; margin-top: 40px; }
+.rec-people-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 6px; }
+.rec-person { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 8px; border-radius: 8px; text-align: left; transition: background-color 0.25s ease, box-shadow 0.25s ease; }
+.rec-person-text { display: grid; min-width: 0; }
+.rec-person-text > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-ring { display: inline-grid; border-radius: 50%; box-shadow: 0 0 0 2px var(--r-card), 0 0 0 3.5px transparent; transition: box-shadow 0.4s ease; }
+.rec-ring.v1 { box-shadow: 0 0 0 2px var(--r-card), 0 0 0 3.5px #4A4F56; }
+.rec-ring.knows { box-shadow: 0 0 0 2px var(--r-card), 0 0 0 3.5px var(--amber); }
+.rec-ring.cur { box-shadow: 0 0 0 2px var(--r-card), 0 0 0 3.5px var(--green); }
+
+/* tape */
+.rec-tape { flex: none; border-top: 1px solid var(--line); padding: 0 16px; background: var(--r-panel); }
+.rec-strip { position: relative; height: 58px; cursor: ew-resize; user-select: none; }
+.rec-base { position: absolute; left: 0; right: 0; top: 29px; height: 1px; background: var(--line); }
+.rec-past { position: absolute; left: 0; top: 29px; height: 1px; background: var(--text-2); }
+.rec-t { position: absolute; top: 40px; font-size: 11px; line-height: 14px; color: var(--muted); transform: translateX(-50%); white-space: nowrap; pointer-events: none; }
+.rec-t.start { transform: none; color: var(--text); font-weight: 500; }
+.rec-brk { position: absolute; top: 20px; height: 18px; border-radius: 3px; background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(255, 255, 255, 0.07) 4px 5px); }
+.rec-tick { position: absolute; top: 24px; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%; z-index: 2; cursor: pointer; transition: opacity 0.3s ease, box-shadow 0.25s ease; }
+.rec-tick.person { background: var(--text-2); }
+.rec-tick.ai { background: var(--r-panel); box-shadow: inset 0 0 0 1.5px var(--blue); }
+.rec-tick.open { background: var(--amber); }
+.rec-tick.done { background: var(--green); }
+.rec-tick.future { opacity: 0.35; }
+.rec-tick:hover, .rec-tick.cur { box-shadow: 0 0 0 2px var(--r-panel), 0 0 0 3.5px var(--text); }
+.rec-tick.ai:hover, .rec-tick.ai.cur { box-shadow: inset 0 0 0 1.5px var(--blue), 0 0 0 2px var(--r-panel), 0 0 0 3.5px var(--text); }
+.rec-head { position: absolute; left: 0; top: 14px; height: 30px; width: 2px; margin-left: -1px; background: var(--text); border-radius: 1px; z-index: 3; pointer-events: none; will-change: transform; }
+.rec-htime { position: absolute; left: 1px; top: -14px; transform: translateX(-50%); padding: 0 6px; border-radius: 4px; background: var(--text); color: #0F1114; font: 500 10.5px/16px var(--mono); white-space: nowrap; }
+.rec-trans { display: flex; align-items: center; gap: 8px; height: 48px; border-top: 1px solid var(--r-line); }
+.rec-play { box-shadow: inset 0 0 0 1px var(--line-2); border-radius: 50%; color: var(--text); }
+.rec-clock { width: 190px; flex: none; font-size: 11.5px; color: var(--text); white-space: nowrap; }
+.rec-callout { flex: 1; min-width: 0; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-callout strong { font-weight: 500; }
+.rec-follow { display: inline-flex; align-items: center; gap: 8px; color: var(--text-2); white-space: nowrap; cursor: pointer; }
+.rec-follow input { position: absolute; opacity: 0; pointer-events: none; }
+.rec-switch { position: relative; width: 26px; height: 16px; border-radius: 999px; background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--line-2); transition: background-color 0.2s ease; }
+.rec-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--text-2); transition: transform 0.2s ease, background-color 0.2s ease; }
+.rec-follow input:checked + .rec-switch { background: var(--green-soft); }
+.rec-follow input:checked + .rec-switch::after { transform: translateX(10px); background: var(--green); }
+.rec-follow input:focus-visible + .rec-switch { outline: 2px solid var(--blue); outline-offset: 2px; }
+.rec-tip { width: 290px; }
+.rec-tip .chips { margin-top: 4px; }
+.rec-tip-head { display: flex; align-items: center; gap: 8px; }
+.rec-bot { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--bg-3); color: var(--text); font: 600 9px var(--mono); flex: none; }
+.rec-bot.astra { background: #7C3AED; color: #fff; }
+@media (prefers-reduced-motion: reduce) { .rec-cols, .rec-trace { animation: none; stroke-dashoffset: 0; } .rec-card, .rec-row, .rec-ring { transition: none; } }

@@ -3,6 +3,7 @@ import { useStore, TEXT, TIMES, R4_INTENT, isPending, r4Text, r4Status, prdVersi
 import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection, StatusChip } from './ui.js';
 import { TimeSkip, EndCard } from './Interstitials.js';
 import { MapView, ScreensView, PresentView } from './AstraViews.js';
+import { RecorderMap } from './RecorderMap.js';
 import { dashboardLabel } from './Figma.js';
 import {
   ChevronDown, Search, Inbox, CircleUser, FileText, Settings, HelpCircle, X, History, Check, Clock, PanelLeft,
@@ -103,7 +104,8 @@ export function Astra() {
 
   const openInbox = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); if (pending) setSelected('R4'); };
   const openProject = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); setSelected(null); };
-  const Body = { doc: DocView, map: MapView, screens: ScreensView, present: PresentView }[view];
+  // The Map view is the Recorder map (src/RecorderMap.js). The earlier focus map (MapView) is kept in AstraViews.js.
+  const Body = { doc: DocView, map: RecorderMap, screens: ScreensView, present: PresentView }[view];
   const ownPath = state.startedAs === 'dana';
 
   // Dana's path (brief §8): 00 publish v1 → skip a week → 06 review → skip → 07 decision record → end card.
