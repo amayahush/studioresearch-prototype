@@ -401,7 +401,7 @@ export function RecorderMap({ selected, setSelected }) {
         window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
       }}>
         <${Axis} ax=${ax} pastRef=${pastRef} />
-        ${spread(events.map((e) => xOf(ax, e.t))).map((x, i) => { const e = events[i]; return html`<button key=${i} className=${cx('rec-tick', e.kind, cur.includes(e) && 'cur', e.t > T && 'future')} style=${{ left: x }}
+        ${stack(events.map((e) => xOf(ax, e.t))).map(([x, dy], i) => { const e = events[i]; return html`<button key=${i} className=${cx('rec-tick', e.kind, cur.includes(e) && 'cur', e.t > T && 'future')} style=${{ left: x, transform: dy ? `translateY(${dy}px)` : undefined }}
           onClick=${() => seek(e.t)} onMouseEnter=${hover(() => evTip(e))} onMouseLeave=${unhover} aria-label=${`${when(e.t)}: ${e.text}`} />`; })}
         <span className="rec-head" ref=${headRef}>
           <span className="rec-htime" ref=${htimeRef} />
@@ -423,7 +423,18 @@ export function RecorderMap({ selected, setSelected }) {
 }
 
 // Circles closer than 13px would overlap: step each one right of the one before (events are in time order).
-const spread = (xs) => { const out = []; for (const x of xs) out.push(out.length && x - out[out.length - 1] < 13 ? out[out.length - 1] + 13 : x); return out; };
+// Circles always sit at their exact time, so the playhead stops right on them. Circles that would overlap
+// stack above and below the line instead of moving sideways.
+const LANES = [0, -12, 12];
+const stack = (xs) => {
+  const lastX = LANES.map(() => -Infinity);
+  return xs.map((x) => {
+    let lane = LANES.findIndex((_, i) => x - lastX[i] >= 12);
+    if (lane < 0) lane = 0;
+    lastX[lane] = x;
+    return [x, LANES[lane]];
+  });
+};
 const whoName = (id) => (id === 'astra' ? 'Astra' : id === 'codex' ? 'Codex' : PEOPLE[id].name);
 const Who = ({ id }) => (PEOPLE[id] ? html`<${Avatar} id=${id} size=${20} />` : html`<span className=${cx('rec-bot', id)}>${id === 'codex' ? '>_' : 'A'}</span>`);
 

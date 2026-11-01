@@ -1365,13 +1365,13 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 
 /* tape */
 .rec-tape { flex: none; border-top: 1px solid var(--line); padding: 0 16px; background: var(--r-panel); }
-.rec-strip { position: relative; height: 58px; cursor: ew-resize; user-select: none; }
-.rec-base { position: absolute; left: 0; right: 0; top: 29px; height: 1px; background: var(--line); }
-.rec-past { position: absolute; left: 0; right: 0; top: 29px; height: 1px; background: var(--text-2); transform-origin: 0 0; transform: scaleX(0); will-change: transform; }
-.rec-t { position: absolute; top: 40px; font-size: 11px; line-height: 14px; color: var(--muted); transform: translateX(-50%); white-space: nowrap; pointer-events: none; }
+.rec-strip { position: relative; height: 72px; cursor: ew-resize; user-select: none; }
+.rec-base { position: absolute; left: 0; right: 0; top: 34px; height: 1px; background: var(--line); }
+.rec-past { position: absolute; left: 0; right: 0; top: 34px; height: 1px; background: var(--text-2); transform-origin: 0 0; transform: scaleX(0); will-change: transform; }
+.rec-t { position: absolute; top: 54px; font-size: 11px; line-height: 14px; color: var(--muted); transform: translateX(-50%); white-space: nowrap; pointer-events: none; }
 .rec-t.start { transform: none; color: var(--text); font-weight: 500; }
-.rec-brk { position: absolute; top: 20px; height: 18px; border-radius: 3px; background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(255, 255, 255, 0.07) 4px 5px); }
-.rec-tick { position: absolute; top: 24px; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%; z-index: 2; cursor: pointer; transition: opacity 0.3s ease, box-shadow 0.25s ease; }
+.rec-brk { position: absolute; top: 20px; height: 29px; border-radius: 3px; background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(255, 255, 255, 0.07) 4px 5px); }
+.rec-tick { position: absolute; top: 29px; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%; z-index: 2; cursor: pointer; transition: opacity 0.3s ease, box-shadow 0.25s ease; }
 .rec-tick.person { background: var(--text-2); }
 .rec-tick.ai { background: var(--r-panel); box-shadow: inset 0 0 0 1.5px var(--blue); }
 .rec-tick.open { background: var(--amber); }
@@ -1379,8 +1379,8 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .rec-tick.future { opacity: 0.35; }
 .rec-tick:hover, .rec-tick.cur { box-shadow: 0 0 0 2px var(--r-panel), 0 0 0 3.5px var(--text); }
 .rec-tick.ai:hover, .rec-tick.ai.cur { box-shadow: inset 0 0 0 1.5px var(--blue), 0 0 0 2px var(--r-panel), 0 0 0 3.5px var(--text); }
-.rec-head { position: absolute; left: 0; top: 14px; height: 30px; width: 2px; margin-left: -1px; background: var(--text); border-radius: 1px; z-index: 3; pointer-events: none; will-change: transform; }
-.rec-htime { position: absolute; left: 1px; top: -14px; padding: 0 6px; border-radius: 4px; background: var(--text); color: #0F1114; font: 500 10.5px/16px var(--mono); white-space: nowrap; }
+.rec-head { position: absolute; left: 0; top: 16px; height: 36px; width: 2px; margin-left: -1px; background: var(--text); border-radius: 1px; z-index: 3; pointer-events: none; will-change: transform; }
+.rec-htime { position: absolute; left: 1px; top: -16px; padding: 0 6px; border-radius: 4px; background: var(--text); color: #0F1114; font: 500 10.5px/16px var(--mono); white-space: nowrap; }
 .rec-trans { display: flex; align-items: center; gap: 8px; height: 48px; border-top: 1px solid var(--r-line); }
 .rec-play { box-shadow: inset 0 0 0 1px var(--line-2); border-radius: 50%; color: var(--text); }
 .rec-clock { width: 190px; flex: none; font-size: 11.5px; color: var(--text); white-space: nowrap; }
