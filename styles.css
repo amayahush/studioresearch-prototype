@@ -1315,12 +1315,11 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .rec-trace { fill: none; stroke: var(--text-2); stroke-width: 1.75; stroke-dasharray: 1; stroke-dashoffset: 1; animation: rec-draw 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 @keyframes rec-draw { to { stroke-dashoffset: 0; } }
 
-.rec-card { background: var(--r-card); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--r-line); overflow: hidden; text-align: left; transition: background-color 0.25s ease, box-shadow 0.25s ease, opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.rec-card { background: var(--r-card); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--r-line); overflow: hidden; text-align: left; transition: background-color 0.3s ease, box-shadow 0.3s ease, opacity 0.45s ease; }
 .rec-card.clickable { cursor: pointer; }
 .rec-card.clickable:hover, button.rec-row:hover, .rec-person:hover { box-shadow: inset 0 0 0 1px var(--text-2); }
 .rec-card.touched, .rec-row.touched, .rec-person.touched { background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--text-2); }
 .rec-card.ghost, .rec-row.ghost { opacity: 0.35; }
-.rec-card.ghost { transform: scale(0.985); }
 .rec-card-head { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-bottom: 1px solid var(--r-line); }
 .rec-card-head > svg { color: var(--text-2); flex-shrink: 0; }
 .rec-card-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1363,7 +1362,7 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .rec-tape { flex: none; border-top: 1px solid var(--line); padding: 0 16px; background: var(--r-panel); }
 .rec-strip { position: relative; height: 58px; cursor: ew-resize; user-select: none; }
 .rec-base { position: absolute; left: 0; right: 0; top: 29px; height: 1px; background: var(--line); }
-.rec-past { position: absolute; left: 0; top: 29px; height: 1px; background: var(--text-2); }
+.rec-past { position: absolute; left: 0; right: 0; top: 29px; height: 1px; background: var(--text-2); transform-origin: 0 0; transform: scaleX(0); will-change: transform; }
 .rec-t { position: absolute; top: 40px; font-size: 11px; line-height: 14px; color: var(--muted); transform: translateX(-50%); white-space: nowrap; pointer-events: none; }
 .rec-t.start { transform: none; color: var(--text); font-weight: 500; }
 .rec-brk { position: absolute; top: 20px; height: 18px; border-radius: 3px; background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(255, 255, 255, 0.07) 4px 5px); }

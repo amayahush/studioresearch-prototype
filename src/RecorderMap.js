@@ -1,4 +1,4 @@
-import { html, useState, useEffect, useLayoutEffect, useRef, useMemo, cx, Fragment } from './lib.js';
+import { html, useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, cx, Fragment } from './lib.js';
 import { useStore, TEXT, EVIDENCE, PEOPLE } from './store.js';
 import { Avatar, Tag, StatusChip, Diff } from './ui.js';
 import { getReqs } from './Astra.js';
@@ -38,6 +38,8 @@ function xOf(ax, T, pad = 5) {
       if (i < 0 && d < s.days[s.days.length - 1]) { i = s.days.filter((x) => x <= d).length - 1; return off + i * cw + cw - 3; }
       if (i >= 0) return off + i * cw + Math.max(pad, Math.min(cw - pad, (m / 1440) * cw));
     }
+    // The break stands for Oct 8 before 1:30 PM, so the playhead glides through it instead of jumping.
+    if (s.k === 'brk' && d === OCT8 && m < ZFROM) return off + (m / ZFROM) * s.w;
     if (s.k === 'mins' && d === OCT8) return off + Math.max(0, Math.min(1, (m - ZFROM) / (ZTO - ZFROM))) * s.w;
     off += s.w;
   }
@@ -50,7 +52,7 @@ function tOf(ax, x, live) {
       const lx = Math.max(0, x - off);
       let T;
       if (s.k === 'days') { const cw = s.w / s.days.length, i = Math.min(s.days.length - 1, Math.floor(lx / cw)); T = s.days[i] * 1440 + ((lx - i * cw) / cw) * 1439; }
-      else if (s.k === 'brk') T = D(OCT8, 13, 30);
+      else if (s.k === 'brk') T = D(OCT8, 0, 0) + (lx / s.w) * ZFROM;
       else T = D(OCT8, 0, 0) + ZFROM + (lx / s.w) * (ZTO - ZFROM);
       return Math.min(live, T);
     }
@@ -212,7 +214,8 @@ function peopleFor(id, nodes, events) {
 
 // ---------- the view ----------
 // Playback: tape pixels per second at 1×, and how long the playhead rests on each event so its change can land.
-const SPEED = 60, DWELL = 900;
+// RAMP: over this many pixels the playhead eases out of and into each event instead of starting and stopping dead.
+const SPEED = 60, DWELL = 750, RAMP = 36;
 const SPEEDS = [[0.5, '0.5×'], [1, '1×'], [2, '2×']];
 
 export function RecorderMap({ selected, setSelected }) {
@@ -250,25 +253,63 @@ export function RecorderMap({ selected, setSelected }) {
   const cur = isLive || !passed.length ? [] : passed.filter((e) => e.t === passed[passed.length - 1].t);
   const touched = new Set(cur.flatMap((e) => e.path.flat()));
 
-  // Smooth playback: the playhead glides along the tape; events take effect as it passes them.
-  const tRef = useRef(T); tRef.current = T;
+  // Smooth playback. The playhead, the played part of the tape and the clock are painted straight to the DOM
+  // every frame; React re-renders the map only when something on it changes (an event, a new minute, a new day).
+  const tRef = useRef(T);
+  const axRef = useRef(ax); axRef.current = ax;
+  const headRef = useRef(null), pastRef = useRef(null), htimeRef = useRef(null), clockRef = useRef(null);
+  const paint = (t) => {
+    const a = axRef.current, x = xOf(a, Math.min(t, live), 0), w = a.reduce((sum, s) => sum + s.w, 0);
+    if (headRef.current) headRef.current.style.transform = `translate3d(${x}px, 0, 0)`;
+    if (pastRef.current) pastRef.current.style.transform = `scaleX(${w ? x / w : 0})`;
+    if (htimeRef.current) htimeRef.current.textContent = t >= live ? 'Live' : t >= D(OCT8, 0, 0) && a.length > 1 ? fmt(t).time : when(t);
+    if (clockRef.current) clockRef.current.textContent = t >= live ? `Now · ${when(live)}` : when(t);
+  };
+  const seekRaf = useRef(0);
+  useLayoutEffect(() => { if (!playing && !seekRaf.current) tRef.current = T; paint(tRef.current); });
+  // Jumps (clicking an event, the arrows, Back to now) glide the playhead there, then update the map.
+  const seek = (to) => {
+    setPlaying(false);
+    cancelAnimationFrame(seekRaf.current);
+    const a = axRef.current, x0 = xOf(a, tRef.current, 0), x1 = xOf(a, to, 0);
+    const dur = Math.min(650, 220 + Math.abs(x1 - x0) * 0.5), start = performance.now();
+    const f = (now) => {
+      const u = Math.min(1, (now - start) / dur), e = u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2;
+      tRef.current = u < 1 ? tOf(a, x0 + (x1 - x0) * e, live) : to;
+      paint(tRef.current);
+      if (u < 1) seekRaf.current = requestAnimationFrame(f);
+      else { seekRaf.current = 0; setT(to); }
+    };
+    seekRaf.current = requestAnimationFrame(f);
+  };
   useEffect(() => {
     if (!playing) return;
-    let raf, last = performance.now(), restUntil = 0;
+    const stops = [...new Set(events.map((e) => e.t))].sort((a, b) => a - b);
+    // Ease over RAMP px, or half the gap when events sit closer than that, so close events don't make it crawl.
+    const ease = (d, gap) => { const u = Math.max(0, Math.min(1, d / Math.max(4, Math.min(RAMP, gap / 2)))); return u * u * (3 - 2 * u); };
+    let raf, last = performance.now(), restUntil = 0, shown = tRef.current;
     const tick = (now) => {
-      const dt = (now - last) / 1000; last = now;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
       if (now < restUntil) { raf = requestAnimationFrame(tick); return; }
-      let nt = Math.max(tRef.current + 0.01, tOf(ax, xOf(ax, tRef.current, 0) + SPEED * speed * dt, live));
-      // Stop on each event for a moment so its cards and connectors can change before moving on.
-      const next = events.find((e) => e.t > tRef.current && e.t <= nt);
-      if (next) { nt = next.t; restUntil = now + DWELL / speed; }
-      setT(Math.min(nt, live));
-      if (nt >= live) { setPlaying(false); return; }
+      const a = axRef.current, t0 = tRef.current, x0 = xOf(a, t0, 0);
+      const next = stops.find((t) => t > t0 + 1e-6), prev = stops.filter((t) => t <= t0).pop();
+      const dNext = next === undefined ? Infinity : xOf(a, next, 0) - x0, dPrev = prev === undefined ? Infinity : x0 - xOf(a, prev, 0);
+      const gap = next !== undefined && prev !== undefined ? xOf(a, next, 0) - xOf(a, prev, 0) : Infinity;
+      const v = SPEED * speed * Math.max(0.15, Math.min(ease(dNext, gap), ease(dPrev, gap)));
+      let t = Math.max(t0 + 1e-4, tOf(a, x0 + v * dt, live)), hit = false;
+      // Rest on each event so its cards and connectors change before the playhead moves on.
+      if (next !== undefined && t >= next) { t = next; hit = true; restUntil = now + DWELL / speed; }
+      t = Math.min(t, live);
+      tRef.current = t;
+      paint(t);
+      const newStep = t >= D(OCT8, 0, 0) ? Math.floor(t) !== Math.floor(shown) : Math.floor(t / 1440) !== Math.floor(shown / 1440);
+      if (hit || newStep || t >= live) { shown = t; setT(t); }
+      if (t >= live) { setPlaying(false); return; }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, speed, ax.length, tapeW, live, track, scope]);
+  }, [playing, speed, live, track, scope, tapeW]);
 
   // Follow mode: center on whoever acted.
   const lastCur = cur[0];
@@ -286,8 +327,14 @@ export function RecorderMap({ selected, setSelected }) {
   };
   const pickScope = (s) => { setMenu(false); setScope(s); setTrack(null); setFocus(s === 'all' ? 'prd' : s); };
   const times = [...new Set(events.map((e) => e.t))];
-  const step = (dir) => { setPlaying(false); const i = dir > 0 ? times.findIndex((t) => t > T) : times.findLastIndex((t) => t < Math.floor(T)); setT(i >= 0 ? times[i] : dir > 0 ? live : T); };
-  const play = () => { if (playing) return setPlaying(false); if (!times.length) return; if (isLive) setT(times[0] - 0.5); setPlaying(true); };
+  const step = (dir) => { const now = tRef.current; const i = dir > 0 ? times.findIndex((t) => t > now + 1e-6) : times.findLastIndex((t) => t < Math.floor(now)); seek(i >= 0 ? times[i] : dir > 0 ? live : now); };
+  const play = () => {
+    if (playing) { setT(tRef.current); setPlaying(false); return; } // pause exactly where the playhead is
+    cancelAnimationFrame(seekRaf.current); seekRaf.current = 0;
+    if (!times.length) return;
+    if (isLive) { tRef.current = times[0] - 0.5; setT(tRef.current); }
+    setPlaying(true);
+  };
 
   useEffect(() => {
     const onKey = (e) => { if (e.target.closest('input, textarea')) return; if (e.key === 'ArrowRight') step(1); if (e.key === 'ArrowLeft') step(-1); };
@@ -295,7 +342,7 @@ export function RecorderMap({ selected, setSelected }) {
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const hover = (content) => (e) => { const r = e.currentTarget.getBoundingClientRect(); const left = Math.max(12, Math.min(r.left, window.innerWidth - 292)); setTip({ content, pos: window.innerHeight - r.bottom < 240 ? { left, bottom: window.innerHeight - r.top + 6 } : { left, top: r.bottom + 6 } }); };
+  const hover = (make) => (e) => { const content = typeof make === 'function' ? make() : make; const r = e.currentTarget.getBoundingClientRect(); const left = Math.max(12, Math.min(r.left, window.innerWidth - 292)); setTip({ content, pos: window.innerHeight - r.bottom < 240 ? { left, bottom: window.innerHeight - r.top + 6 } : { left, top: r.bottom + 6 } }); };
   const unhover = () => setTip(null);
   const nodeTip = (id) => {
     const n = nodes[id];
@@ -342,27 +389,28 @@ export function RecorderMap({ selected, setSelected }) {
         if (e.target.closest('.rec-tick')) return;
         setPlaying(false);
         const r = tapeRef.current.getBoundingClientRect();
+        cancelAnimationFrame(seekRaf.current); seekRaf.current = 0;
         const move = (ev) => setT(tOf(ax, ev.clientX - r.left, live));
         move(e);
         const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
         window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
       }}>
-        <${Axis} ax=${ax} T=${T} />
+        <${Axis} ax=${ax} pastRef=${pastRef} />
         ${spread(events.map((e) => xOf(ax, e.t))).map((x, i) => { const e = events[i]; return html`<button key=${i} className=${cx('rec-tick', e.kind, cur.includes(e) && 'cur', e.t > T && 'future')} style=${{ left: x }}
-          onClick=${() => { setPlaying(false); setT(e.t); }} onMouseEnter=${hover(evTip(e))} onMouseLeave=${unhover} aria-label=${`${when(e.t)}: ${e.text}`} />`; })}
-        <span className="rec-head" style=${{ transform: `translateX(${xOf(ax, Math.min(T, live))}px)` }}>
-          <span className="rec-htime">${isLive ? 'Live' : T >= D(OCT8, 0, 0) && ax.length > 1 ? fmt(T).time : when(T)}</span>
+          onClick=${() => seek(e.t)} onMouseEnter=${hover(() => evTip(e))} onMouseLeave=${unhover} aria-label=${`${when(e.t)}: ${e.text}`} />`; })}
+        <span className="rec-head" ref=${headRef}>
+          <span className="rec-htime" ref=${htimeRef} />
         </span>
       </div>
       <div className="rec-trans">
         <button className="icon-btn" onClick=${() => step(-1)} aria-label="Previous event"><${SkipBack} size=${14} strokeWidth=${1.5} /></button>
         <button className="icon-btn rec-play" onClick=${play} aria-label=${playing ? 'Pause' : 'Play'}>${playing ? html`<${Pause} size=${14} strokeWidth=${1.5} />` : html`<${Play} size=${14} strokeWidth=${1.5} />`}</button>
         <button className="icon-btn" onClick=${() => step(1)} aria-label="Next event"><${SkipForward} size=${14} strokeWidth=${1.5} /></button>
-        <span className="rec-clock mono">${isLive ? `Now · ${when(live)}` : when(T)}</span>
+        <span className="rec-clock mono" ref=${clockRef} />
         <span className="rec-callout"><${Callout} rec=${rec} T=${T} cur=${cur} isLive=${isLive} track=${track} /></span>
         <div className="seg sm rec-speed" role="group" aria-label="Playback speed">${SPEEDS.map(([v, l]) => html`<button key=${v} className=${cx('seg-btn', speed === v && 'active')} aria-pressed=${speed === v} onClick=${() => setSpeed(v)}>${l}</button>`)}</div>
         <label className="rec-follow"><input type="checkbox" checked=${follow} onChange=${(e) => setFollow(e.target.checked)} /><span className="rec-switch" aria-hidden="true" />Follow events</label>
-        ${!isLive && html`<button className="btn sm" onClick=${() => { setPlaying(false); setT(live); }}>Back to now</button>`}
+        ${!isLive && html`<button className="btn sm" onClick=${() => seek(live)}>Back to now</button>`}
       </div>
     </div>
     ${tip && html`<div className="map-tip rec-tip" role="tooltip" style=${tip.pos}>${tip.content}</div>`}
@@ -385,7 +433,7 @@ function Callout({ rec, T, cur, isLive, track }) {
   return cur[0] ? cur[0].text : 'Nothing has happened yet at this point.';
 }
 
-function Axis({ ax, T }) {
+function Axis({ ax, pastRef }) {
   let off = 0;
   const out = [];
   for (const s of ax) {
@@ -394,7 +442,7 @@ function Axis({ ax, T }) {
     else { out.push(html`<span key="o8" className="rec-t start" style=${{ left: off }}>Oct 8</span>`); for (let m = ZFROM + 15; m <= ZTO; m += 15) out.push(html`<span key=${m} className="rec-t" style=${{ left: off + ((m - ZFROM) / (ZTO - ZFROM)) * s.w - (m === ZTO ? 10 : 0) }}>${clock(m)}</span>`); }
     off += s.w;
   }
-  return html`<${Fragment}><span className="rec-base" />${out}<span className="rec-past" style=${{ width: xOf(ax, T) }} /><//>`;
+  return html`<${Fragment}><span className="rec-base" />${out}<span className="rec-past" ref=${pastRef} /><//>`;
 }
 
 // ---------- columns ----------
@@ -428,7 +476,8 @@ function Columns(p) {
   }
 
   // Connectors are measured from the laid-out cards, so they follow whatever the columns hold.
-  useLayoutEffect(() => {
+  // Measured when the columns mount and whenever a card changes size, never on every playback frame.
+  const measure = useCallback(() => {
     const st = stageRef.current; if (!st) return;
     const sr = st.getBoundingClientRect();
     const box = (el) => { const r = el.getBoundingClientRect(); return { l: r.left - sr.left, r: r.right - sr.left, t: r.top - sr.top, b: r.bottom - sr.top, cy: r.top + r.height / 2 - sr.top, cx: r.left + r.width / 2 - sr.left }; };
@@ -445,12 +494,14 @@ function Columns(p) {
     });
     const sig = JSON.stringify(out);
     setPaths((prev) => (JSON.stringify(prev) === sig ? prev : out));
-  });
-  useEffect(() => {
-    const on = () => setPaths((p) => [...p]);
-    window.addEventListener('resize', on);
-    return () => window.removeEventListener('resize', on);
-  }, []);
+  }, [focus]);
+  useLayoutEffect(() => {
+    measure();
+    const ro = new ResizeObserver(() => measure());
+    stageRef.current.querySelectorAll('.rec-card, .rec-col').forEach((el) => ro.observe(el));
+    ro.observe(stageRef.current);
+    return () => ro.disconnect();
+  }, [measure]);
 
   const lit = (path) => path.ids.filter((i) => p.touched.has(i)).length >= 2;
   return html`<div className="rec-cols" ref=${stageRef}>
@@ -475,7 +526,7 @@ const cls = (p, id) => cx(!p.nodes[id].alive && 'ghost', p.touched.has(id) && p.
 function Row({ id, p }) {
   const n = p.nodes[id];
   const meta = n.type === 'req' ? html`<${StatusChip} status=${n.assume} sources=${n.sources} changedIn=${n.changedIn} />` : n.type === 'evidence' ? html`<span className="rec-meta">${n.alive ? (p.T - n.born < 30 && p.T < p.rec.live ? html`<span className="blue">new</span>` : n.status.split(',')[0]) : ''}</span>` : null;
-  return html`<button className=${cx('rec-row', cls(p, id))} data-id=${id} onClick=${(e) => { e.stopPropagation(); p.center(id); }} onMouseEnter=${p.hover(p.nodeTip(id))} onMouseLeave=${p.unhover}>
+  return html`<button className=${cx('rec-row', cls(p, id))} data-id=${id} onClick=${(e) => { e.stopPropagation(); p.center(id); }} onMouseEnter=${p.hover(() => p.nodeTip(id))} onMouseLeave=${p.unhover}>
     <${Ico} t=${n.icon || n.type} />
     <span className="rec-row-main"><span className="rec-row-label">${n.type === 'req' && html`<span className="mono muted">${id} </span>`}${n.label}</span>${!['req', 'evidence', 'epic'].includes(n.type) && html`<span className=${cx('rec-row-sub', /needs update|behind/i.test(n.status) && 'amber')}>${n.status}</span>`}</span>
     ${meta}
@@ -487,7 +538,7 @@ function SourcesCard({ ids, ...p }) {
     <div className="rec-card-head"><${Ico} t="evidence" /><span className="rec-card-title">Sources</span><span className="muted tiny">${ids.length}</span></div>
     ${ids.map((id) => (SOURCES[id]
       ? html`<div key=${id} className=${cx('rec-row', p.T < SOURCES[id][2] && 'ghost', p.touched.has(id) && 'touched')} data-id=${id}
-          onMouseEnter=${p.hover(html`<${Fragment}><div className="tiny-label">Source · ${SOURCES[id][1]}</div><div className="map-tip-text">${SOURCES[id][0]}</div><div className="muted tiny">${SOURCES[id][3]}</div><//>`)} onMouseLeave=${p.unhover}>
+          onMouseEnter=${p.hover(() => html`<${Fragment}><div className="tiny-label">Source · ${SOURCES[id][1]}</div><div className="map-tip-text">${SOURCES[id][0]}</div><div className="muted tiny">${SOURCES[id][3]}</div><//>`)} onMouseLeave=${p.unhover}>
           <${Ico} t="source" /><span className="rec-row-main"><span className="rec-row-label">${SOURCES[id][0]}</span></span><span className="rec-meta">${SOURCES[id][1]}</span></div>`
       : html`<${Row} key=${id} id=${id} p=${p} />`))}
   </div>`;
@@ -497,7 +548,7 @@ function Card({ id, title, icon, anchor, rows = [], from, ...p }) {
   const n = id && p.nodes[id];
   const lag = n && /needs update|behind/i.test(n.status);
   return html`<div className=${cx('rec-card', id && cls(p, id), id && 'clickable')} data-anchor=${anchor} data-id=${id} data-from=${from}
-      onClick=${id ? () => p.center(id) : undefined} onMouseEnter=${id ? p.hover(p.nodeTip(id)) : undefined} onMouseLeave=${id ? p.unhover : undefined}>
+      onClick=${id ? () => p.center(id) : undefined} onMouseEnter=${id ? p.hover(() => p.nodeTip(id)) : undefined} onMouseLeave=${id ? p.unhover : undefined}>
     <div className="rec-card-head"><${Ico} t=${n ? n.type : icon} /><span className="rec-card-title">${n ? html`<${Fragment}>${n.id && html`<span className="mono muted">${n.id} </span>`}${n.label}<//>` : title}</span></div>
     ${n && n.type !== 'epic' && html`<div className=${cx('rec-card-status', lag && 'amber')}>${n.alive ? n.status : 'Not created yet'}</div>`}
     ${rows.map((r) => html`<${Row} key=${r} id=${r} p=${p} />`)}
@@ -506,7 +557,7 @@ function Card({ id, title, icon, anchor, rows = [], from, ...p }) {
 
 function ReqCard({ id, side = 'right', ...p }) {
   const n = p.nodes[id];
-  return html`<div className=${cx('rec-card clickable', cls(p, id))} data-anchor=${side} data-id=${id} onClick=${() => p.center(id)} onMouseEnter=${p.hover(p.nodeTip(id))} onMouseLeave=${p.unhover}>
+  return html`<div className=${cx('rec-card clickable', cls(p, id))} data-anchor=${side} data-id=${id} onClick=${() => p.center(id)} onMouseEnter=${p.hover(() => p.nodeTip(id))} onMouseLeave=${p.unhover}>
     <div className="rec-card-head"><${Ico} t="req" /><span className="rec-card-title"><span className="mono muted">${id} </span>${n.label}</span></div>
     <div className="rec-card-status"><span className="clamp">${n.full}</span>${n.assume !== 'verified' || n.changedIn ? html`<div className="rec-chip-line"><${StatusChip} status=${n.assume} sources=${n.sources} changedIn=${n.changedIn} /></div>` : null}</div>
   </div>`;
@@ -548,7 +599,7 @@ function PeopleCard({ ids, ...p }) {
   return html`<div className="rec-card rec-people" data-anchor="bottom" data-id="people">
     <div className="rec-card-head"><${Users} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span className="rec-card-title">People</span><span className="muted tiny">${ids.length}</span></div>
     <div className="rec-people-grid">
-      ${ids.map((id) => { const k = p.rec.knewAt(id, p.T); return html`<button key=${id} className=${cx('rec-person', p.touched.has(id) && 'touched')} data-id=${id} onClick=${() => p.center(id)} onMouseEnter=${p.hover(p.nodeTip(id))} onMouseLeave=${p.unhover}>
+      ${ids.map((id) => { const k = p.rec.knewAt(id, p.T); return html`<button key=${id} className=${cx('rec-person', p.touched.has(id) && 'touched')} data-id=${id} onClick=${() => p.center(id)} onMouseEnter=${p.hover(() => p.nodeTip(id))} onMouseLeave=${p.unhover}>
         <span className=${cx('rec-ring', k)}><${Avatar} id=${id} size=${22} /></span>
         <span className="rec-person-text"><span>${PEOPLE[id].name}</span><span className="muted tiny">${k ? word[k] : PEOPLE[id].title}</span></span>
       </button>`; })}
