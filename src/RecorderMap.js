@@ -262,7 +262,12 @@ export function RecorderMap({ selected, setSelected }) {
     const a = axRef.current, x = xOf(a, Math.min(t, live), 0), w = a.reduce((sum, s) => sum + s.w, 0);
     if (headRef.current) headRef.current.style.transform = `translate3d(${x}px, 0, 0)`;
     if (pastRef.current) pastRef.current.style.transform = `scaleX(${w ? x / w : 0})`;
-    if (htimeRef.current) htimeRef.current.textContent = t >= live ? 'Live' : t >= D(OCT8, 0, 0) && a.length > 1 ? fmt(t).time : when(t);
+    if (htimeRef.current) {
+      const el = htimeRef.current;
+      el.textContent = t >= live ? 'Live' : t >= D(OCT8, 0, 0) && a.length > 1 ? fmt(t).time : when(t);
+      const lw = el.offsetWidth, cx0 = Math.max(lw / 2, Math.min(w - lw / 2, x));
+      el.style.transform = `translateX(${cx0 - x - lw / 2}px)`;
+    }
     if (clockRef.current) clockRef.current.textContent = t >= live ? `Now · ${when(live)}` : when(t);
   };
   const seekRaf = useRef(0);
@@ -455,7 +460,7 @@ function Columns(p) {
   if (n.type === 'req') {
     crumbs = ['prd', epicOf(focus)];
     L.push(html`<${SourcesCard} key="src" ids=${REQ_SOURCES[focus]} ...${p} />`);
-    if (focus === 'R4') L.push(html`<${Card} key="cl" title="Also reads this API" icon="cluster" anchor="loop" from="ev-api" rows=${['cl-shift', 'cl-comp']} ...${p} />`);
+    if (focus === 'R4') L.push(html`<${Card} key="cl" title="Also reads this API" icon="cluster" anchor="loop" from="ev-api" show=${nodes['ev-api'].alive} rows=${['cl-shift', 'cl-comp']} ...${p} />`);
     for (const k of neighbors(focus, nodes).filter((k) => WORK.includes(nodes[k].type))) R.push(html`<${Card} key=${k} id=${k} anchor="right" rows=${neighbors(k, nodes).filter((c) => nodes[c].type === 'code')} ...${p} />`);
     ppl = peopleFor(focus, nodes, events);
   } else if (n.type === 'epic') {
@@ -483,14 +488,16 @@ function Columns(p) {
     const box = (el) => { const r = el.getBoundingClientRect(); return { l: r.left - sr.left, r: r.right - sr.left, t: r.top - sr.top, b: r.bottom - sr.top, cy: r.top + r.height / 2 - sr.top, cx: r.left + r.width / 2 - sr.left }; };
     const cEl = st.querySelector('.rec-center'); if (!cEl) return;
     const c = box(cEl), out = [];
-    const ids = (el) => [el.dataset.id, ...[...el.querySelectorAll('[data-id]')].map((x) => x.dataset.id)].filter(Boolean);
+    const ids = (el) => [el.dataset.id, ...[...el.querySelectorAll('[data-id]')].filter((x) => !x.closest('.rec-reveal.gone')).map((x) => x.dataset.id)].filter(Boolean);
+    const gone = (el) => !!el.closest('.rec-reveal.gone');
     st.querySelectorAll('[data-anchor]').forEach((el) => {
+      if (gone(el)) return;
       const a = el.dataset.anchor, b = box(el);
-      if (a === 'rows') { const rows = [...el.querySelectorAll('.rec-row')]; rows.forEach((r, i) => { const rb = box(r); const y2 = c.t + 52 + (c.b - c.t - 70) * (rows.length < 2 ? 0.5 : i / (rows.length - 1)); out.push({ key: 'src' + i, d: hz(b.r, rb.cy, c.l, y2), ids: [r.dataset.id, focus] }); }); }
+      if (a === 'rows') { const rows = [...el.querySelectorAll('.rec-row')].filter((r) => !gone(r)); rows.forEach((r, i) => { const rb = box(r); const y2 = c.t + 52 + (c.b - c.t - 70) * (rows.length < 2 ? 0.5 : i / (rows.length - 1)); out.push({ key: 'src' + i, d: hz(b.r, rb.cy, c.l, y2), ids: [r.dataset.id, focus] }); }); }
       if (a === 'left') out.push({ key: 'l' + el.dataset.id, d: hz(b.r, b.cy, c.l, c.cy), ids: [...ids(el), focus] });
       if (a === 'right') out.push({ key: 'r' + el.dataset.id, d: hz(c.r, c.cy, b.l, b.t + 21), ids: [focus, ...ids(el)] });
       if (a === 'bottom') out.push({ key: 'ppl', d: vt(c.cx, c.b, b.cx, b.t), ids: [focus, ...ids(el)], people: true });
-      if (a === 'loop') { const f = st.querySelector(`.rec-row[data-id="${el.dataset.from}"]`); if (f) { const fb = box(f); out.push({ key: 'loop', d: `M ${fb.l} ${fb.cy} C ${fb.l - 28} ${fb.cy}, ${b.l - 28} ${b.t + 21}, ${b.l} ${b.t + 21}`, ids: [el.dataset.from, ...ids(el)] }); } }
+      if (a === 'loop') { const f = st.querySelector(`.rec-row[data-id="${el.dataset.from}"]`); if (f && !gone(f)) { const fb = box(f); out.push({ key: 'loop', d: `M ${fb.l} ${fb.cy} C ${fb.l - 28} ${fb.cy}, ${b.l - 28} ${b.t + 21}, ${b.l} ${b.t + 21}`, ids: [el.dataset.from, ...ids(el)] }); } }
     });
     const sig = JSON.stringify(out);
     setPaths((prev) => (JSON.stringify(prev) === sig ? prev : out));
@@ -521,46 +528,51 @@ function Columns(p) {
 const hz = (x1, y1, x2, y2) => { const dx = Math.max(24, (x2 - x1) / 2); return `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`; };
 const vt = (x1, y1, x2, y2) => { const dy = Math.max(12, (y2 - y1) / 2); return `M ${x1} ${y1} C ${x1} ${y1 + dy}, ${x2} ${y2 - dy}, ${x2} ${y2}`; };
 
-const cls = (p, id) => cx(!p.nodes[id].alive && 'ghost', p.touched.has(id) && p.nodes[id].alive && 'touched');
+const cls = (p, id) => cx(p.touched.has(id) && p.nodes[id].alive && 'touched');
+
+// Records that don't exist yet at the playhead take no space. When they're created they expand into place,
+// and the cards around them slide to make room.
+const Reveal = ({ show, children }) => html`<div className=${cx('rec-reveal', !show && 'gone')} aria-hidden=${show ? undefined : 'true'}><div className="rec-reveal-in">${children}</div></div>`;
 
 function Row({ id, p }) {
   const n = p.nodes[id];
   const meta = n.type === 'req' ? html`<${StatusChip} status=${n.assume} sources=${n.sources} changedIn=${n.changedIn} />` : n.type === 'evidence' ? html`<span className="rec-meta">${n.alive ? (p.T - n.born < 30 && p.T < p.rec.live ? html`<span className="blue">new</span>` : n.status.split(',')[0]) : ''}</span>` : null;
-  return html`<button className=${cx('rec-row', cls(p, id))} data-id=${id} onClick=${(e) => { e.stopPropagation(); p.center(id); }} onMouseEnter=${p.hover(() => p.nodeTip(id))} onMouseLeave=${p.unhover}>
+  return html`<${Reveal} show=${n.alive}><button className=${cx('rec-row', cls(p, id))} data-id=${id} tabIndex=${n.alive ? undefined : -1} onClick=${(e) => { e.stopPropagation(); p.center(id); }} onMouseEnter=${p.hover(() => p.nodeTip(id))} onMouseLeave=${p.unhover}>
     <${Ico} t=${n.icon || n.type} />
     <span className="rec-row-main"><span className="rec-row-label">${n.type === 'req' && html`<span className="mono muted">${id} </span>`}${n.label}</span>${!['req', 'evidence', 'epic'].includes(n.type) && html`<span className=${cx('rec-row-sub', /needs update|behind/i.test(n.status) && 'amber')}>${n.status}</span>`}</span>
     ${meta}
-  </button>`;
+  </button><//>`;
 }
 
 function SourcesCard({ ids, ...p }) {
-  return html`<div className="rec-card" data-anchor="rows">
-    <div className="rec-card-head"><${Ico} t="evidence" /><span className="rec-card-title">Sources</span><span className="muted tiny">${ids.length}</span></div>
+  const any = ids.some((id) => (SOURCES[id] ? p.T >= SOURCES[id][2] : p.nodes[id].alive));
+  return html`<${Reveal} show=${any}><div className="rec-card" data-anchor="rows">
+    <div className="rec-card-head"><${Ico} t="evidence" /><span className="rec-card-title">Sources</span><span className="muted tiny">${ids.filter((id) => (SOURCES[id] ? p.T >= SOURCES[id][2] : p.nodes[id].alive)).length}</span></div>
     ${ids.map((id) => (SOURCES[id]
-      ? html`<div key=${id} className=${cx('rec-row', p.T < SOURCES[id][2] && 'ghost', p.touched.has(id) && 'touched')} data-id=${id}
+      ? html`<${Reveal} key=${id} show=${p.T >= SOURCES[id][2]}><div className=${cx('rec-row', p.touched.has(id) && 'touched')} data-id=${id}
           onMouseEnter=${p.hover(() => html`<${Fragment}><div className="tiny-label">Source · ${SOURCES[id][1]}</div><div className="map-tip-text">${SOURCES[id][0]}</div><div className="muted tiny">${SOURCES[id][3]}</div><//>`)} onMouseLeave=${p.unhover}>
-          <${Ico} t="source" /><span className="rec-row-main"><span className="rec-row-label">${SOURCES[id][0]}</span></span><span className="rec-meta">${SOURCES[id][1]}</span></div>`
+          <${Ico} t="source" /><span className="rec-row-main"><span className="rec-row-label">${SOURCES[id][0]}</span></span><span className="rec-meta">${SOURCES[id][1]}</span></div><//>`
       : html`<${Row} key=${id} id=${id} p=${p} />`))}
-  </div>`;
+  </div><//>`;
 }
 
-function Card({ id, title, icon, anchor, rows = [], from, ...p }) {
+function Card({ id, title, icon, anchor, rows = [], from, show, ...p }) {
   const n = id && p.nodes[id];
   const lag = n && /needs update|behind/i.test(n.status);
-  return html`<div className=${cx('rec-card', id && cls(p, id), id && 'clickable')} data-anchor=${anchor} data-id=${id} data-from=${from}
+  return html`<${Reveal} show=${show ?? (!n || n.alive)}><div className=${cx('rec-card', id && cls(p, id), id && 'clickable')} data-anchor=${anchor} data-id=${id} data-from=${from}
       onClick=${id ? () => p.center(id) : undefined} onMouseEnter=${id ? p.hover(() => p.nodeTip(id)) : undefined} onMouseLeave=${id ? p.unhover : undefined}>
     <div className="rec-card-head"><${Ico} t=${n ? n.type : icon} /><span className="rec-card-title">${n ? html`<${Fragment}>${n.id && html`<span className="mono muted">${n.id} </span>`}${n.label}<//>` : title}</span></div>
     ${n && n.type !== 'epic' && html`<div className=${cx('rec-card-status', lag && 'amber')}>${n.alive ? n.status : 'Not created yet'}</div>`}
     ${rows.map((r) => html`<${Row} key=${r} id=${r} p=${p} />`)}
-  </div>`;
+  </div><//>`;
 }
 
 function ReqCard({ id, side = 'right', ...p }) {
   const n = p.nodes[id];
-  return html`<div className=${cx('rec-card clickable', cls(p, id))} data-anchor=${side} data-id=${id} onClick=${() => p.center(id)} onMouseEnter=${p.hover(() => p.nodeTip(id))} onMouseLeave=${p.unhover}>
+  return html`<${Reveal} show=${n.alive}><div className=${cx('rec-card clickable', cls(p, id))} data-anchor=${side} data-id=${id} onClick=${() => p.center(id)} onMouseEnter=${p.hover(() => p.nodeTip(id))} onMouseLeave=${p.unhover}>
     <div className="rec-card-head"><${Ico} t="req" /><span className="rec-card-title"><span className="mono muted">${id} </span>${n.label}</span></div>
     <div className="rec-card-status"><span className="clamp">${n.full}</span>${n.assume !== 'verified' || n.changedIn ? html`<div className="rec-chip-line"><${StatusChip} status=${n.assume} sources=${n.sources} changedIn=${n.changedIn} /></div>` : null}</div>
-  </div>`;
+  </div><//>`;
 }
 
 function CenterCard(p) {
@@ -568,8 +580,11 @@ function CenterCard(p) {
   const n = nodes[focus];
   const reviewing = focus === 'R4' && T >= AT.propose && !(rec.approved && T >= AT.decide) && rec.events.some((e) => e.t === AT.propose);
   const evs = rec.events.filter((e) => e.req === focus && e.t <= T);
-  let meta = n.status;
-  if (focus === 'R4') {
+  // Counts only what exists at the playhead.
+  const srcCount = n.type === 'req' ? REQ_SOURCES[focus].filter((id) => (SOURCES[id] ? T >= SOURCES[id][2] : nodes[id].alive)).length : 0;
+  const linkCount = n.type === 'req' ? neighbors(focus, nodes).filter((k) => WORK.includes(nodes[k].type) && nodes[k].alive).length : 0;
+  let meta = n.alive ? n.status : `Written ${when(n.born)}`;
+  if (focus === 'R4' && n.alive) {
     const s = rec.r4At(T);
     meta = s === 'verified' ? `Approved by Dana Ortiz · was every 15 minutes` : s === 'contradicted' ? (reviewing ? `Suggested by Marcus Lee · ${fmt(AT.propose).time}` : `The build contradicted this at ${fmt(AT.flag).time}`) : s === 'assumed' ? 'Assumed · from the kickoff call, never checked' : 'AI draft from the kickoff transcript';
   }
@@ -577,7 +592,7 @@ function CenterCard(p) {
     <div className="rec-card-head">
       <${Ico} t=${n.type} />
       <span className="rec-card-title">${n.id && html`<span className="mono muted">${n.id} </span>`}${n.label}</span>
-      ${n.type === 'req' && html`<${StatusChip} status=${n.assume} sources=${n.sources} changedIn=${n.changedIn} />`}
+      ${n.type === 'req' && n.alive && html`<${StatusChip} status=${n.assume} sources=${n.sources} changedIn=${n.changedIn} />`}
       ${n.type === 'prd' && html`<${Tag} tone=${rec.r4At(T) === 'verified' ? 'green' : 'neutral'}>${n.full.replace('PRD ', '')}<//>`}
     </div>
     <div className="rec-center-body">
@@ -590,7 +605,7 @@ function CenterCard(p) {
         : html`<p className=${cx('rec-center-text', n.type === 'epic' && 'pre')}>${n.alive ? n.full : 'Not written yet.'}</p>`}
       <div className=${cx('muted tiny', focus === 'R4' && rec.r4At(T) === 'contradicted' && !reviewing && 'amber')}>${meta}</div>
     </div>
-    ${n.type === 'req' && html`<div className="rec-center-foot muted tiny"><span>${evs.length} event${evs.length === 1 ? '' : 's'}</span><span>${REQ_SOURCES[focus].length} source${REQ_SOURCES[focus].length === 1 ? '' : 's'}</span><span>${neighbors(focus, nodes).filter((k) => WORK.includes(nodes[k].type)).length} linked</span></div>`}
+    ${n.type === 'req' && html`<div className="rec-center-foot muted tiny"><span>${evs.length} event${evs.length === 1 ? '' : 's'}</span><span>${srcCount} source${srcCount === 1 ? '' : 's'}</span><span>${linkCount} linked</span></div>`}
   </div>`;
 }
 

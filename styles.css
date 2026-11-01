@@ -1307,10 +1307,11 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .rec-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--r-app); }
 .rec-cols { position: relative; height: 100%; display: grid; grid-template-columns: minmax(220px, 260px) minmax(320px, 1fr) minmax(250px, 300px); column-gap: 72px; align-items: center; padding: 20px 28px; animation: rec-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 @keyframes rec-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.rec-col { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; max-height: 100%; }
+.rec-col { position: relative; z-index: 1; display: flex; flex-direction: column; min-width: 0; max-height: 100%; }
 .rec-col.mid { align-items: center; gap: 0; }
 .rec-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-.rec-conn { fill: none; stroke: var(--r-line-strong); stroke-width: 1.5; transition: opacity 0.35s ease; }
+.rec-conn { fill: none; stroke: var(--r-line-strong); stroke-width: 1.5; transition: opacity 0.35s ease; animation: rec-fade 0.6s ease backwards; }
+@keyframes rec-fade { from { opacity: 0; } }
 .rec-conn.quiet { opacity: 0.4; }
 .rec-trace { fill: none; stroke: var(--text-2); stroke-width: 1.75; stroke-dasharray: 1; stroke-dashoffset: 1; animation: rec-draw 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 @keyframes rec-draw { to { stroke-dashoffset: 0; } }
@@ -1319,7 +1320,11 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .rec-card.clickable { cursor: pointer; }
 .rec-card.clickable:hover, button.rec-row:hover, .rec-person:hover { box-shadow: inset 0 0 0 1px var(--text-2); }
 .rec-card.touched, .rec-row.touched, .rec-person.touched { background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--text-2); }
-.rec-card.ghost, .rec-row.ghost { opacity: 0.35; }
+/* Not created yet: takes no space. Created: expands into place while the cards around it slide over. */
+.rec-reveal { display: grid; grid-template-rows: 1fr; opacity: 1; transition: grid-template-rows 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease 0.1s; }
+.rec-reveal.gone { grid-template-rows: 0fr; opacity: 0; pointer-events: none; transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease; }
+.rec-reveal-in { min-height: 0; overflow: hidden; }
+.rec-col > .rec-reveal > .rec-reveal-in > .rec-card { margin: 6px 0; }
 .rec-card-head { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-bottom: 1px solid var(--r-line); }
 .rec-card-head > svg { color: var(--text-2); flex-shrink: 0; }
 .rec-card-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1375,7 +1380,7 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .rec-tick:hover, .rec-tick.cur { box-shadow: 0 0 0 2px var(--r-panel), 0 0 0 3.5px var(--text); }
 .rec-tick.ai:hover, .rec-tick.ai.cur { box-shadow: inset 0 0 0 1.5px var(--blue), 0 0 0 2px var(--r-panel), 0 0 0 3.5px var(--text); }
 .rec-head { position: absolute; left: 0; top: 14px; height: 30px; width: 2px; margin-left: -1px; background: var(--text); border-radius: 1px; z-index: 3; pointer-events: none; will-change: transform; }
-.rec-htime { position: absolute; left: 1px; top: -14px; transform: translateX(-50%); padding: 0 6px; border-radius: 4px; background: var(--text); color: #0F1114; font: 500 10.5px/16px var(--mono); white-space: nowrap; }
+.rec-htime { position: absolute; left: 1px; top: -14px; padding: 0 6px; border-radius: 4px; background: var(--text); color: #0F1114; font: 500 10.5px/16px var(--mono); white-space: nowrap; }
 .rec-trans { display: flex; align-items: center; gap: 8px; height: 48px; border-top: 1px solid var(--r-line); }
 .rec-play { box-shadow: inset 0 0 0 1px var(--line-2); border-radius: 50%; color: var(--text); }
 .rec-clock { width: 190px; flex: none; font-size: 11.5px; color: var(--text); white-space: nowrap; }
@@ -1395,4 +1400,4 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .rec-tip-head { display: flex; align-items: center; gap: 8px; }
 .rec-bot { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--bg-3); color: var(--text); font: 600 9px var(--mono); flex: none; }
 .rec-bot.astra { background: #7C3AED; color: #fff; }
-@media (prefers-reduced-motion: reduce) { .rec-cols, .rec-trace { animation: none; stroke-dashoffset: 0; } .rec-card, .rec-row, .rec-ring { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .rec-cols, .rec-trace { animation: none; stroke-dashoffset: 0; } .rec-card, .rec-row, .rec-ring, .rec-reveal { transition: none; } .rec-conn { animation: none; } }
