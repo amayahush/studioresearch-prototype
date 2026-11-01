@@ -112,6 +112,8 @@ export function reducer(state, action) {
   switch (action.type) {
     case 'SET_ROLE':
       return { ...state, role: action.role };
+    case 'EXPLORE_ASTRA':
+      return { ...initialState, role: 'explore' };
     case 'START_ROLE': {
       // Each role path starts fresh at its own point in the story (brief §8).
       const fresh = { ...initialState, role: action.role, startedAs: action.role };

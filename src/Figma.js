@@ -80,7 +80,7 @@ export function Figma() {
   return html`<div className="figma">
     <aside className="fg-left">
       <div className="fg-file">
-        <div className="fg-file-name"><span className="fg-logo">F</span> Line Labor Dashboard <${ChevronDown} size=${12} /></div>
+        <div className="fg-file-name">Line Labor Dashboard <${ChevronDown} size=${12} /></div>
         <div className="muted tiny">Manufacturing Systems · Design</div>
       </div>
       <div className="fg-tabs"><strong>File</strong><span className="muted">Assets</span><span className="grow" /><${Search} size=${13} className="muted" /></div>
@@ -155,6 +155,11 @@ export function Figma() {
     <aside className="fg-right">
       <div className="fg-right-head"><${Avatar} legacy id="priya" size=${24} /><span className="grow" /><${Play} size=${14} /><button className="btn btn-figma sm">Share</button></div>
       <div className="fg-props">
+        ${selected === 'label' && tagged && html`<button className="fg-prop-alert" onClick=${openPlugin}>
+          <${Link2} size=${13} aria-hidden="true" />
+          <span><strong>R4 ${needsLabel ? 'changed' : 'may change'}</strong><small>Open in Astra</small></span>
+          <${ChevronRight} size=${13} aria-hidden="true" />
+        </button>`}
         <div className="fg-prop-label">${selected === 'label' ? 'Text' : 'Frame'}</div>
         <div className="fg-prop-grid"><span>X 0</span><span>Y 0</span><span>W ${selected === 'label' ? (state.labelUpdated ? 236 : 134) : 1280}</span><span>H ${selected === 'label' ? 24 : 832}</span></div>
         <div className="fg-prop-label">Fill</div>
@@ -320,4 +325,3 @@ function AstraPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
     ${body}
   </div>`;
 }
-

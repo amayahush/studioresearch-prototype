@@ -1,5 +1,5 @@
 import { html, useState, useEffect, useRef, cx, Fragment } from './lib.js';
-import { useStore, TEXT, EVIDENCE, TIMES, R4_INTENT, prdVersion } from './store.js';
+import { useStore, TEXT, EVIDENCE, TIMES, R4_INTENT, PEOPLE, prdVersion } from './store.js';
 import { Avatar, Tag, SectionLabel, Diff, EvidenceChip, Toast, StatusChip } from './ui.js';
 import { TimeSkip, EndCard } from './Interstitials.js';
 import {
@@ -442,6 +442,9 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
   const [reason, setReason] = useState(state.proposal.reason);
   const [reply, setReply] = useState('');
   const [people, setPeople] = useState(false);
+  const [peopleQuery, setPeopleQuery] = useState('');
+  const [linkedPeople, setLinkedPeople] = useState(['priya', 'kim', 'jordan']);
+  const peopleMatches = Object.entries(PEOPLE).filter(([, person]) => person.name.toLowerCase().includes(peopleQuery.toLowerCase()));
 
   if (panel === 'check') {
     return html`<div className="sp">
@@ -468,11 +471,34 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         </div>
         <div className="rl-divider" />
         <div className="rl-label-row"><span className="rl-label">Linked to R4</span>
-          <span className="rl-avatars" title="Priya, Kim, Jordan"><${Avatar} id="priya" size=${22} /><${Avatar} id="kim" size=${22} /><${Avatar} id="jordan" size=${22} /></span>
+          <span className="rl-avatars" title=${linkedPeople.map((id) => PEOPLE[id].name).join(', ')}>
+            ${linkedPeople.map((id) => html`<${Avatar} key=${id} id=${id} size=${22} />`)}
+          </span>
           <button className="rl-icon round" aria-label="Add or suggest people" aria-expanded=${people} onClick=${() => setPeople(!people)}><${Plus} size=${12} strokeWidth=${1.5} aria-hidden="true" /></button>
         </div>
-        <div className="chips"><span className="chip static">Jira LAB-15</span><span className="chip static">Figma · Overview</span><span className="chip static">Success metric</span></div>
-        ${people && html`<div className="rl-note">Suggested: Ravi Patel (owns timekeeping-api.md). Adding people is not simulated.</div>`}
+        <div className=${cx('rl-linked-work', people && 'with-search')}>
+          ${people && html`<div className="rl-people-search">
+            <input
+              className="field"
+              type="search"
+              placeholder="Enter Name"
+              aria-label="Search people to link"
+              value=${peopleQuery}
+              onInput=${(e) => setPeopleQuery(e.currentTarget.value)}
+            />
+            ${peopleQuery && html`<div className="rl-people-results">
+              ${peopleMatches.length
+                ? peopleMatches.map(([id, person]) => html`<button key=${id} className="rl-person-result" disabled=${linkedPeople.includes(id)} onClick=${() => {
+                    setLinkedPeople((current) => current.includes(id) ? current : [...current, id]);
+                    setPeopleQuery('');
+                  }}>
+                    <${Avatar} id=${id} size=${22} /><span>${person.name}</span><span className="muted tiny">${linkedPeople.includes(id) ? 'Linked' : person.role || person.title}</span>
+                  </button>`)
+                : html`<div className="rl-note">No people found.</div>`}
+            </div>`}
+          </div>`}
+          <div className="chips"><span className="chip static">Jira LAB-15</span><span className="chip static">Figma · Overview</span><span className="chip static">Success metric</span></div>
+        </div>
         <div className="rl-divider" />
         <div className="rl-label">Evidence · where this comes from</div>
         <div className="chips"><${EvidenceChip} id="api" /><${EvidenceChip} id="spec" /></div>

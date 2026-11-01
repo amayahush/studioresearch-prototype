@@ -28,7 +28,7 @@ function App() {
     } catch {}
   }, [state]);
 
-  const screens = { marcus: Codex, priya: Figma, dana: Astra };
+  const screens = { marcus: Codex, priya: Figma, dana: Astra, explore: Astra };
   const Screen = screens[state.role];
 
   return html`<${StoreContext.Provider} value=${{ state, dispatch }}>
@@ -36,7 +36,7 @@ function App() {
       <${TesterBar} />
       <main className="stage">
         ${Screen ? html`<${Screen} key=${state.role} />` : html`<${RolePicker} />`}
-        ${Screen && html`<${Guide} />`}
+        ${Screen && state.role !== 'explore' && html`<${Guide} />`}
       </main>
     </div>
   <//>`;
