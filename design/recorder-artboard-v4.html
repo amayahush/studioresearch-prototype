@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recorder v4 Artboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --app: #191A1A; --sidebar: #161717; --panel: #1C1D1D; --card: #252727; --row: #2D2F2F;
+  --line: #333535; --line-2: #3A3C3C; --text: #E6E8EC; --muted: #9BA2AD; --label: #878E99; --faint: #5F656E;
+  --blue: #8EA6FF; --blue-bg: #1E2537; --amber: #E8AA4E; --amber-bg: #372D1E; --green: #5DC79A; --green-bg: #1C2F27;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace; --sans: 'Inter', system-ui, sans-serif;
+  --lab: 168px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #0E0F0F; color: var(--text); font: 12px/18px var(--sans); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.stage { padding: 28px 16px 40px; display: grid; justify-items: center; gap: 10px; }
+.artlabel { width: 1280px; font: 11px/16px var(--mono); color: var(--label); }
+.scaler { width: 1280px; height: 832px; transform-origin: top left; }
+.board { width: 1280px; height: 832px; display: flex; background: var(--app); border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+
+/* shell */
+.side { width: 212px; background: var(--sidebar); border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.ws { font-weight: 600; font-size: 13px; padding: 4px 6px 12px; }
+.search { display: flex; justify-content: space-between; padding: 6px 10px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); margin-bottom: 8px; }
+.nav { padding: 6px 10px; border-radius: 8px; color: var(--muted); display: flex; justify-content: space-between; }
+.nav.on { background: var(--row); color: var(--text); }
+.navh { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--label); padding: 14px 10px 4px; font-weight: 500; }
+.nav .f { font: 11px var(--mono); color: var(--label); }
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.top { height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.top h1 { font-size: 14px; font-weight: 600; margin: 0; }
+.chip { display: inline-flex; align-items: center; height: 22px; font-size: 11px; padding: 0 8px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); white-space: nowrap; }
+.chip.green { background: var(--green-bg); color: var(--green); box-shadow: none; }
+.chip.amber { background: var(--amber-bg); color: var(--amber); box-shadow: none; }
+.chip.blue { background: var(--blue-bg); color: var(--blue); box-shadow: none; }
+.grow { flex: 1; }
+.seg { display: flex; padding: 3px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line-2); }
+.seg span { padding: 5px 10px; border-radius: 7px; color: var(--muted); }
+.seg span.on { background: var(--row); color: var(--text); }
+.pill { height: 32px; padding: 0 14px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line-2); font-weight: 500; white-space: nowrap; }
+.pill.primary { background: var(--text); color: #0F1114; box-shadow: none; }
+.pill:disabled { opacity: .4; cursor: not-allowed; }
+.av { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 9px; font-weight: 600; color: #fff; flex-shrink: 0; }
+
+.bar { height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 16px; flex-shrink: 0; }
+.bar h2 { font-size: 14px; font-weight: 600; margin: 0; }
+.state { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.state i { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+.state.replay i { background: var(--amber); }
+.note { color: var(--label); }
+.card { margin: 0 16px 16px; flex: 1; background: var(--panel); border-radius: 14px; box-shadow: inset 0 0 0 1px var(--line); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+
+/* tabs */
+.tabs { display: flex; align-items: center; gap: 4px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.tab { height: 28px; padding: 0 9px; border-radius: 7px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tab:hover { color: var(--text); background: rgba(255,255,255,.03); }
+.tab.on { background: var(--row); color: var(--text); }
+.tab .sd { width: 6px; height: 6px; border-radius: 50%; }
+.tab .sd.none { display: none; }
+.grp { display: flex; align-items: center; gap: 2px; padding-left: 10px; margin-left: 6px; border-left: 1px solid var(--line); }
+.grp .gl { font: 500 10.5px var(--mono); color: var(--label); padding-right: 4px; white-space: nowrap; }
+
+/* view header */
+.vhead { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; flex-shrink: 0; }
+.vhead .when { font: 11px var(--mono); color: var(--label); width: calc(var(--lab) - 10px); flex-shrink: 0; white-space: nowrap; }
+.vhead .txt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cap { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--label); font-weight: 500; white-space: nowrap; }
+.legend { display: flex; gap: 14px; color: var(--muted); font-size: 11px; align-items: center; white-space: nowrap; }
+.legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.k { display: inline-block; flex-shrink: 0; }
+
+/* plot */
+.plot { position: relative; padding: 0 16px; flex: 1; min-height: 0; }
+.r { display: flex; align-items: center; }
+.lab { width: var(--lab); flex-shrink: 0; padding-right: 12px; display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; color: var(--muted); height: 100%; }
+.trk { position: relative; height: 100%; flex: 1; }
+.axis { height: 44px; }
+.axis .t { position: absolute; top: 24px; font-size: 11px; color: var(--label); transform: translateX(-50%); white-space: nowrap; }
+.axis .t.l { transform: none; }
+.axis .t.strong { color: var(--text); font-weight: 500; }
+.axis .trk { cursor: ew-resize; }
+.brk { position: absolute; top: 20px; bottom: 0; background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(255,255,255,.06) 4px 5px); border-radius: 3px; }
+.grid { position: absolute; top: 44px; bottom: 0; width: 1px; background: var(--line); opacity: .55; pointer-events: none; }
+
+.epic { height: 40px; border-top: 1px solid var(--line); }
+.epic .lab { color: var(--text); font-weight: 500; }
+.epic .lab .id { font: 500 11px var(--mono); color: var(--label); }
+.req { height: 30px; border-radius: 6px; cursor: pointer; }
+.req:hover { background: rgba(255,255,255,.03); }
+.req .lab { padding-left: 14px; }
+.req .lab b { color: var(--text); font: 500 11px var(--mono); width: 20px; flex-shrink: 0; }
+.req .lab span { overflow: hidden; text-overflow: ellipsis; }
+.dot { position: absolute; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; }
+.dot.verified { background: var(--muted); }
+.dot.assumed { box-shadow: inset 0 0 0 1.5px var(--muted); }
+.dot.contested { background: var(--amber); }
+.dot.changed { background: var(--green); }
+.dot.draft { background: var(--blue); }
+.ln { position: absolute; top: 50%; height: 2px; margin-top: -1px; }
+.ln.verified { background: var(--faint); }
+.ln.assumed { background: repeating-linear-gradient(90deg, #6a717c 0 4px, transparent 4px 7px); }
+.ln.draft { background: repeating-linear-gradient(90deg, var(--blue) 0 4px, transparent 4px 7px); }
+.ln.contested { background: var(--amber); height: 4px; margin-top: -2px; border-radius: 2px; }
+.ln.changed { background: var(--green); height: 4px; margin-top: -2px; border-radius: 2px; }
+.pin { position: absolute; top: 50%; width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-right: 6px solid var(--amber); margin: -4px 0 0 8px; cursor: help; }
+.tick { position: absolute; top: 12px; width: 4px; height: 16px; margin-left: -2px; border-radius: 2px; cursor: pointer; }
+.tick.person { background: var(--muted); }
+.tick.ai { box-shadow: inset 0 0 0 1.5px var(--blue); }
+.tick.open { background: var(--amber); }
+.tick.done { background: var(--green); }
+
+.lane { height: 42px; }
+.lane .trk::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
+.mk { position: absolute; top: 11px; width: 8px; height: 20px; margin-left: -4px; border-radius: 3px; cursor: pointer; z-index: 2; }
+.mk:hover, .mk.cur { box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--text); }
+.mk.person { background: var(--muted); }
+.mk.ai { box-shadow: inset 0 0 0 1.5px var(--blue); background: var(--panel); }
+.mk.ai:hover, .mk.ai.cur { box-shadow: inset 0 0 0 1.5px var(--blue), 0 0 0 2px var(--panel), 0 0 0 3.5px var(--text); }
+.mk.open { background: var(--amber); }
+.mk.done { background: var(--green); }
+.lag { position: absolute; top: 11px; height: 20px; border-radius: 4px; background: var(--amber-bg); box-shadow: inset 0 0 0 1px rgba(232,170,78,.35); z-index: 1; cursor: help; }
+.lagl { position: absolute; top: 12px; font-size: 11px; color: var(--amber); white-space: nowrap; z-index: 1; pointer-events: none; }
+.sub { height: 40px; display: flex; align-items: center; gap: 16px; border-top: 1px solid var(--line); margin-top: 6px; }
+.who { height: 34px; }
+.who .lab { color: var(--text); }
+.wseg { position: absolute; top: 50%; cursor: help; }
+.wseg.v1 { height: 2px; margin-top: -1px; background: #4a4f56; }
+.wseg.knows { height: 8px; margin-top: -4px; background: var(--amber); border-radius: 2px; }
+.wseg.cur { height: 8px; margin-top: -4px; background: var(--green); border-radius: 2px; }
+.empty { color: var(--label); padding: 18px 0 0 var(--lab); position: relative; z-index: 6; }
+
+.mask { position: absolute; bottom: 0; right: 16px; background: rgba(28,29,29,.72); pointer-events: none; z-index: 3; }
+.head { position: absolute; bottom: 0; width: 2px; margin-left: -1px; background: var(--text); z-index: 4; pointer-events: none; }
+.htime { position: absolute; top: 0; transform: translateX(-50%); background: var(--text); color: #0F1114; font: 500 10.5px/18px var(--mono); padding: 0 7px; border-radius: 4px; white-space: nowrap; z-index: 5; cursor: ew-resize; user-select: none; }
+
+.trans { display: flex; align-items: center; gap: 10px; padding: 0 16px; height: 56px; border-top: 1px solid var(--line); flex-shrink: 0; }
+.ib { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); flex-shrink: 0; }
+.ib.play { box-shadow: inset 0 0 0 1px var(--line-2); color: var(--text); }
+.ib:hover { color: var(--text); background: var(--row); }
+.clock { font: 500 11.5px var(--mono); width: 200px; white-space: nowrap; flex-shrink: 0; }
+.callout { flex: 1; min-width: 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.callout strong { color: var(--amber); font-weight: 500; }
+
+.tip { position: fixed; z-index: 50; width: 288px; padding: 12px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-2), 0 16px 40px rgba(0,0,0,.55); pointer-events: none; display: none; }
+.tip .th { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.tip .tn { font-weight: 500; }
+.tip .tm { color: var(--label); font-size: 11px; }
+.tip p { margin: 0 0 8px; }
+.tip p:last-child { margin: 0; }
+.tip .q { color: var(--muted); }
+.tip .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="artlabel" id="artlabel">10R v4 · Recorder · Overview combines each epic’s events; requirement tabs are grouped by epic and play their own record</div>
+  <div class="scaler" id="scaler">
+  <div class="board">
+    <aside class="side">
+      <div class="ws">Manufacturing Systems ⌄</div>
+      <div class="search"><span>Search</span><span style="font:11px var(--mono)">⌘K</span></div>
+      <div class="nav">Inbox</div><div class="nav">My work</div>
+      <div class="navh">Projects</div>
+      <div class="nav on">Line Labor Dashboard</div><div class="nav">Compliance Tracker</div><div class="nav">Shift Handoff</div>
+      <div class="navh">Connected tools</div>
+      <div class="nav">Jira <span class="f">2m</span></div><div class="nav">GitLab <span class="f">5m</span></div><div class="nav">Figma <span class="f">1m</span></div>
+      <div class="nav">Teams <span class="f">live</span></div><div class="nav">SharePoint <span class="f">10m</span></div><div class="nav">Codex <span class="f">live</span></div>
+      <div class="grow"></div><div class="nav">Settings</div><div class="nav">Help</div>
+    </aside>
+    <div class="main">
+      <div class="top">
+        <h1>Line Labor Dashboard</h1>
+        <span class="chip" id="ver"></span><span class="chip" id="unv"></span>
+        <span class="grow"></span>
+        <div class="seg"><span>Doc</span><span class="on">Recorder</span><span>Screens</span><span>Present</span></div>
+        <button class="pill">Share</button>
+        <span class="av" style="background:#2F8A6B;width:28px;height:28px;font-size:10px">DO</span>
+      </div>
+      <div class="bar">
+        <h2>Recorder</h2>
+        <span class="state" id="state"><i></i><span></span></span>
+        <span class="grow"></span>
+        <span class="note">Same records as the Doc view. Nothing is edited here.</span>
+        <button class="pill">Export</button>
+        <button class="pill primary" id="signoff">Sign off record</button>
+      </div>
+      <div class="card">
+        <div class="tabs" id="tabs"></div>
+        <div class="vhead" id="vhead"></div>
+        <div class="plot" id="plot"></div>
+        <div class="trans">
+          <button class="ib" id="prev" aria-label="Previous event"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 3v10M13 3 6 8l7 5z"/></svg></button>
+          <button class="ib play" id="play" aria-label="Play"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3l8 5-8 5z"/></svg></button>
+          <button class="ib" id="next" aria-label="Next event"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v10M3 3l7 5-7 5z"/></svg></button>
+          <span class="clock" id="clock"></span>
+          <span class="callout" id="callout"></span>
+          <button class="pill" id="live">Go live</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+// ---------- time ----------
+// T = minutes since Sep 24 00:00. Day numbers: Sep 24 = 0, Oct 1 = 7 … Oct 8 = 14.
+const D = (day, h, m) => day * 1440 + h * 60 + m;
+const OCT8 = 14, ZFROM = 13 * 60 + 30, ZTO = 14 * 60 + 30, LIVE = D(OCT8, 14, 27);
+const DAYS = [0, 7, 8, 9, 10, 11, 12, 13];
+const dayName = (d) => (d === 0 ? 'Sep 24' : `Oct ${d - 6}`);
+const clock = (m) => `${((Math.floor(m / 60) + 11) % 12) + 1}:${String(m % 60).padStart(2, '0')}`;
+const fmt = (T) => { const d = Math.floor(T / 1440), m = T % 1440; return { date: dayName(d), time: `${clock(m)} ${m < 720 ? 'AM' : 'PM'}`, short: clock(m) }; };
+const whenStr = (T) => `${fmt(T).date} · ${fmt(T).time}`;
+
+// An axis is a row of segments. 'days' = one column per day (time of day spreads within the column);
+// 'mins' = one day drawn minute by minute. R4 needs the minute view of Oct 8; the other requirements don't.
+let TW = 0, AX = null;
+function makeAxis(kind) {
+  if (kind === 'days') return [{ k: 'days', days: [...DAYS, OCT8], w: TW }];
+  const dw = 40 * DAYS.length, brk = 16;
+  return [{ k: 'days', days: DAYS, w: dw }, { k: 'brk', w: brk }, { k: 'mins', day: OCT8, w: TW - dw - brk }];
+}
+function xOf(T) {
+  let off = 0;
+  const d = Math.floor(T / 1440), m = T % 1440;
+  for (const s of AX) {
+    if (s.k === 'days') {
+      const cw = s.w / s.days.length;
+      let i = s.days.indexOf(d);
+      if (i < 0 && d < s.days[s.days.length - 1]) { i = s.days.filter((x) => x <= d).length - 1; return off + i * cw + cw - 4; }
+      if (i >= 0) return off + i * cw + Math.max(5, Math.min(cw - 5, (m / 1440) * cw));
+    }
+    if (s.k === 'mins' && d === s.day) return off + Math.max(0, Math.min(1, (m - ZFROM) / (ZTO - ZFROM))) * s.w;
+    off += s.w;
+  }
+  return off;
+}
+const colCenter = (d) => { const s = AX[0], cw = s.w / s.days.length, i = s.days.indexOf(d); return i < 0 ? null : i * cw + cw / 2; };
+function tOf(x) {
+  let off = 0;
+  for (const s of AX) {
+    if (x < off + s.w || s === AX[AX.length - 1]) {
+      const lx = Math.max(0, x - off);
+      if (s.k === 'days') { const cw = s.w / s.days.length, i = Math.min(s.days.length - 1, Math.floor(lx / cw)); return Math.min(LIVE, s.days[i] * 1440 + Math.round(((lx - i * cw) / cw) * 1439)); }
+      if (s.k === 'brk') return D(OCT8, 13, 30);
+      return Math.min(LIVE, D(OCT8, 0, 0) + ZFROM + Math.round((lx / s.w) * (ZTO - ZFROM)));
+    }
+    off += s.w;
+  }
+  return LIVE;
+}
+
+// ---------- story data (R4 follows src/store.js; other requirements use the store's records with placeholder dates) ----------
+const PEOPLE = {
+  marcus: ['Marcus Lee', 'ML', '#3D5AFE'], priya: ['Priya Shah', 'PS', '#9F0064'], dana: ['Dana Ortiz', 'DO', '#2F8A6B'],
+  kim: ['Kim Alvarez', 'KA', '#C76A00'], sam: ['Sam Reed', 'SR', '#5C6370'], jordan: ['Jordan Kim', 'JK', '#4100E2'],
+  astra: ['Astra', 'A', '#3A3C3C'], codex: ['Codex', '>_', '#2D2F2F'],
+};
+const R4_OLD = 'Refresh data every 15 minutes.';
+const R4_NEW = 'Refresh data hourly, 5 minutes after the timekeeping system syncs. Show the real last-sync time.';
+const EPICS = [
+  ['LAB-E1', 'Live labor visibility', ['R1', 'R2', 'R4', 'R6']],
+  ['LAB-E2', 'Filtering', ['R3', 'R5']],
+  ['LAB-E3', 'Alerts and history', ['R7', 'R8']],
+];
+const PUB = D(7, 16, 0);
+const REQ = {
+  R1: { short: 'Hours by dept', text: 'Show labor hours per department for the current shift.', born: D(0, 16, 0), st: (T) => (T < PUB ? 'draft' : 'verified') },
+  R2: { short: '85% flag', text: 'Flag any department above 85% of planned hours.', born: D(0, 16, 0), st: (T) => (T < PUB ? 'draft' : 'verified') },
+  R3: { short: 'Shift filter', text: 'Let leaders filter by shift (1st, 2nd, 3rd).', born: D(0, 16, 0), st: (T) => (T < PUB ? 'draft' : 'verified') },
+  R4: { short: 'Refresh rate', text: null, born: D(0, 16, 0), st: (T) => (T < PUB ? 'draft' : T < D(OCT8, 13, 40) ? 'assumed' : T < D(OCT8, 14, 21) ? 'contested' : 'changed') },
+  R5: { short: 'Dept detail', text: 'Show a department detail view with an hourly breakdown.', born: D(7, 9, 30), st: () => 'draft' },
+  R6: { short: 'Crews by lead', text: 'Show each crew lead their own departments first.', born: D(9, 10, 40), st: () => 'assumed' },
+  R7: { short: 'Overtime alerts', text: 'Send the shift lead a Teams alert when a department crosses the overtime threshold.', born: D(0, 16, 0), st: (T) => (T < PUB ? 'draft' : 'assumed') },
+  R8: { short: 'Shift history', text: 'Keep 90 days of shift history for weekly labor reviews.', born: D(10, 15, 5), st: () => 'assumed' },
+};
+const reqText = (id, T) => (id === 'R4' ? (REQ.R4.st(T) === 'changed' ? R4_NEW : R4_OLD) : REQ[id].text);
+const WORD = { verified: 'Verified', assumed: 'Assumed', contested: 'Contradicted by build', changed: 'Changed in v1.1', draft: 'AI draft' };
+const TONE = { verified: '', assumed: '', contested: 'amber', changed: 'green', draft: 'blue' };
+const LANES = ['Conversation', 'PRD', 'Code + AI', 'Design', 'Decisions'];
+
+// [req, time, lane, kind, who, text, chips, reviewer]
+const EV = [
+  ['R4', D(0, 10, 18), 0, 'person', 'kim', 'Kickoff call: “If leads can see it by lunch, they can move people before it turns into overtime.”', ['Kickoff transcript 18:40']],
+  ['R4', D(0, 16, 0), 1, 'ai', 'astra', 'Drafted R4 “Refresh data every 15 minutes” from the kickoff transcript.', [], 'Dana Ortiz'],
+  ['R4', PUB, 4, 'person', 'dana', 'Published PRD v1 with R4 still assumed. The assumption check flagged it first.', ['Assumption check · Oct 1']],
+  ['R4', D(8, 11, 20), 2, 'ai', 'astra', 'Created Jira LAB-15 from R4: refresh labor hours every 15 minutes.', ['Jira LAB-15'], 'Dana Ortiz'],
+  ['R4', D(9, 14, 40), 3, 'person', 'priya', 'Added an “Updated every 15 min” label to the Overview frame.', ['Figma · Overview']],
+  ['R4', D(9, 18, 5), 2, 'ai', 'codex', 'Wrote the refresh job on a 15-minute schedule, as R4 says. Opened !219.', ['GitLab !219'], 'Marcus Lee'],
+  ['R4', D(OCT8, 13, 40), 2, 'open', 'codex', 'Build test: the timekeeping API returns sync_interval PT1H. R4 is contradicted.', ['API response · Oct 8', 'Spec §3.2 · 2023'], 'Marcus Lee'],
+  ['R4', D(OCT8, 13, 52), 4, 'open', 'marcus', 'Proposed changing R4 to an hourly refresh, 5 minutes after each sync.', ['Proposal · R4']],
+  ['R4', D(OCT8, 13, 58), 3, 'person', 'priya', 'Agreed in the Figma plugin: “I’ll relabel ‘Updated every 15 min’ to show the actual last sync time.”', []],
+  ['R4', D(OCT8, 14, 8), 4, 'open', 'dana', 'Asked for more evidence: the linked spec section is from 2023.', []],
+  ['R4', D(OCT8, 14, 19), 4, 'open', 'marcus', 'Added changelog lines 58–60 (data owner confirmed hourly in Sept) and resent.', ['Changelog L58–60 · Sep 2026']],
+  ['R4', D(OCT8, 14, 19), 0, 'person', 'kim', 'Agreed in Teams: “Hourly still gets us there by lunch.”', []],
+  ['R4', D(OCT8, 14, 21), 4, 'done', 'dana', 'Approved R4: “Hourly still meets the mid-shift goal. Label shows the real sync time.”', ['Decision record · R4']],
+  ['R4', D(OCT8, 14, 21), 1, 'done', 'astra', 'Published PRD v1.1 with the new R4.', ['PRD v1.1']],
+  ['R4', D(OCT8, 14, 21), 2, 'done', 'astra', 'Updated the Jira LAB-15 description for v1.1.', ['Jira LAB-15']],
+  ['R4', D(OCT8, 14, 21), 0, 'done', 'astra', 'Posted v1.1 to Teams. Kim and Sam were notified.', ['Teams · #line-labor']],
+  ['R4', D(OCT8, 14, 21), 3, 'done', 'astra', 'Left a comment on the Overview frame for Priya.', ['Figma · Overview']],
+  ['R4', D(OCT8, 14, 24), 2, 'done', 'marcus', 'Updated the refresh job to hourly (5 * * * *).', ['GitLab !219']],
+  ['R4', D(OCT8, 14, 26), 3, 'done', 'priya', 'Relabeled the Overview: “Last synced 1:00 PM · next 2:05 PM”.', ['Figma · Overview']],
+
+  ['R1', D(0, 16, 0), 1, 'ai', 'astra', 'Drafted R1 from the kickoff transcript.', [], 'Dana Ortiz'],
+  ['R1', PUB, 4, 'person', 'dana', 'Approved R1 in PRD v1.', []],
+  ['R1', D(9, 11, 0), 3, 'person', 'priya', 'Drew the department bars on the Overview frame.', ['Figma · Overview']],
+  ['R1', D(10, 15, 30), 2, 'person', 'marcus', 'Merged !205, the department hours endpoint.', ['GitLab !205']],
+  ['R1', D(11, 9, 0), 2, 'done', 'astra', 'Jira LAB-12 moved to Done.', ['Jira LAB-12']],
+
+  ['R2', D(0, 16, 0), 1, 'ai', 'astra', 'Drafted R2 from the kickoff transcript.', [], 'Dana Ortiz'],
+  ['R2', PUB, 4, 'person', 'dana', 'Approved R2 in PRD v1.', []],
+  ['R2', D(9, 11, 30), 3, 'person', 'priya', 'Added the over-85% highlight state to the Overview frame.', ['Figma · Overview']],
+  ['R2', D(11, 10, 0), 2, 'person', 'jordan', 'Started Jira LAB-13, the overtime flag.', ['Jira LAB-13']],
+
+  ['R3', D(0, 16, 0), 1, 'ai', 'astra', 'Drafted R3 from the kickoff transcript.', [], 'Dana Ortiz'],
+  ['R3', PUB, 4, 'person', 'dana', 'Approved R3 in PRD v1.', []],
+  ['R3', D(9, 13, 0), 3, 'person', 'priya', 'Designed the Filters frame.', ['Figma · Filters']],
+  ['R3', D(12, 14, 0), 2, 'person', 'marcus', 'Opened !212, the shift filter UI.', ['GitLab !212']],
+
+  ['R5', D(7, 9, 30), 1, 'ai', 'astra', 'Drafted R5 from crew lead notes. Nobody has accepted it.', ['Lead notes'], null],
+  ['R5', D(9, 15, 0), 3, 'person', 'priya', 'Made a Department detail frame. It may match R5, but nobody has linked it.', ['Figma · Department detail']],
+
+  ['R6', D(9, 10, 0), 0, 'person', 'sam', 'Lead sync call: crew leads want to see their own departments first.', ['Lead sync · Oct 3']],
+  ['R6', D(9, 10, 40), 1, 'ai', 'astra', 'Added R6 as assumed from the lead sync call.', [], 'Dana Ortiz'],
+
+  ['R7', D(0, 10, 31), 0, 'person', 'kim', 'Kickoff call: asked for a Teams alert when a department nears overtime.', ['Kickoff transcript 31:20']],
+  ['R7', D(0, 16, 0), 1, 'ai', 'astra', 'Drafted R7 from the kickoff transcript.', [], 'Dana Ortiz'],
+  ['R7', PUB, 4, 'person', 'dana', 'Published R7 in v1 as assumed. No tickets yet.', []],
+
+  ['R8', D(10, 14, 30), 0, 'person', 'sam', 'SME sync: weekly labor reviews look back about 90 days.', ['SME sync · Oct 4']],
+  ['R8', D(10, 15, 5), 1, 'ai', 'astra', 'Added R8 as assumed from the SME sync.', [], 'Dana Ortiz'],
+];
+const LAGS = [
+  [1, D(OCT8, 13, 40), D(OCT8, 14, 21), 'PRD behind · 41 min', 'in', 'The build knew R4 was wrong at 1:40 PM. The PRD said so at 2:21 PM.'],
+  [2, D(OCT8, 14, 21), D(OCT8, 14, 24), 'Code behind · 3 min', 'before', 'v1.1 was approved at 2:21 PM. The refresh job matched it at 2:24 PM.'],
+  [3, D(OCT8, 14, 21), D(OCT8, 14, 26), 'Label behind · 5 min', 'before', 'v1.1 was approved at 2:21 PM. The Overview label matched it at 2:26 PM.'],
+];
+const KNEW = [
+  ['marcus', D(OCT8, 13, 40), D(OCT8, 14, 21), 'Saw the build test in Codex'],
+  ['dana', D(OCT8, 13, 52), D(OCT8, 14, 21), 'Got the proposal in Astra'],
+  ['priya', D(OCT8, 13, 52), D(OCT8, 14, 21), 'Got the pending change in Figma'],
+  ['kim', D(OCT8, 14, 19), D(OCT8, 14, 21), 'Saw the thread in Teams'],
+  ['sam', null, D(OCT8, 14, 21), null],
+];
+const knewAt = (k, T) => (T >= k[2] ? 'cur' : k[1] !== null && T >= k[1] ? 'knows' : 'v1');
+const PATTERN = '<p><b>Pattern across 3 PRDs · early signal</b></p><p class="q">Across 3 PRDs, 3 of 4 requirements set from a kickoff quote and never checked against the source system changed after the build started.</p><p class="q">This was shown on R4 at the assumption check on Oct 1. v1 was published anyway, and R4 changed a week later.</p><p class="tm">Counts requirements and sources, never people.</p>';
+
+// ---------- state ----------
+let view = 'R4', T = D(OCT8, 13, 40), playing = null;
+const $ = (id) => document.getElementById(id);
+const TIPS = {}; let tipN = 0;
+const tip = (html) => { const k = 't' + tipN++; TIPS[k] = html; return `data-tip="${k}"`; };
+const av = (id, s = 22) => { const p = PEOPLE[id]; return `<span class="av" style="background:${p[2]};width:${s}px;height:${s}px">${p[1]}</span>`; };
+const eventsFor = (v) => EV.filter((e) => v === 'overview' || e[0] === v);
+const evTip = (e) => {
+  const [req, t, li, kind, who, text, chips, rev] = e, p = PEOPLE[who];
+  const ai = rev ? `<span class="chip blue">AI action · reviewed by ${rev}</span>` : kind === 'ai' ? '<span class="chip blue">AI action · not reviewed</span>' : '';
+  return tip(`<div class="th">${av(who)}<div><div class="tn">${p[0]}</div><div class="tm">${req} · ${LANES[li]} · ${whenStr(t)}</div></div></div><p>${text}</p><div class="chips">${ai}${chips.map((c) => `<span class="chip">${c}</span>`).join('')}</div>`);
+};
+const statusTip = (id, s, when) => tip(`<div class="th"><span class="tn">${id} · ${REQ[id].short}</span><span class="chip ${TONE[s]}">${WORD[s]}</span></div><p class="tm">${when}</p><p class="q">${id === 'R4' ? (s === 'changed' ? R4_NEW : R4_OLD) : REQ[id].text}</p>`);
+
+// ---------- tabs ----------
+function renderTabs() {
+  const dot = (id) => { const s = REQ[id].st(T); return s === 'contested' ? 'var(--amber)' : s === 'changed' ? 'var(--green)' : 'transparent'; };
+  let h = `<button class="tab${view === 'overview' ? ' on' : ''}" data-v="overview">Overview</button>`;
+  for (const [eid, , reqs] of EPICS) h += `<div class="grp"><span class="gl">${eid}</span>${reqs.map((r) => `<button class="tab${view === r ? ' on' : ''}" data-v="${r}"><span class="sd${dot(r) === 'transparent' ? ' none' : ''}" style="background:${dot(r)}"></span>${r}</button>`).join('')}</div>`;
+  h += `<span class="grow"></span><span class="legend">${[['verified', 'Verified'], ['assumed', 'Assumed'], ['contested', 'Contested'], ['changed', 'Changed'], ['draft', 'AI draft']].map(([c, l]) => `<span><span class="k dot ${c}" style="position:static;margin:0"></span>${l}</span>`).join('')}</span>`;
+  $('tabs').innerHTML = h;
+  $('tabs').querySelectorAll('[data-v]').forEach((b) => (b.onclick = () => go(b.dataset.v)));
+}
+const go = (v) => { stop(); view = v; build(); };
+
+// ---------- plot ----------
+function axisRow() {
+  let t = '', off = 0, grid = '';
+  for (const s of AX) {
+    if (s.k === 'days') {
+      const cw = s.w / s.days.length;
+      s.days.forEach((d, i) => {
+        const lbl = d === 0 ? 'Sep 24' : d === 7 ? 'Oct 1' : cw > 60 ? dayName(d) : String(d - 6);
+        t += `<span class="t" style="left:${off + i * cw + cw / 2}px">${lbl}</span>`;
+        if (i > 0) grid += `<span class="grid" style="left:calc(16px + var(--lab) + ${off + i * cw}px)"></span>`;
+      });
+    } else if (s.k === 'brk') {
+      t += `<span class="brk" style="left:${off + 3}px;width:${s.w - 6}px" ${tip('<p><b>The scale changes here</b></p><p class="q">Sep 24 to Oct 7 get one column per day. Oct 8 is drawn minute by minute, 1:30 to 2:30 PM.</p>')}></span>`;
+    } else {
+      t += `<span class="t l strong" style="left:${off}px">Oct 8</span>`;
+      for (let m = ZFROM + 15; m <= ZTO; m += 15) t += `<span class="t" style="left:${off + ((m - ZFROM) / (ZTO - ZFROM)) * s.w - (m === ZTO ? 12 : 0)}px">${clock(m)}</span>`;
+    }
+    off += s.w;
+  }
+  return `<div class="r axis"><div class="lab"></div><div class="trk" id="axtrk">${t}</div></div>${grid}`;
+}
+
+function statusCells(id) {
+  let h = '';
+  for (const d of AX[0].days) {
+    const end = d * 1440 + 1439, x = colCenter(d);
+    if (end < REQ[id].born || x === null) continue;
+    const s = REQ[id].st(end);
+    h += `<span class="dot ${s}" style="left:${x}px" ${statusTip(id, s, `End of ${dayName(d)}`)}></span>`;
+    if (id === 'R4' && d === 7) h += `<span class="pin" style="left:${x}px" ${tip(PATTERN)}></span>`;
+  }
+  if (AX.length > 1) {
+    const segs = id === 'R4' ? [[D(OCT8, 13, 30), D(OCT8, 13, 40)], [D(OCT8, 13, 40), D(OCT8, 14, 21)], [D(OCT8, 14, 21), LIVE]] : [[D(OCT8, 13, 30), LIVE]];
+    for (const [a, b] of segs) { const s = REQ[id].st(a); h += `<span class="ln ${s}" style="left:${xOf(a)}px;width:${xOf(b) - xOf(a)}px" ${statusTip(id, s, `Oct 8 · ${fmt(a).short} to ${fmt(b).time}`)}></span>`; }
+  }
+  return h;
+}
+
+function overview() {
+  let h = '';
+  for (const [eid, name, reqs] of EPICS) {
+    const evs = EV.filter((e) => reqs.includes(e[0])).sort((p, q) => p[1] - q[1]);
+    const placed = [];
+    const ticks = evs.map((e) => {
+      // Ticks closer than 6px would sit on top of each other: nudge each one right of the last.
+      let x = xOf(e[1]);
+      const prev = placed[placed.length - 1];
+      if (prev !== undefined && x - prev < 6) x = prev + 6;
+      placed.push(x);
+      return `<span class="tick ${e[3]}" data-t="${e[1]}" style="left:${x}px" ${evTip(e)}></span>`;
+    }).join('');
+    h += `<div class="r epic"><div class="lab"><span class="id">${eid}</span>${name}</div><div class="trk">${ticks}</div></div>`;
+    for (const id of reqs) h += `<div class="r req" data-v="${id}"><div class="lab"><b>${id}</b><span>${REQ[id].short}</span></div><div class="trk">${statusCells(id)}</div></div>`;
+  }
+  return h;
+}
+
+function record(id) {
+  let h = '';
+  LANES.forEach((name, li) => {
+    let inner = '';
+    if (id === 'R4') for (const [l, a, b, txt, place, why] of LAGS) if (l === li) {
+      inner += `<span class="lag" style="left:${xOf(a)}px;width:${xOf(b) - xOf(a)}px" ${tip(`<p><b>${txt}</b></p><p class="q">${why}</p>`)}></span>`;
+      inner += place === 'in' ? `<span class="lagl" style="left:${xOf(a) + 10}px">${txt}</span>` : `<span class="lagl" style="right:calc(100% - ${xOf(a) - 10}px)">${txt}</span>`;
+    }
+    EV.forEach((e, i) => { if (e[0] === id && e[2] === li) inner += `<span class="mk ${e[3]}" data-t="${e[1]}" style="left:${xOf(e[1])}px" ${evTip(e)}></span>`; });
+    h += `<div class="r lane"><div class="lab">${name}</div><div class="trk">${inner}</div></div>`;
+  });
+  if (id === 'R4') {
+    h += `<div class="r sub"><div class="lab"><span class="cap">Who knew what</span></div><span class="legend"><span><span class="k" style="width:14px;height:2px;background:#4a4f56"></span>On v1, not told</span><span><span class="k" style="width:14px;height:8px;background:var(--amber);border-radius:2px"></span>Knew R4 was wrong</span><span><span class="k" style="width:14px;height:8px;background:var(--green);border-radius:2px"></span>On v1.1</span></span></div>`;
+    for (const k of KNEW) {
+      const [pid, a, b, how] = k, p = PEOPLE[pid], s1 = a ?? b;
+      let segs = `<span class="wseg v1" style="left:0;width:${xOf(s1)}px" ${tip(`<div class="th">${av(pid)}<span class="tn">${p[0]}</span></div><p>Working from v1, not told R4 was wrong.</p><p class="tm">Until ${whenStr(s1)}</p>`)}></span>`;
+      if (a !== null) segs += `<span class="wseg knows" style="left:${xOf(a)}px;width:${xOf(b) - xOf(a)}px" ${tip(`<div class="th">${av(pid)}<span class="tn">${p[0]}</span></div><p>Knew R4 was wrong while the PRD still said every 15 minutes.</p><p class="tm">${how} · ${fmt(a).time} to ${fmt(b).time}</p>`)}></span>`;
+      segs += `<span class="wseg cur" style="left:${xOf(b)}px;width:${xOf(LIVE) - xOf(b)}px" ${tip(`<div class="th">${av(pid)}<span class="tn">${p[0]}</span></div><p>On v1.1.</p><p class="tm">Since ${fmt(b).time}${pid === 'kim' || pid === 'sam' ? ' · Teams alert' : ''}</p>`)}></span>`;
+      h += `<div class="r who"><div class="lab">${av(pid, 18)}${p[0]}${pid === 'dana' ? '<span style="color:var(--label)">(you)</span>' : ''}</div><div class="trk">${segs}</div></div>`;
+    }
+  } else {
+    h += `<div class="empty">No change has been proposed on ${id}, so everyone is working from the same version. ${REQ[id].st(LIVE) === 'assumed' ? 'It is still assumed: nobody has checked it against a source.' : ''}</div>`;
+  }
+  return h;
+}
+
+function build() {
+  const plot = $('plot');
+  TW = plot.clientWidth - 32 - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--lab'));
+  AX = makeAxis(view === 'overview' || view === 'R4' ? 'mixed' : 'days');
+  if (!eventsFor(view).length) T = LIVE;
+  plot.innerHTML = axisRow() + (view === 'overview' ? overview() : record(view)) + '<div class="mask" id="mask"></div><div class="head" id="head"></div><span class="htime" id="htime"></span>';
+  plot.querySelectorAll('.req[data-v]').forEach((r) => (r.onclick = (e) => { if (!e.target.closest('[data-tip].dot, .pin')) go(r.dataset.v); }));
+  plot.querySelectorAll('[data-t]').forEach((m) => (m.onclick = (e) => { e.stopPropagation(); stop(); T = +m.dataset.t; update(); }));
+  bindTips(plot);
+  bindDrag();
+  update();
+}
+
+function update() {
+  const live = T >= LIVE;
+  const x = xOf(Math.min(T, LIVE));
+  const lab = 16 + parseInt(getComputedStyle(document.documentElement).getPropertyValue('--lab'));
+  $('head').style.cssText = `left:${lab + x}px;top:20px`;
+  $('mask').style.cssText = `left:${lab + x}px;top:44px`;
+  const ht = $('htime'); ht.style.left = lab + x + 'px'; ht.textContent = live ? 'Live' : T >= D(OCT8, 0, 0) && AX.length > 1 ? fmt(T).time : `${fmt(T).date} · ${fmt(T).time}`;
+  // Hide axis labels the playhead line would cut through.
+  document.querySelectorAll('.axis .t').forEach((t) => { const c = t.offsetLeft + (t.classList.contains('l') ? 0 : 0); t.style.visibility = Math.abs(parseFloat(t.style.left) - x) < 14 ? 'hidden' : ''; });
+  document.querySelectorAll('.mk').forEach((m) => m.classList.toggle('cur', !live && +m.dataset.t === lastEventAt(T)));
+  renderTabs();
+  // view header
+  const s4 = REQ.R4.st(T);
+  if (view === 'overview') {
+    $('vhead').innerHTML = `<span class="cap" style="width:calc(var(--lab) - 10px)">Every requirement</span><span class="txt muted" style="color:var(--muted)">Each epic row combines its requirements’ events. Click a requirement to play its record.</span><span class="chip amber" style="cursor:help" ${tip(PATTERN)}>Pattern · 3 of 4</span>`;
+  } else {
+    const s = REQ[view].st(T), born = T >= REQ[view].born;
+    $('vhead').innerHTML = `<span class="when">${view} ${live ? 'right now' : 'at ' + fmt(T).date + ' ' + fmt(T).short}</span>${born ? `<span class="chip ${TONE[s]}">${WORD[s]}</span><span class="txt">${reqText(view, T)}</span>` : '<span class="txt" style="color:var(--label)">Not written yet.</span>'}${view === 'R4' ? `<span class="chip amber" style="cursor:help" ${tip(PATTERN)}>Pattern · 3 of 4</span>` : ''}`;
+  }
+  bindTips($('vhead'));
+  // top bar
+  const v11 = T >= D(OCT8, 14, 21);
+  $('ver').textContent = v11 ? 'v1.1' : T >= PUB ? 'v1' : 'v1 draft';
+  $('ver').className = 'chip' + (v11 ? ' green' : '');
+  const unv = Object.keys(REQ).filter((id) => T >= REQ[id].born && !['verified', 'changed'].includes(REQ[id].st(T))).length;
+  $('unv').textContent = `${unv} unverified`;
+  $('state').className = 'state' + (live ? '' : ' replay');
+  $('state').querySelector('span').textContent = live ? 'Recording' : 'Replaying';
+  $('signoff').disabled = !live;
+  $('clock').textContent = live ? `Live · Oct 8 · ${fmt(LIVE).time}` : whenStr(T);
+  $('live').style.visibility = live ? 'hidden' : 'visible';
+  // callout
+  const evs = eventsFor(view).filter((e) => e[1] <= T);
+  let c;
+  if (view === 'overview' || view === 'R4') {
+    const notTold = KNEW.filter((k) => knewAt(k, T) === 'v1').map((k) => PEOPLE[k[0]][0].split(' ')[0]);
+    const knew = KNEW.filter((k) => knewAt(k, T) === 'knows').map((k) => PEOPLE[k[0]][0].split(' ')[0]);
+    if (live) c = view === 'R4' ? 'Everyone is on v1.1. Sign off to close R4’s record.' : '1 requirement changed today (R4). 4 are still unverified.';
+    else if (s4 === 'contested') c = `<strong>R4: ${knew.length === 1 ? 'only ' + knew[0] + ' knew' : knew.join(', ') + ' knew'} it was wrong.</strong> ${notTold.length ? notTold.join(', ') + (notTold.length > 1 ? ' were' : ' was') + ' still working from v1.' : 'The PRD still said every 15 minutes.'}`;
+    else if (s4 === 'changed') c = 'R4 changed in v1.1. Code and design are catching up.';
+    else c = `${evs.length} event${evs.length === 1 ? '' : 's'} so far. R4 is assumed: nobody has checked it against the timekeeping system.`;
+  } else c = `${evs.length} of ${eventsFor(view).length} events on ${view} so far.`;
+  $('callout').innerHTML = c;
+}
+const lastEventAt = (t) => eventsFor(view).reduce((best, e) => (e[1] <= t && e[1] > best ? e[1] : best), -1);
+
+// ---------- interactions ----------
+function bindTips(root) {
+  const el = $('tip');
+  root.querySelectorAll('[data-tip]').forEach((n) => {
+    n.onmouseenter = () => { el.innerHTML = TIPS[n.dataset.tip]; el.style.display = 'block'; };
+    n.onmousemove = (e) => {
+      const h = el.offsetHeight;
+      el.style.left = Math.min(window.innerWidth - 300, e.clientX + 14) + 'px';
+      el.style.top = (e.clientY + h + 24 > window.innerHeight ? e.clientY - h - 12 : e.clientY + 16) + 'px';
+    };
+    n.onmouseleave = () => { el.style.display = 'none'; };
+  });
+}
+function bindDrag() {
+  const plot = $('plot');
+  const move = (e) => {
+    const r = $('axtrk').getBoundingClientRect(), k = r.width / $('axtrk').offsetWidth;
+    T = tOf((e.clientX - r.left) / k); update();
+  };
+  const down = (e) => { stop(); move(e); const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); }; window.addEventListener('mousemove', move); window.addEventListener('mouseup', up); e.preventDefault(); };
+  $('htime').onmousedown = down; $('axtrk').onmousedown = down;
+}
+const times = () => [...new Set(eventsFor(view).map((e) => e[1]))].sort((a, b) => a - b);
+const step = (dir) => { const ts = times(); const i = dir > 0 ? ts.findIndex((t) => t > T) : ts.findLastIndex((t) => t < T); if (i >= 0) T = ts[i]; else if (dir > 0) T = LIVE; update(); };
+const stop = () => { clearInterval(playing); playing = null; };
+$('prev').onclick = () => { stop(); step(-1); };
+$('next').onclick = () => { stop(); step(1); };
+$('live').onclick = () => { stop(); T = LIVE; update(); };
+$('play').onclick = () => {
+  if (playing) return stop();
+  if (T >= LIVE) T = times()[0];
+  update();
+  playing = setInterval(() => { step(1); if (T >= LIVE) stop(); }, 900);
+};
+document.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { stop(); step(1); } if (e.key === 'ArrowLeft') { stop(); step(-1); } });
+
+function fit() {
+  const k = Math.min(1, (window.innerWidth - 32) / 1280);
+  $('scaler').style.transform = `scale(${k})`;
+  $('scaler').style.height = 832 * k + 'px';
+  $('artlabel').style.width = 1280 * k + 'px';
+}
+window.addEventListener('resize', fit);
+fit();
+build();
+</script>
+</body>
+</html>

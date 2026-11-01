@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recorder v3 Artboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --app: #191A1A; --sidebar: #161717; --panel: #1C1D1D; --card: #252727; --row: #2D2F2F; --canvas: #141515;
+  --line: #333535; --line-2: #3A3C3C; --text: #E6E8EC; --muted: #9BA2AD; --label: #878E99;
+  --blue: #8EA6FF; --blue-bg: #1E2537; --amber: #E8AA4E; --amber-bg: #372D1E; --green: #5DC79A; --green-bg: #1C2F27;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace; --sans: 'Inter', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #0E0F0F; color: var(--text); font: 12px/18px var(--sans); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.stage { padding: 28px 16px 40px; display: grid; justify-items: center; gap: 10px; }
+.artlabel { width: 1280px; font: 11px/16px var(--mono); color: var(--label); transform-origin: top left; }
+.scaler { width: 1280px; height: 832px; transform-origin: top left; }
+.board { width: 1280px; height: 832px; display: flex; background: var(--app); border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+
+/* shell */
+.side { width: 212px; background: var(--sidebar); border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.ws { font-weight: 600; font-size: 13px; padding: 4px 6px 12px; }
+.search { display: flex; justify-content: space-between; padding: 6px 10px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); margin-bottom: 8px; }
+.nav { padding: 6px 10px; border-radius: 8px; color: var(--muted); display: flex; justify-content: space-between; }
+.nav.on { background: var(--row); color: var(--text); }
+.navh { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--label); padding: 14px 10px 4px; font-weight: 500; }
+.nav .f { font: 11px var(--mono); color: var(--label); }
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.top { height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.top h1 { font-size: 14px; font-weight: 600; margin: 0; }
+.chip { font-size: 11px; padding: 2px 8px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); }
+.chip.green { background: var(--green-bg); color: var(--green); box-shadow: none; }
+.chip.amber { background: var(--amber-bg); color: var(--amber); box-shadow: none; }
+.chip.blue { background: var(--blue-bg); color: var(--blue); box-shadow: none; }
+.grow { flex: 1; }
+.seg { display: flex; padding: 3px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line-2); }
+.seg span { padding: 5px 10px; border-radius: 7px; color: var(--muted); }
+.seg span.on { background: var(--row); color: var(--text); }
+.pill { padding: 7px 14px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line-2); font-weight: 500; }
+.pill.primary { background: var(--text); color: #0F1114; box-shadow: none; }
+.pill:disabled { opacity: .4; cursor: not-allowed; }
+.av { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 10px; font-weight: 600; color: #fff; flex-shrink: 0; }
+
+/* recorder */
+.bar { height: 46px; display: flex; align-items: center; gap: 10px; padding: 0 16px; flex-shrink: 0; }
+.bar h2 { font-size: 14px; font-weight: 600; margin: 0; }
+.state { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.state i { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+.state.replay i { background: var(--amber); }
+.note { color: var(--label); }
+.card { margin: 0 16px 16px; flex: 1; background: var(--panel); border-radius: 14px; box-shadow: inset 0 0 0 1px var(--line); display: flex; flex-direction: column; min-height: 0; }
+.chead { display: flex; align-items: center; gap: 14px; padding: 12px 16px 6px; }
+.cap { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--label); font-weight: 500; }
+.legend { display: flex; gap: 12px; color: var(--muted); font-size: 11px; align-items: center; }
+.legend b { display: inline-block; vertical-align: middle; margin-right: 5px; }
+
+.plot { position: relative; padding: 0 16px; flex: 1; }
+.r { display: flex; align-items: center; }
+.lab { width: 160px; flex-shrink: 0; padding-right: 12px; display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; color: var(--muted); }
+.trk { position: relative; width: 832px; height: 100%; }
+.axis { height: 30px; }
+.axis .t { position: absolute; top: 8px; font-size: 11px; color: var(--label); transform: translateX(-50%); white-space: nowrap; }
+.axis .t.l { transform: none; }
+.axis .t.strong { color: var(--text); font-weight: 500; }
+.brk { position: absolute; top: 0; bottom: 0; width: 20px; background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(255,255,255,.04) 4px 5px); }
+.req { height: 24px; border-radius: 6px; }
+.req:hover { background: rgba(255,255,255,.025); }
+.req .lab b { color: var(--text); font-weight: 500; font-family: var(--mono); font-size: 11px; width: 20px; }
+.req .lab span { overflow: hidden; text-overflow: ellipsis; }
+.req.sel { background: var(--row); }
+.req.sel .lab span { color: var(--text); }
+.dot { position: absolute; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; }
+.dot.verified { background: var(--muted); }
+.dot.assumed { box-shadow: inset 0 0 0 1.5px var(--muted); }
+.dot.contested { background: var(--amber); }
+.dot.changed { background: var(--green); }
+.dot.draft { background: var(--blue); }
+.dot.ring::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; box-shadow: 0 0 0 1.5px var(--text); }
+.ln { position: absolute; top: 50%; height: 2px; margin-top: -1px; }
+.ln.verified { background: #5f656e; }
+.ln.assumed { background: repeating-linear-gradient(90deg, #6a717c 0 4px, transparent 4px 7px); }
+.ln.draft { background: repeating-linear-gradient(90deg, var(--blue) 0 4px, transparent 4px 7px); }
+.ln.contested { background: var(--amber); height: 4px; margin-top: -2px; border-radius: 2px; }
+.ln.changed { background: var(--green); height: 4px; margin-top: -2px; border-radius: 2px; }
+.pin { position: absolute; top: 2px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid var(--amber); margin-left: 2px; cursor: help; }
+
+/* R4 expanded */
+.block { margin: 2px 0 6px; border-left: 2px solid var(--line-2); margin-left: 6px; padding-left: 0; }
+.now { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 8px 0 10px; position: relative; z-index: 6; background: var(--panel); }
+.now .when { font: 11px var(--mono); color: var(--label); width: 142px; flex-shrink: 0; }
+.now .txt { color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lane { height: 26px; }
+.lane .lab { padding-left: 10px; width: 152px; color: var(--muted); }
+.lane .trk::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--line); }
+.mk { position: absolute; top: 4px; width: 8px; height: 18px; margin-left: -4px; border-radius: 3px; cursor: pointer; z-index: 2; transition: transform .1s; }
+.mk:hover, .mk.cur { transform: scaleY(1.15); box-shadow: 0 0 0 2px var(--app), 0 0 0 3px var(--text); }
+.mk.person { background: var(--muted); }
+.mk.ai { box-shadow: inset 0 0 0 1.5px var(--blue); background: var(--panel); }
+.mk.open { background: var(--amber); }
+.mk.done { background: var(--green); }
+.lag { position: absolute; top: 4px; height: 18px; border-radius: 4px; background: var(--amber-bg); box-shadow: inset 0 0 0 1px rgba(232,170,78,.35); z-index: 1; cursor: help; }
+.lagl { position: absolute; top: 5px; font-size: 11px; color: var(--amber); white-space: nowrap; z-index: 1; pointer-events: none; }
+.sub { height: 26px; padding-left: 10px; display: flex; align-items: end; }
+.who { height: 24px; }
+.who .lab { padding-left: 10px; width: 152px; color: var(--text); }
+.seg2 { position: absolute; top: 50%; cursor: help; }
+.seg2.v1 { height: 2px; margin-top: -1px; background: #4a4f56; }
+.seg2.knows { height: 8px; margin-top: -4px; background: var(--amber); border-radius: 2px; }
+.seg2.cur { height: 8px; margin-top: -4px; background: var(--green); border-radius: 2px; }
+
+.mask { position: absolute; top: 0; bottom: 0; right: 0; background: rgba(28,29,29,.72); pointer-events: none; z-index: 3; }
+.head { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--text); z-index: 4; pointer-events: none; }
+.htime { position: absolute; top: -2px; transform: translateX(-50%); background: var(--text); color: #0F1114; font: 500 10.5px/16px var(--mono); padding: 1px 6px; border-radius: 4px; white-space: nowrap; z-index: 5; cursor: ew-resize; }
+
+.trans { display: flex; align-items: center; gap: 10px; padding: 10px 16px 12px; border-top: 1px solid var(--line); }
+.ib { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
+.ib.play { box-shadow: inset 0 0 0 1px var(--line-2); color: var(--text); }
+.ib:hover { color: var(--text); background: var(--row); }
+.clock { font: 500 11.5px var(--mono); width: 190px; white-space: nowrap; }
+.callout { flex: 1; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.callout strong { color: var(--amber); font-weight: 500; }
+
+.tip { position: fixed; z-index: 50; width: 280px; padding: 12px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-2), 0 16px 40px rgba(0,0,0,.55); pointer-events: none; display: none; }
+.tip .th { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.tip .tn { font-weight: 500; }
+.tip .tm { color: var(--label); font-size: 11px; }
+.tip p { margin: 0 0 8px; color: var(--text); }
+.tip p:last-child { margin: 0; }
+.tip .q { color: var(--muted); }
+.tip .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="artlabel" id="artlabel">10R v3 · Recorder · one surface, details on hover · drag the playhead, hover anything</div>
+  <div class="scaler" id="scaler">
+  <div class="board">
+    <aside class="side">
+      <div class="ws">Manufacturing Systems ⌄</div>
+      <div class="search"><span>Search</span><span style="font:11px var(--mono)">⌘K</span></div>
+      <div class="nav">Inbox</div><div class="nav">My work</div>
+      <div class="navh">Projects</div>
+      <div class="nav on">Line Labor Dashboard</div><div class="nav">Compliance Tracker</div><div class="nav">Shift Handoff</div>
+      <div class="navh">Connected tools</div>
+      <div class="nav">Jira <span class="f">2m</span></div><div class="nav">GitLab <span class="f">5m</span></div><div class="nav">Figma <span class="f">1m</span></div>
+      <div class="nav">Teams <span class="f">live</span></div><div class="nav">SharePoint <span class="f">10m</span></div><div class="nav">Codex <span class="f">live</span></div>
+      <div class="grow"></div><div class="nav">Settings</div><div class="nav">Help</div>
+    </aside>
+    <div class="main">
+      <div class="top">
+        <h1>Line Labor Dashboard</h1>
+        <span class="chip" id="ver"></span><span class="chip" id="unv"></span>
+        <span class="grow"></span>
+        <div class="seg"><span>Doc</span><span class="on">Recorder</span><span>Screens</span><span>Present</span></div>
+        <button class="pill">Share</button>
+        <span class="av" style="background:#2F8A6B;width:28px;height:28px">D</span>
+      </div>
+      <div class="bar">
+        <h2>Recorder</h2>
+        <span class="state" id="state"><i></i><span></span></span>
+        <span class="grow"></span>
+        <span class="note">Same records as the Doc view. Nothing is edited here.</span>
+        <button class="pill">Export</button>
+        <button class="pill primary" id="signoff">Sign off record</button>
+      </div>
+      <div class="card">
+        <div class="chead">
+          <span class="cap">Every requirement, every day</span>
+          <span class="grow"></span>
+          <div class="legend">
+            <span><b class="dot verified" style="position:static;margin:0"></b>Verified</span>
+            <span><b class="dot assumed" style="position:static;margin:0"></b>Assumed</span>
+            <span><b class="dot contested" style="position:static;margin:0"></b>Contested</span>
+            <span><b class="dot changed" style="position:static;margin:0"></b>Changed</span>
+            <span><b class="dot draft" style="position:static;margin:0"></b>AI draft</span>
+          </div>
+        </div>
+        <div class="plot" id="plot"></div>
+        <div class="trans">
+          <button class="ib" id="prev" aria-label="Previous event"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 3v10M13 3 6 8l7 5z"/></svg></button>
+          <button class="ib play" id="play" aria-label="Play"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3l8 5-8 5z"/></svg></button>
+          <button class="ib" id="next" aria-label="Next event"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v10M3 3l7 5-7 5z"/></svg></button>
+          <span class="clock" id="clock"></span>
+          <span class="callout" id="callout"></span>
+          <button class="pill" id="live">Go live</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+// ---------- time model ----------
+// T = minutes since Sep 24 00:00. Day index: Sep 24 = 0, Oct 1 = 7 … Oct 8 = 14.
+const D = (day, h, m) => day * 1440 + h * 60 + m;
+const OCT8 = 14, START = D(OCT8, 13, 30), END = D(OCT8, 14, 30), LIVE = D(OCT8, 14, 27);
+const COLW = 38, COLS = ['Sep 24', 'Oct 1', '2', '3', '4', '5', '6', '7'], BRK = 20, ZX = COLS.length * COLW + BRK, PXM = 8.4;
+const colOf = (day) => (day === 0 ? 0 : day - 6);
+const xOf = (T) => (T >= START ? ZX + Math.min(END - START, T - START) * PXM : colOf(Math.floor(T / 1440)) * COLW + COLW / 2);
+const tOf = (x) => {
+  if (x >= ZX - BRK / 2) return Math.round(Math.min(LIVE, Math.max(START, START + (x - ZX) / PXM)));
+  const c = Math.max(0, Math.min(COLS.length - 1, Math.floor(x / COLW)));
+  return (c === 0 ? 0 : c + 6) * 1440 + 1439;
+};
+const fmt = (T) => {
+  const day = Math.floor(T / 1440), m = T % 1440, h = Math.floor(m / 60), mm = String(m % 60).padStart(2, '0');
+  const date = day === 0 ? 'Sep 24' : `Oct ${day - 6}`;
+  return { date, time: `${((h + 11) % 12) + 1}:${mm} ${h < 12 ? 'AM' : 'PM'}`, short: `${((h + 11) % 12) + 1}:${mm}` };
+};
+const whenStr = (T) => { const f = fmt(T); return `${f.date} · ${f.time}`; };
+
+// ---------- story data (matches src/store.js) ----------
+const PEOPLE = {
+  marcus: ['Marcus Lee', 'ML', '#3D5AFE', 'Senior engineer'], priya: ['Priya Shah', 'PS', '#9F0064', 'Designer'],
+  dana: ['Dana Ortiz', 'DO', '#2F8A6B', 'Product manager'], kim: ['Kim Alvarez', 'KA', '#C76A00', 'Business lead'],
+  sam: ['Sam Reed', 'SR', '#5C6370', 'SME · line operations'], astra: ['Astra', 'A', '#3A3C3C', 'AI'], codex: ['Codex', '>_', '#2D2F2F', 'AI in the IDE'],
+};
+const R4_OLD = 'Refresh data every 15 minutes.';
+const R4_NEW = 'Refresh data hourly, 5 minutes after the timekeeping system syncs. Show the real last-sync time.';
+const REQS = [
+  ['R1', 'Hours by dept', 'Show labor hours per department for the current shift.', 'verified', 0],
+  ['R2', '85% flag', 'Flag any department above 85% of planned hours.', 'verified', 0],
+  ['R3', 'Shift filter', 'Let leaders filter by shift (1st, 2nd, 3rd).', 'verified', 0],
+  ['R4', 'Refresh rate', null, null, 0],
+  ['R5', 'Dept detail', 'Show a department detail view with an hourly breakdown.', 'draft', 7, 'AI draft from lead notes. Nobody has accepted it.'],
+  ['R6', 'Crews by lead', 'Show each crew lead their own departments first.', 'assumed', 9, 'Assumed from a lead sync call, Oct 3.'],
+  ['R7', 'Overtime alerts', 'Send the shift lead a Teams alert when a department crosses the overtime threshold.', 'assumed', 0, 'Assumed from the kickoff call, 31:20.'],
+  ['R8', 'Shift history', 'Keep 90 days of shift history for weekly labor reviews.', 'assumed', 10, 'Assumed from an SME sync, Oct 4.'],
+];
+const r4Status = (T) => (T < D(0, 16, 0) ? 'draft' : T < D(OCT8, 13, 40) ? 'assumed' : T < D(OCT8, 14, 21) ? 'contested' : 'changed');
+const STATUS_WORD = { verified: 'Verified', assumed: 'Assumed', contested: 'Contradicted by build', changed: 'Changed in v1.1', draft: 'AI draft' };
+const STATUS_TONE = { verified: '', assumed: '', contested: 'amber', changed: 'green', draft: 'blue' };
+
+const LANES = ['Conversation', 'PRD', 'Code + AI', 'Design', 'Decisions'];
+// [time, lane, kind, who, text, chips, reviewer]
+const EV = [
+  [D(0, 10, 18), 0, 'person', 'kim', 'Kickoff call: “If leads can see it by lunch, they can move people before it turns into overtime.”', ['Kickoff transcript 18:40']],
+  [D(0, 16, 0), 1, 'ai', 'astra', 'Drafted R4 “Refresh data every 15 minutes” from the kickoff transcript.', [], 'Dana Ortiz'],
+  [D(7, 16, 0), 4, 'person', 'dana', 'Published PRD v1 with R4 still assumed. The assumption check flagged it first.', ['Assumption check · Oct 1']],
+  [D(8, 11, 20), 2, 'ai', 'astra', 'Created Jira LAB-15 from R4: refresh labor hours every 15 minutes.', ['Jira LAB-15'], 'Dana Ortiz'],
+  [D(9, 14, 40), 3, 'person', 'priya', 'Added an “Updated every 15 min” label to the Overview frame.', ['Figma · Overview']],
+  [D(9, 16, 5), 2, 'ai', 'codex', 'Wrote the refresh job on a 15-minute schedule, as R4 says. Opened !219.', ['GitLab !219'], 'Marcus Lee'],
+  [D(OCT8, 13, 40), 2, 'open', 'codex', 'Build test: the timekeeping API returns sync_interval PT1H. R4 is contradicted.', ['API response · Oct 8', 'Spec §3.2 · 2023'], 'Marcus Lee'],
+  [D(OCT8, 13, 52), 4, 'open', 'marcus', 'Proposed changing R4 to an hourly refresh, 5 minutes after each sync.', ['Proposal · R4']],
+  [D(OCT8, 13, 58), 3, 'person', 'priya', 'Agreed in the Figma plugin: “I’ll relabel ‘Updated every 15 min’ to show the actual last sync time.”', []],
+  [D(OCT8, 14, 8), 4, 'open', 'dana', 'Asked for more evidence: the linked spec section is from 2023.', []],
+  [D(OCT8, 14, 19), 4, 'open', 'marcus', 'Added changelog lines 58–60 (data owner confirmed hourly in Sept) and resent.', ['Changelog L58–60 · Sep 2026']],
+  [D(OCT8, 14, 19), 0, 'person', 'kim', 'Agreed in Teams: “Hourly still gets us there by lunch.”', []],
+  [D(OCT8, 14, 21), 4, 'done', 'dana', 'Approved R4: “Hourly still meets the mid-shift goal. Label shows the real sync time.”', ['Decision record · R4']],
+  [D(OCT8, 14, 21), 1, 'done', 'astra', 'Published PRD v1.1 with the new R4.', ['PRD v1.1']],
+  [D(OCT8, 14, 21), 2, 'done', 'astra', 'Updated the Jira LAB-15 description for v1.1.', ['Jira LAB-15']],
+  [D(OCT8, 14, 21), 0, 'done', 'astra', 'Posted v1.1 to Teams. Kim and Sam were notified.', ['Teams · #line-labor']],
+  [D(OCT8, 14, 21), 3, 'done', 'astra', 'Left a comment on the Overview frame for Priya.', ['Figma · Overview']],
+  [D(OCT8, 14, 24), 2, 'done', 'marcus', 'Updated the refresh job to hourly (5 * * * *).', ['GitLab !219']],
+  [D(OCT8, 14, 26), 3, 'done', 'priya', 'Relabeled the Overview: “Last synced 1:00 PM · next 2:05 PM”.', ['Figma · Overview']],
+];
+const LAGS = [
+  [1, D(OCT8, 13, 40), D(OCT8, 14, 21), 'PRD behind · 41 min', 'in', 'The build knew R4 was wrong at 1:40 PM. The PRD said so at 2:21 PM.'],
+  [2, D(OCT8, 14, 21), D(OCT8, 14, 24), 'Code behind · 3 min', 'before', 'v1.1 was approved at 2:21 PM. The refresh job matched it at 2:24 PM.'],
+  [3, D(OCT8, 14, 21), D(OCT8, 14, 26), 'Label behind · 5 min', 'before', 'v1.1 was approved at 2:21 PM. The Overview label matched it at 2:26 PM.'],
+];
+// When each person learned R4 was wrong, and when they were on v1.1.
+const KNEW = [
+  ['marcus', D(OCT8, 13, 40), D(OCT8, 14, 21), 'Saw the build test in Codex'],
+  ['dana', D(OCT8, 13, 52), D(OCT8, 14, 21), 'Got the proposal in Astra'],
+  ['priya', D(OCT8, 13, 52), D(OCT8, 14, 21), 'Got the pending change in Figma'],
+  ['kim', D(OCT8, 14, 19), D(OCT8, 14, 21), 'Saw the thread in Teams'],
+  ['sam', null, D(OCT8, 14, 21), null],
+];
+const knewAt = (k, T) => (T >= k[2] ? 'cur' : k[1] !== null && T >= k[1] ? 'knows' : 'v1');
+const PATTERN = '<p><b>Pattern across 3 PRDs · early signal</b></p><p class="q">Across 3 PRDs, 3 of 4 requirements set from a kickoff quote and never checked against the source system changed after the build started.</p><p class="q">This was shown on R4 at the assumption check on Oct 1. v1 was published anyway, and R4 changed a week later.</p><p class="tm">Counts requirements and sources, never people.</p>';
+
+// ---------- render ----------
+let T = LIVE, playing = null;
+const $ = (id) => document.getElementById(id);
+const av = (id, s = 22) => { const p = PEOPLE[id]; return `<span class="av" style="background:${p[2]};width:${s}px;height:${s}px;font-size:${s > 20 ? 10 : 9}px">${p[1]}</span>`; };
+const TIPS = {};
+let tipN = 0;
+const tip = (html) => { const k = 't' + tipN++; TIPS[k] = html; return `data-tip="${k}"`; };
+
+function reqRow(r, i) {
+  const [id, short, full, st, born, why] = r;
+  const isR4 = id === 'R4';
+  let cells = '';
+  COLS.forEach((_, c) => {
+    const day = c === 0 ? 0 : c + 6, Tend = day * 1440 + 1439;
+    if (day < born) return;
+    const s = isR4 ? r4Status(Tend) : st;
+    const txt = isR4 ? (s === 'draft' ? 'AI draft · not published yet' : 'Assumed · from the kickoff call, never checked') : why || 'Approved in v1.';
+    cells += `<span class="dot ${s}${isR4 ? ' ring' : ''}" style="left:${c * COLW + COLW / 2}px" ${tip(`<div class="th"><span class="tn">${id} · ${short}</span><span class="chip ${STATUS_TONE[s]}">${STATUS_WORD[s]}</span></div><p class="tm">${COLS[c].length < 3 ? 'Oct ' + COLS[c] : COLS[c]}</p><p class="q">${isR4 ? R4_OLD : full}</p><p class="tm">${txt}</p>`)}></span>`;
+    if (isR4 && day === 7) cells += `<span class="pin" style="left:${c * COLW + COLW / 2}px" ${tip(PATTERN)}></span>`;
+  });
+  // Oct 8 minute zone: one continuous line per requirement
+  const segs = isR4
+    ? [[START, D(OCT8, 13, 40), 'assumed'], [D(OCT8, 13, 40), D(OCT8, 14, 21), 'contested'], [D(OCT8, 14, 21), END, 'changed']]
+    : [[START, END, st]];
+  for (const [a, b, s] of segs) {
+    const text = isR4 ? (s === 'changed' ? R4_NEW : R4_OLD) : full;
+    cells += `<span class="ln ${s}" style="left:${xOf(a)}px;width:${xOf(b) - xOf(a)}px" ${tip(`<div class="th"><span class="tn">${id} · ${short}</span><span class="chip ${STATUS_TONE[s]}">${STATUS_WORD[s]}</span></div><p class="tm">Oct 8 · ${fmt(a).short}–${fmt(Math.min(b, LIVE)).time}</p><p class="q">${text}</p>`)}></span>`;
+  }
+  const label = `<b>${id}</b><span>${short}</span>`;
+  return `<div class="r req${isR4 ? ' sel' : ''}"><div class="lab" ${isR4 ? '' : tip(`<p><b>${id} · ${short}</b></p><p class="q">${full}</p><p class="tm">${why || 'Approved in v1.'} No changes recorded.</p>`)}>${label}</div><div class="trk">${cells}</div></div>`;
+}
+
+function r4Block() {
+  let lanes = '';
+  LANES.forEach((name, li) => {
+    let inner = '';
+    for (const [l, a, b, txt, place, why] of LAGS) if (l === li) {
+      inner += `<span class="lag" style="left:${xOf(a)}px;width:${xOf(b) - xOf(a)}px" ${tip(`<p><b>${txt}</b></p><p class="q">${why}</p>`)}></span>`;
+      inner += place === 'in' ? `<span class="lagl" style="left:${xOf(a) + 10}px">${txt}</span>` : `<span class="lagl" style="right:${832 - xOf(a) + 8}px">${txt}</span>`;
+    }
+    EV.forEach((e, i) => {
+      if (e[1] !== li) return;
+      const [t, , kind, who, text, chips, rev] = e, p = PEOPLE[who];
+      const ai = (kind === 'ai' || who === 'codex' || who === 'astra') && rev ? `<span class="chip blue">AI action · reviewed by ${rev}</span>` : '';
+      inner += `<span class="mk ${kind}" data-i="${i}" style="left:${xOf(t)}px" ${tip(`<div class="th">${av(who)}<div><div class="tn">${p[0]}</div><div class="tm">${LANES[li]} · ${whenStr(t)}</div></div></div><p>${text}</p><div class="chips">${ai}${chips.map((c) => `<span class="chip">${c}</span>`).join('')}</div>`)}></span>`;
+    });
+    lanes += `<div class="r lane"><div class="lab">${name}</div><div class="trk">${inner}</div></div>`;
+  });
+  let who = '';
+  for (const k of KNEW) {
+    const [id, a, b, how] = k, p = PEOPLE[id];
+    const s1end = a ?? b;
+    let segs = `<span class="seg2 v1" style="left:0;width:${xOf(s1end)}px" ${tip(`<div class="th">${av(id)}<span class="tn">${p[0]}</span></div><p>Working from v1, not told R4 was wrong.</p><p class="tm">Until ${whenStr(s1end)}</p>`)}></span>`;
+    if (a !== null) segs += `<span class="seg2 knows" style="left:${xOf(a)}px;width:${xOf(b) - xOf(a)}px" ${tip(`<div class="th">${av(id)}<span class="tn">${p[0]}</span></div><p>Knew R4 was wrong, but the PRD still said every 15 minutes.</p><p class="tm">${how} · ${fmt(a).time} to ${fmt(b).time}</p>`)}></span>`;
+    segs += `<span class="seg2 cur" style="left:${xOf(b)}px;width:${xOf(END) - xOf(b)}px" ${tip(`<div class="th">${av(id)}<span class="tn">${p[0]}</span></div><p>On v1.1.</p><p class="tm">Since ${fmt(b).time}${id === 'kim' || id === 'sam' ? ' · Teams alert' : ''}</p>`)}></span>`;
+    who += `<div class="r who"><div class="lab">${av(id, 18)}${p[0]}${id === 'dana' ? ' <span style="color:var(--label)">(you)</span>' : ''}</div><div class="trk">${segs}</div></div>`;
+  }
+  return `<div class="block">
+    <div class="now" id="now"></div>
+    ${lanes}
+    <div class="sub"><span class="cap">Who knew what</span>
+      <span class="legend" style="margin-left:16px;padding-bottom:1px"><span><b style="width:14px;height:2px;background:#4a4f56"></b>On v1, not told</span><span><b style="width:14px;height:6px;background:var(--amber);border-radius:2px"></b>Knew R4 was wrong</span><span><b style="width:14px;height:6px;background:var(--green);border-radius:2px"></b>On v1.1</span></span></div>
+    ${who}
+  </div>`;
+}
+
+function axisRow() {
+  let t = COLS.map((c, i) => `<span class="t" style="left:${i * COLW + COLW / 2}px">${c}</span>`).join('');
+  t += `<span class="t l strong" style="left:${ZX}px">Oct 8</span>`;
+  for (let m = 13 * 60 + 45; m <= 14 * 60 + 30; m += 15) t += `<span class="t" style="left:${xOf(OCT8 * 1440 + m)}px">${fmt(OCT8 * 1440 + m).short}${m === 14 * 60 + 30 ? ' PM' : ''}</span>`;
+  return `<div class="r axis"><div class="lab"></div><div class="trk"><span class="brk" style="left:${COLS.length * COLW}px" ${tip('<p><b>Scale changes here</b></p><p class="q">Sep 24 to Oct 7 are one column per day. Oct 8 is drawn minute by minute, 1:30 to 2:30 PM.</p>')}></span>${t}</div></div>`;
+}
+
+function build() {
+  const rows = REQS.map((r, i) => reqRow(r, i) + (r[0] === 'R4' ? r4Block() : '')).join('');
+  $('plot').innerHTML = axisRow() + rows + `<div class="mask" id="mask"></div><div class="head" id="head"></div><span class="htime" id="htime"></span>`;
+  bindTips();
+  bindDrag();
+  update();
+}
+
+function update() {
+  const plot = $('plot'), axisH = plot.querySelector('.axis').offsetHeight;
+  const x = 16 + 160 + xOf(T);
+  const head = $('head'), mask = $('mask'), ht = $('htime');
+  head.style.left = x + 'px'; head.style.top = axisH + 'px';
+  mask.style.left = x + 'px'; mask.style.top = axisH + 'px'; mask.style.right = '16px';
+  ht.style.left = x + 'px'; ht.textContent = T >= START ? fmt(T).time : fmt(T).date;
+  const live = T >= LIVE;
+  // marks at the playhead
+  document.querySelectorAll('.mk').forEach((m) => m.classList.toggle('cur', !live && EV[+m.dataset.i][0] === lastEventAt(T)));
+  // R4 now-strip
+  const s = r4Status(T), txt = s === 'changed' ? R4_NEW : R4_OLD;
+  $('now').innerHTML = `<span class="when">R4 ${live ? 'right now' : 'at ' + (T >= START ? fmt(T).time : fmt(T).date)}</span><span class="chip ${STATUS_TONE[s]}">${STATUS_WORD[s]}</span><span class="txt">${txt}</span><span class="chip amber" style="cursor:help" ${tipInline(PATTERN)}>Pattern · 3 of 4</span>`;
+  bindTips($('now'));
+  // header + bar
+  const v11 = T >= D(OCT8, 14, 21);
+  $('ver').textContent = v11 ? 'v1.1' : T >= D(7, 16, 0) ? 'v1' : 'v1 draft';
+  $('ver').className = 'chip' + (v11 ? ' green' : '');
+  const unv = REQS.filter((r) => (r[0] === 'R4' ? s !== 'changed' : r[3] !== 'verified') && (r[4] * 1440 <= T)).length;
+  $('unv').textContent = `${unv} unverified`;
+  $('state').className = 'state' + (live ? '' : ' replay');
+  $('state').querySelector('span').textContent = live ? 'Recording' : 'Replaying';
+  $('signoff').disabled = !live;
+  $('clock').textContent = live ? `Live · Oct 8 · ${fmt(T).time}` : whenStr(T);
+  $('live').style.visibility = live ? 'hidden' : 'visible';
+  // callout: who knew at this moment
+  const notTold = KNEW.filter((k) => knewAt(k, T) === 'v1').map((k) => PEOPLE[k[0]][0].split(' ')[0]);
+  const knew = KNEW.filter((k) => knewAt(k, T) === 'knows').map((k) => PEOPLE[k[0]][0].split(' ')[0]);
+  let c = '';
+  if (live) c = 'Everyone is on v1.1. Sign off to close R4’s record.';
+  else if (s === 'contested') c = `<strong>${knew.length === 1 ? 'Only ' + knew[0] + ' knew' : knew.join(', ') + ' knew'} R4 was wrong.</strong> ${notTold.length ? notTold.join(', ') + (notTold.length > 1 ? ' were' : ' was') + ' still working from v1.' : 'The PRD still said every 15 minutes.'}`;
+  else if (s === 'changed') c = 'R4 changed in v1.1. Code and design are catching up.';
+  else c = 'R4 is assumed. Nobody has checked it against the timekeeping system.';
+  $('callout').innerHTML = c;
+}
+const lastEventAt = (t) => EV.reduce((best, e) => (e[0] <= t && e[0] > best ? e[0] : best), -1);
+const tipInline = (html) => tip(html);
+
+// ---------- interactions ----------
+function bindTips(root = document) {
+  const el = $('tip');
+  root.querySelectorAll('[data-tip]').forEach((n) => {
+    n.onmouseenter = () => { el.innerHTML = TIPS[n.dataset.tip]; el.style.display = 'block'; };
+    n.onmousemove = (e) => {
+      const w = 280, h = el.offsetHeight;
+      el.style.left = Math.min(window.innerWidth - w - 12, e.clientX + 14) + 'px';
+      el.style.top = (e.clientY + h + 24 > window.innerHeight ? e.clientY - h - 12 : e.clientY + 16) + 'px';
+    };
+    n.onmouseleave = () => { el.style.display = 'none'; };
+  });
+  root.querySelectorAll('.mk').forEach((m) => (m.onclick = () => { stop(); T = EV[+m.dataset.i][0]; update(); }));
+}
+function bindDrag() {
+  const plot = $('plot');
+  const scale = () => plot.getBoundingClientRect().width / plot.offsetWidth;
+  const move = (e) => { const r = plot.getBoundingClientRect(); T = tOf((e.clientX - r.left) / scale() - 176); update(); };
+  const down = (e) => { stop(); move(e); const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); }; window.addEventListener('mousemove', move); window.addEventListener('mouseup', up); e.preventDefault(); };
+  $('htime').onmousedown = down;
+  plot.querySelector('.axis .trk').onmousedown = down;
+}
+const times = [...new Set(EV.map((e) => e[0]))].sort((a, b) => a - b);
+const step = (dir) => { const i = dir > 0 ? times.findIndex((t) => t > T) : times.findLastIndex((t) => t < T); if (i >= 0) T = times[i]; else if (dir > 0) T = LIVE; update(); };
+const stop = () => { clearInterval(playing); playing = null; };
+$('prev').onclick = () => { stop(); step(-1); };
+$('next').onclick = () => { stop(); step(1); };
+$('live').onclick = () => { stop(); T = LIVE; update(); };
+$('play').onclick = () => {
+  if (playing) return stop();
+  if (T >= LIVE) T = times[0];
+  update();
+  playing = setInterval(() => { step(1); if (T >= LIVE) stop(); }, 900);
+};
+document.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { stop(); step(1); } if (e.key === 'ArrowLeft') { stop(); step(-1); } });
+
+// fit the 1280×832 artboard to narrow windows
+function fit() {
+  const k = Math.min(1, (window.innerWidth - 32) / 1280);
+  $('scaler').style.transform = `scale(${k})`;
+  $('scaler').style.height = 832 * k + 'px';
+  $('artlabel').style.width = 1280 * k + 'px';
+}
+window.addEventListener('resize', fit);
+fit();
+build();
+// Start paused at the 1:40 PM moment so the replay state is what you see first; Go live shows the signed-off state.
+T = D(OCT8, 13, 40); update();
+</script>
+</body>
+</html>

@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recorder Map v7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --app: #191A1A; --sidebar: #161717; --panel: #1C1D1D; --card: #252727; --row: #2D2F2F;
+  --line: #333535; --line-2: #3A3C3C; --text: #E6E8EC; --muted: #9BA2AD; --label: #878E99; --faint: #5F656E;
+  --blue: #8EA6FF; --blue-bg: #1E2537; --amber: #E8AA4E; --amber-bg: #372D1E; --green: #5DC79A; --green-bg: #1C2F27;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace; --sans: 'Inter', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #0E0F0F; color: var(--text); font: 12px/18px var(--sans); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.stage { padding: 28px 16px 40px; display: grid; justify-items: center; gap: 10px; }
+.artlabel { width: 1280px; font: 11px/16px var(--mono); color: var(--label); }
+.scaler { width: 1280px; height: 832px; transform-origin: top left; }
+.board { width: 1280px; height: 832px; display: flex; background: var(--app); border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+
+/* shell */
+.side { width: 212px; background: var(--sidebar); border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.ws { font-weight: 600; font-size: 13px; padding: 4px 6px 12px; }
+.search { display: flex; justify-content: space-between; padding: 6px 10px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); margin-bottom: 8px; }
+.nav { padding: 6px 10px; border-radius: 8px; color: var(--muted); display: flex; justify-content: space-between; }
+.nav.on { background: var(--row); color: var(--text); }
+.navh { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--label); padding: 14px 10px 4px; font-weight: 500; }
+.nav .f { font: 11px var(--mono); color: var(--label); }
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.top { height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.top h1 { font-size: 14px; font-weight: 600; margin: 0; }
+.chip { display: inline-flex; align-items: center; height: 22px; font-size: 11px; padding: 0 8px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); white-space: nowrap; }
+.chip.green { background: var(--green-bg); color: var(--green); box-shadow: none; }
+.chip.amber { background: var(--amber-bg); color: var(--amber); box-shadow: none; }
+.chip.blue { background: var(--blue-bg); color: var(--blue); box-shadow: none; }
+.grow { flex: 1; }
+.seg { display: flex; padding: 3px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line-2); }
+.seg span { padding: 5px 10px; border-radius: 7px; color: var(--muted); }
+.seg span.on { background: var(--row); color: var(--text); }
+.pill { height: 32px; padding: 0 14px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line-2); font-weight: 500; white-space: nowrap; text-align: center; }
+.pill.primary { background: var(--text); color: #0F1114; box-shadow: none; }
+.pill:disabled { opacity: .4; cursor: not-allowed; }
+.av { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 9px; font-weight: 600; color: #fff; flex-shrink: 0; }
+
+.bar { height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 16px; flex-shrink: 0; }
+.bar h2 { font-size: 14px; font-weight: 600; margin: 0; }
+.state { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.state i { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+.state.replay i { background: var(--amber); }
+.note { color: var(--label); }
+.card { margin: 0 16px 16px; flex: 1; background: var(--panel); border-radius: 14px; box-shadow: inset 0 0 0 1px var(--line); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+
+/* controls */
+.tabs { display: flex; align-items: center; gap: 4px; padding: 10px 16px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.tab { height: 24px; padding: 0 9px; border-radius: 6px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tab:hover { color: var(--text); background: rgba(255,255,255,.03); }
+.tab.on { background: var(--row); color: var(--text); }
+.sd { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.dd { position: relative; }
+.ddbtn { height: 30px; padding: 0 10px 0 12px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-2); display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.ddbtn .id, .opt .id { font: 500 11px var(--mono); color: var(--label); }
+.ddbtn svg { color: var(--muted); }
+.menu { position: absolute; top: 36px; left: 0; z-index: 40; width: 280px; padding: 6px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-2), 0 16px 40px rgba(0,0,0,.55); display: none; }
+.menu.open { display: block; }
+.opt { width: 100%; display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; }
+.opt:hover { background: rgba(255,255,255,.04); }
+.opt.on { background: var(--row); }
+.opt .id { width: 48px; flex-shrink: 0; }
+.opt .n { flex: 1; }
+.opt .c { color: var(--label); font-size: 11px; }
+.msep { height: 1px; background: var(--line); margin: 4px 6px; }
+.bgrp { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; box-shadow: inset 0 0 0 1px var(--line-2); margin-left: 8px; }
+.trail { display: flex; align-items: center; gap: 4px; color: var(--label); margin-left: 8px; white-space: nowrap; overflow: hidden; }
+.trail b { color: var(--text); font-weight: 500; }
+.switch { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); white-space: nowrap; }
+.switch i { width: 26px; height: 16px; border-radius: 999px; background: var(--row); box-shadow: inset 0 0 0 1px var(--line-2); position: relative; transition: background .15s; }
+.switch i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--muted); transition: left .15s, background .15s; }
+.switch.on i { background: var(--green-bg); }
+.switch.on i::after { left: 12px; background: var(--green); }
+
+/* map */
+.mapstage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #171818; }
+.rings span { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border: 1px dashed rgba(255,255,255,.05); border-radius: 50%; pointer-events: none; }
+.msvg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.fedge { fill: none; stroke: #4A4D4D; stroke-width: 1.5; transition: opacity .3s, stroke .3s; }
+.fedge.outer { stroke-dasharray: 3 4; opacity: .6; }
+.fedge.evidence { stroke: var(--amber); stroke-dasharray: 4 4; }
+.fedge.other { stroke: var(--blue); stroke-dasharray: 4 4; }
+.fedge.untraced { stroke-dasharray: 4 4; }
+.fedge.pending { stroke: var(--amber); opacity: 1; }
+.fedge.changed { stroke: var(--green); opacity: 1; }
+.fedge.ghost { opacity: .08; }
+.pulse { fill: none; stroke-width: 3; stroke-dasharray: 2 10; stroke-linecap: round; animation: flow .7s linear infinite; filter: drop-shadow(0 0 4px currentColor); }
+.pulse.amber { stroke: var(--amber); color: var(--amber); }
+.pulse.green { stroke: var(--green); color: var(--green); }
+.pulse.blue { stroke: var(--blue); color: var(--blue); }
+.pulse.gray { stroke: var(--muted); color: var(--muted); }
+@keyframes flow { to { stroke-dashoffset: -12; } }
+
+.fnode { position: absolute; z-index: 2; transform: translate(-50%, -50%); display: flex; flex-direction: column; max-width: 160px; border-radius: 12px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-2); transition: left .45s cubic-bezier(.2,.8,.2,1), top .45s cubic-bezier(.2,.8,.2,1), opacity .3s, box-shadow .2s; }
+.fnode:not(.ring0):hover { box-shadow: inset 0 0 0 1px var(--muted); z-index: 6; }
+.fnode-row { display: flex; align-items: center; gap: 8px; min-width: 0; height: 36px; padding: 0 12px; }
+.fnode-row svg { flex-shrink: 0; color: var(--muted); }
+.fnode-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.fnode.ring2 { opacity: .65; }
+.fnode.ring2 .fnode-row { height: 30px; padding: 0 10px; }
+.fnode.ring2 .fnode-label { font-weight: 400; color: var(--muted); }
+.fnode.ring0 { z-index: 3; width: 250px; max-width: 250px; height: 168px; box-shadow: inset 0 0 0 1.5px var(--muted), 0 0 0 4px var(--row); cursor: default; }
+.fnode.ring0 .fnode-row { border-bottom: 1px solid var(--line); }
+.fnode.ring0 .fnode-label { font-size: 13px; font-weight: 600; }
+.fbody { display: grid; gap: 6px; padding: 10px 12px 12px; align-content: start; }
+.fkind { font-size: 10.5px; line-height: 16px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--label); display: flex; justify-content: space-between; align-items: center; }
+.ffull { font-size: 13px; line-height: 18px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.fstat { font-size: 11px; line-height: 16px; color: var(--muted); }
+.fnode.t-people:not(.ring0) { border-radius: 999px; }
+.fnode.t-people:not(.ring0) .fnode-row { padding: 0 12px 0 6px; }
+.fnode.t-cluster { box-shadow: none; outline: 1px dashed var(--blue); outline-offset: -1px; }
+.fnode.t-cluster svg { color: var(--blue); }
+.fnode.t-untraced { box-shadow: none; outline: 1px dashed var(--line-2); outline-offset: -1px; }
+.fnode.draft .fnode-label { font-style: italic; color: var(--muted); }
+.fnode.pending { box-shadow: inset 0 0 0 1px var(--amber); }
+.fnode.changed { box-shadow: inset 0 0 0 1px var(--green); }
+.fnode.ring0.pending { box-shadow: inset 0 0 0 1.5px var(--amber), 0 0 0 4px var(--amber-bg); }
+.fnode.ring0.changed { box-shadow: inset 0 0 0 1.5px var(--green), 0 0 0 4px var(--green-bg); }
+.fnode.notified { outline-color: var(--green); }
+.fnode.ghost { opacity: .16 !important; box-shadow: none; outline: 1px dashed var(--faint); outline-offset: -1px; }
+.fnode.touched { z-index: 5; }
+.fnode.touched::after { content: ''; position: absolute; inset: -5px; border-radius: inherit; border: 2px solid var(--tc); animation: ping 1.1s ease-out infinite; pointer-events: none; }
+.fnode.touched.amber { --tc: var(--amber); } .fnode.touched.green { --tc: var(--green); } .fnode.touched.blue { --tc: var(--blue); } .fnode.touched.gray { --tc: var(--muted); }
+.fnode.touched .fnode-label { color: var(--text); }
+@keyframes ping { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.08); } }
+.knew { border-radius: 50%; box-shadow: 0 0 0 2px var(--card), 0 0 0 3.5px var(--kc, transparent); }
+.badge { position: absolute; top: -10px; right: 8px; height: 18px; padding: 0 6px; border-radius: 5px; font: 500 10.5px/18px var(--mono); white-space: nowrap; background: var(--amber-bg); color: var(--amber); box-shadow: inset 0 0 0 1px rgba(232,170,78,.4); z-index: 2; }
+.badge.green { background: var(--green-bg); color: var(--green); box-shadow: inset 0 0 0 1px rgba(93,199,154,.4); }
+
+.legend { display: flex; gap: 16px; color: var(--muted); font-size: 11px; align-items: center; white-space: nowrap; }
+.legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.lg { display: inline-block; width: 16px; height: 0; border-top: 2px solid #4A4D4D; }
+.lg.outer { border-top-style: dashed; }
+.lg.pending { border-top-color: var(--amber); } .lg.changed { border-top-color: var(--green); }
+.lg.evidence { border-top: 2px dashed var(--amber); } .lg.other { border-top: 2px dashed var(--blue); }
+.lg.pulse { border-top: 3px dotted var(--green); }
+.maplegend { position: absolute; left: 16px; right: 16px; bottom: 12px; height: 32px; padding: 0 12px; border-radius: 9px; background: rgba(37,39,39,.92); box-shadow: inset 0 0 0 1px var(--line); z-index: 8; }
+
+/* tape */
+.tape { border-top: 1px solid var(--line); flex-shrink: 0; padding: 0 16px; }
+.strip { position: relative; height: 58px; margin-left: 120px; }
+.strip .t { position: absolute; top: 40px; font-size: 10.5px; color: var(--label); transform: translateX(-50%); white-space: nowrap; }
+.strip .t.l { transform: none; }
+.strip .t.strong { color: var(--text); font-weight: 500; }
+.strip .base { position: absolute; left: 0; right: 0; top: 28px; height: 1px; background: var(--line); }
+.strip .brk { position: absolute; top: 18px; height: 20px; background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(255,255,255,.07) 4px 5px); border-radius: 3px; }
+.tick { position: absolute; top: 23px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; cursor: pointer; z-index: 2; }
+.tick.person { background: var(--muted); } .tick.ai { box-shadow: inset 0 0 0 1.5px var(--blue); background: var(--panel); }
+.tick.open { background: var(--amber); } .tick.done { background: var(--green); }
+.tick.cur { box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--text); }
+.tick.ai.cur { box-shadow: inset 0 0 0 1.5px var(--blue), 0 0 0 2px var(--panel), 0 0 0 3.5px var(--text); }
+.smask { position: absolute; top: 14px; height: 28px; right: 0; background: rgba(28,29,29,.7); pointer-events: none; z-index: 3; }
+.shead { position: absolute; top: 14px; height: 28px; width: 2px; margin-left: -1px; background: var(--text); z-index: 4; pointer-events: none; }
+.htime { position: absolute; top: -1px; transform: translateX(-50%); background: var(--text); color: #0F1114; font: 500 10.5px/16px var(--mono); padding: 0 6px; border-radius: 4px; white-space: nowrap; z-index: 5; cursor: ew-resize; user-select: none; }
+.stlab { position: absolute; left: -120px; top: 19px; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--label); font-weight: 500; }
+.trans { display: flex; align-items: center; gap: 10px; height: 48px; border-top: 1px solid var(--line); }
+.ib { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); flex-shrink: 0; }
+.ib.play { box-shadow: inset 0 0 0 1px var(--line-2); color: var(--text); }
+.ib:hover { color: var(--text); background: var(--row); }
+.clock { font: 500 11.5px var(--mono); width: 190px; white-space: nowrap; flex-shrink: 0; }
+.callout { flex: 1; min-width: 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.callout strong { font-weight: 500; }
+.callout .a { color: var(--amber); } .callout .g { color: var(--green); }
+
+.tip { position: fixed; z-index: 50; width: 288px; padding: 12px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-2), 0 16px 40px rgba(0,0,0,.55); pointer-events: none; display: none; }
+.tip .th { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.tip .tn { font-weight: 500; }
+.tip .tm { color: var(--label); font-size: 11px; }
+.tip p { margin: 0 0 8px; }
+.tip p:last-child { margin: 0; }
+.tip .q { color: var(--muted); }
+.tip .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* v7 map: columns of cards joined by curved connectors */
+.mgrid { position: relative; z-index: 1; height: 100%; display: grid; grid-template-columns: 250px 1fr 260px; column-gap: 72px; padding: 20px 28px; align-items: center; }
+.mcol { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.mcol.mid { align-items: center; gap: 0; }
+.mcol.right { max-height: 100%; overflow: hidden; }
+.msvg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: visible; }
+.conn { fill: none; stroke: #4A4D4D; stroke-width: 1.5; transition: stroke .25s, opacity .25s, stroke-width .25s; }
+.conn.on { stroke: var(--text); stroke-width: 2; }
+.conn.dim { opacity: .45; }
+.mcard { background: var(--card); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line-2); overflow: hidden; transition: box-shadow .2s, opacity .25s; cursor: pointer; }
+.mcard:hover { box-shadow: inset 0 0 0 1px var(--muted); }
+.mcard.active, .mrow.active, .pchip.active { box-shadow: inset 0 0 0 1.5px var(--text); }
+.mcard.ghost, .mrow.ghost, .pchip.ghost { opacity: .3; }
+.mhead { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border-bottom: 1px solid var(--line); }
+.mhead svg { color: var(--muted); flex-shrink: 0; }
+.mt { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rid { font: 500 11.5px var(--mono); color: var(--label); margin-right: 8px; }
+.mc { color: var(--label); font-size: 11px; }
+.mstat { padding: 9px 14px; color: var(--muted); font-size: 12px; }
+.mstat.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mcard > .mstat:last-child, .mcard > .mhead:last-child { border-bottom: 0; }
+.warn { color: var(--amber) !important; } .ok { color: var(--green) !important; }
+.mrow { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 14px; border-top: 1px solid var(--line); border-radius: 0; }
+.mhead + .mrow { border-top: 0; }
+.mrow.two { height: auto; padding: 7px 14px; align-items: flex-start; }
+.mrow.two svg { margin-top: 2px; }
+.mrow.two .ml { display: grid; white-space: normal; }
+.l1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.l2 { font-size: 11px; line-height: 15px; color: var(--label); }
+.mstat + .mrow { border-top: 1px solid var(--line); }
+.mrow svg { color: var(--muted); flex-shrink: 0; }
+.mrow:hover { background: rgba(255,255,255,.03); }
+.ml { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mm { color: var(--label); font-size: 11px; white-space: nowrap; }
+.mm .tiny, .tiny { font-size: 11px; color: var(--label); }
+.newtag { color: var(--blue); }
+.mcard.center { width: 330px; cursor: default; box-shadow: inset 0 0 0 1.5px var(--muted), 0 0 0 4px var(--row); }
+.mcard.center .mhead { height: 46px; }
+.mcard.center .mt { font-size: 14px; }
+.cbody { padding: 12px 14px 12px; display: grid; gap: 8px; min-height: 132px; align-content: start; }
+.cseg { display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border-radius: 8px; background: var(--row); }
+.cseg button { height: 26px; border-radius: 6px; text-align: center; color: var(--muted); }
+.cseg button.on { background: var(--card); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-2); }
+.ctext { font-size: 13.5px; line-height: 21px; }
+.ctext mark { background: var(--green-bg); color: var(--green); border-radius: 3px; padding: 0 2px; }
+.cmeta { font-size: 11.5px; color: var(--label); }
+.cfoot { display: flex; gap: 16px; padding: 9px 14px; border-top: 1px solid var(--line); color: var(--label); font-size: 11.5px; }
+.fkind { font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--label); }
+.crumbs { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; color: var(--label); font-size: 11.5px; min-height: 22px; }
+.crumb { color: var(--muted); padding: 2px 6px; border-radius: 5px; }
+.crumb:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.sep { color: var(--faint); }
+.mcard.people { width: 330px; margin-top: 44px; cursor: default; }
+.pchips { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 8px; }
+.pchip { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; min-width: 0; }
+.pchip:hover { background: rgba(255,255,255,.04); }
+.pchip > span:last-child { display: grid; min-width: 0; }
+.pn { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ps { font-size: 10.5px; color: var(--label); white-space: nowrap; }
+.sd { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+@media (prefers-reduced-motion: reduce) { .pulse, .fnode.touched::after { animation: none; } .fnode { transition: none; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="artlabel" id="artlabel">10R v7 · Recorder Map · Relay-style columns (sources → requirement → linked work, people below), replayed by the tape</div>
+  <div class="scaler" id="scaler">
+  <div class="board">
+    <aside class="side">
+      <div class="ws">Manufacturing Systems ⌄</div>
+      <div class="search"><span>Search</span><span style="font:11px var(--mono)">⌘K</span></div>
+      <div class="nav">Inbox</div><div class="nav">My work</div>
+      <div class="navh">Projects</div>
+      <div class="nav on">Line Labor Dashboard</div><div class="nav">Compliance Tracker</div><div class="nav">Shift Handoff</div>
+      <div class="navh">Connected tools</div>
+      <div class="nav">Jira <span class="f">2m</span></div><div class="nav">GitLab <span class="f">5m</span></div><div class="nav">Figma <span class="f">1m</span></div>
+      <div class="nav">Teams <span class="f">live</span></div><div class="nav">SharePoint <span class="f">10m</span></div><div class="nav">Codex <span class="f">live</span></div>
+      <div class="grow"></div><div class="nav">Settings</div><div class="nav">Help</div>
+    </aside>
+    <div class="main">
+      <div class="top">
+        <h1>Line Labor Dashboard</h1>
+        <span class="chip" id="ver"></span><span class="chip" id="unv"></span>
+        <span class="grow"></span>
+        <div class="seg"><span>Doc</span><span class="on">Map</span><span>Screens</span><span>Present</span></div>
+        <button class="pill">Share</button>
+        <span class="av" style="background:#2F8A6B;width:28px;height:28px;font-size:10px">DO</span>
+      </div>
+      <div class="bar">
+        <h2>Map</h2>
+        <span class="state" id="state"><i></i><span></span></span>
+        <span class="grow"></span>
+        <span class="note">Same records as the Doc view. Nothing is edited here.</span>
+        <button class="pill">Export</button>
+        <button class="pill primary" id="signoff">Sign off record</button>
+      </div>
+      <div class="card">
+        <div class="tabs" id="tabs"></div>
+        <div class="mapstage" id="stage"></div>
+        <div class="tape">
+          <div class="strip" id="strip"></div>
+          <div class="trans">
+            <button class="ib" id="prev" aria-label="Previous event"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 3v10M13 3 6 8l7 5z"/></svg></button>
+            <button class="ib play" id="play" aria-label="Play"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3l8 5-8 5z"/></svg></button>
+            <button class="ib" id="next" aria-label="Next event"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v10M3 3l7 5-7 5z"/></svg></button>
+            <span class="clock" id="clock"></span>
+            <span class="callout" id="callout"></span>
+            <button class="switch" id="follow" aria-pressed="false"><i></i>Follow events</button>
+            <button class="pill" id="live">Go live</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+// ================= time =================
+// T = minutes since Sep 24 00:00. Days: Sep 24 = 0, Oct 1 = 7 … Oct 8 = 14.
+const D = (day, h, m) => day * 1440 + h * 60 + m;
+const OCT8 = 14, ZFROM = 13 * 60 + 30, ZTO = 14 * 60 + 30, LIVE = D(OCT8, 14, 27), PUB = D(7, 16, 0);
+const DAYS = [0, 7, 8, 9, 10, 11, 12, 13];
+const dayName = (d) => (d === 0 ? 'Sep 24' : `Oct ${d - 6}`);
+const clock = (m) => `${((Math.floor(m / 60) + 11) % 12) + 1}:${String(m % 60).padStart(2, '0')}`;
+const fmt = (T) => { const d = Math.floor(T / 1440), m = T % 1440; return { date: dayName(d), time: `${clock(m)} ${m < 720 ? 'AM' : 'PM'}`, short: clock(m) }; };
+const whenStr = (T) => `${fmt(T).date} · ${fmt(T).time}`;
+
+// Tape axis: one column per day, then Oct 8 minute by minute (or days only when R4 isn't in scope).
+let SW = 0, AX = null;
+function makeAxis(mixed) {
+  if (!mixed) return [{ k: 'days', days: [...DAYS, OCT8], w: SW }];
+  const dw = Math.round(SW * 0.36), brk = 14;
+  return [{ k: 'days', days: DAYS, w: dw }, { k: 'brk', w: brk }, { k: 'mins', w: SW - dw - brk }];
+}
+function xOf(T) {
+  let off = 0; const d = Math.floor(T / 1440), m = T % 1440;
+  for (const s of AX) {
+    if (s.k === 'days') {
+      const cw = s.w / s.days.length; let i = s.days.indexOf(d);
+      if (i < 0 && d < s.days[s.days.length - 1]) { i = s.days.filter((x) => x <= d).length - 1; return off + i * cw + cw - 3; }
+      if (i >= 0) return off + i * cw + Math.max(4, Math.min(cw - 4, (m / 1440) * cw));
+    }
+    if (s.k === 'mins' && d === OCT8) return off + Math.max(0, Math.min(1, (m - ZFROM) / (ZTO - ZFROM))) * s.w;
+    off += s.w;
+  }
+  return off;
+}
+function tOf(x) {
+  let off = 0;
+  for (const s of AX) {
+    if (x < off + s.w || s === AX[AX.length - 1]) {
+      const lx = Math.max(0, x - off);
+      if (s.k === 'days') { const cw = s.w / s.days.length, i = Math.min(s.days.length - 1, Math.floor(lx / cw)); return Math.min(LIVE, s.days[i] * 1440 + Math.round(((lx - i * cw) / cw) * 1439)); }
+      if (s.k === 'brk') return D(OCT8, 13, 30);
+      return Math.min(LIVE, D(OCT8, 0, 0) + ZFROM + Math.round((lx / s.w) * (ZTO - ZFROM)));
+    }
+    off += s.w;
+  }
+  return LIVE;
+}
+
+// ================= story records (src/store.js + src/AstraViews.js) =================
+const PEOPLE = {
+  marcus: ['Marcus Lee', 'ML', '#3D5AFE', 'Senior engineer'], priya: ['Priya Shah', 'PS', '#9F0064', 'Designer · owns Figma Overview'],
+  dana: ['Dana Ortiz', 'DO', '#2F8A6B', 'Product manager · approver'], kim: ['Kim Alvarez', 'KA', '#C76A00', 'Business lead · owns the success metric'],
+  sam: ['Sam Reed', 'SR', '#5C6370', 'SME · line operations'], jordan: ['Jordan Kim', 'JK', '#4100E2', 'Developer'],
+  astra: ['Astra', 'A', '#3A3C3C', ''], codex: ['Codex', '>_', '#2D2F2F', ''],
+};
+const R4_OLD = 'Refresh data every 15 minutes.';
+const R4_NEW = 'Refresh data hourly, 5 minutes after the timekeeping system syncs. Show the real last-sync time.';
+const EPICS = [['LAB-E1', 'Live labor visibility', ['R1', 'R2', 'R4', 'R6']], ['LAB-E2', 'Filtering', ['R3', 'R5']], ['LAB-E3', 'Alerts and history', ['R7', 'R8']]];
+const R4ST = (T) => (T < PUB ? 'draft' : T < D(OCT8, 13, 40) ? 'assumed' : T < D(OCT8, 14, 21) ? 'contested' : 'changed');
+const REQ = {
+  R1: ['Hours by dept', 'Show labor hours per department for the current shift.', D(0, 16, 0), (T) => (T < PUB ? 'draft' : 'verified')],
+  R2: ['85% flag', 'Flag any department above 85% of planned hours.', D(0, 16, 0), (T) => (T < PUB ? 'draft' : 'verified')],
+  R3: ['Shift filter', 'Let leaders filter by shift (1st, 2nd, 3rd).', D(0, 16, 0), (T) => (T < PUB ? 'draft' : 'verified')],
+  R4: ['Refresh rate', null, D(0, 16, 0), R4ST],
+  R5: ['Dept detail', 'Show a department detail view with an hourly breakdown.', D(7, 9, 30), () => 'draft'],
+  R6: ['Crews by lead', 'Show each crew lead their own departments first.', D(9, 10, 40), () => 'assumed'],
+  R7: ['Overtime alerts', 'Send the shift lead a Teams alert when a department crosses the overtime threshold.', D(0, 16, 0), (T) => (T < PUB ? 'draft' : 'assumed')],
+  R8: ['Shift history', 'Keep 90 days of shift history for weekly labor reviews.', D(10, 15, 5), () => 'assumed'],
+};
+const WORD = { verified: 'Approved', assumed: 'Assumed', contested: 'Contradicted by build', changed: 'Changed in v1.1', draft: 'AI draft' };
+const TONE = { verified: '', assumed: '', contested: 'amber', changed: 'green', draft: 'blue' };
+const KNEW = { marcus: [D(OCT8, 13, 40), 'Saw the build test in Codex'], dana: [D(OCT8, 13, 52), 'Got the proposal in Astra'], priya: [D(OCT8, 13, 52), 'Got the pending change in Figma'], kim: [D(OCT8, 14, 19), 'Saw the thread in Teams'], sam: [null, null] };
+const CUR = D(OCT8, 14, 21);
+const knewAt = (id, T) => (!KNEW[id] ? null : T >= CUR ? 'cur' : KNEW[id][0] !== null && T >= KNEW[id][0] ? 'knows' : 'v1');
+// Lag badges: a card is "behind" between the moment it should have changed and the moment it did.
+const LAG = { prd: [D(OCT8, 13, 40), D(OCT8, 14, 21), 'The build knew R4 was wrong at 1:40 PM. The PRD said so at 2:21 PM.'], 'code-job': [D(OCT8, 14, 21), D(OCT8, 14, 24), 'v1.1 was approved at 2:21 PM. The refresh job matched it at 2:24 PM.'], Overview: [D(OCT8, 14, 21), D(OCT8, 14, 26), 'v1.1 was approved at 2:21 PM. The Overview label matched it at 2:26 PM.'] };
+
+// Each node: type, label, kind, full(T), status(T), born.
+function N(T) {
+  const ch = T >= CUR, st4 = R4ST(T);
+  const n = {
+    prd: { type: 'prd', label: 'Line Labor Dashboard', kind: 'PRD', full: () => `Line Labor Dashboard PRD ${T >= CUR ? 'v1.1' : T >= PUB ? 'v1' : 'v1 draft'}`, status: 'Owner Dana Ortiz', born: D(0, 16, 0) },
+    E1: { type: 'epic', label: 'LAB-E1 · Live labor', kind: 'Epic', full: () => 'LAB-E1 · Live labor visibility', status: 'R1, R2, R4, R6', born: PUB },
+    E2: { type: 'epic', label: 'LAB-E2 · Filtering', kind: 'Epic', full: () => 'LAB-E2 · Filtering and drill-down', status: 'R3, R5', born: PUB },
+    E3: { type: 'epic', label: 'LAB-E3 · Alerts', kind: 'Epic', full: () => 'LAB-E3 · Alerts and history', status: 'R7, R8 · no tickets yet', born: PUB },
+    goal: { type: 'goal', label: 'Goal · mid-shift risk', kind: 'Success metric', full: () => 'Leaders spot overtime risk by mid-shift.', status: 'Owner Kim Alvarez · depends on R2 and R4', born: D(0, 10, 18) },
+    'LAB-12': { type: 'jira', label: 'LAB-12', kind: 'Jira ticket', full: () => 'LAB-12 · Labor hours by department', status: T >= D(11, 9, 0) ? 'Done' : 'In progress', born: D(8, 11, 0) },
+    'LAB-13': { type: 'jira', label: 'LAB-13', kind: 'Jira ticket', full: () => 'LAB-13 · Overtime flag at 85% of planned hours', status: 'In progress · Jordan Kim', born: D(8, 11, 10) },
+    'LAB-14': { type: 'jira', label: 'LAB-14', kind: 'Jira ticket', full: () => 'LAB-14 · Shift filter', status: 'In progress', born: D(8, 11, 15) },
+    'LAB-15': { type: 'jira', label: 'LAB-15', kind: 'Jira ticket', full: () => 'LAB-15 · Refresh labor hours from the timekeeping API', status: ch ? 'In progress · description updated for v1.1' : 'In progress', born: D(8, 11, 20) },
+    '!205': { type: 'gitlab', label: '!205 · Merged', kind: 'GitLab merge request', full: () => '!205 · Department hours endpoint', status: 'Merged · Marcus Lee', born: D(10, 15, 30) },
+    '!212': { type: 'gitlab', label: '!212 · Open', kind: 'GitLab merge request', full: () => '!212 · Shift filter UI', status: 'Open · Marcus Lee', born: D(12, 14, 0) },
+    '!219': { type: 'gitlab', label: '!219 · lab-15', kind: 'GitLab merge request', full: () => '!219 · lab-15-refresh: scheduled refresh job', status: `Open · Marcus Lee${st4 === 'contested' ? ' · tagged pending-R4' : ''}`, born: D(9, 18, 5) },
+    '!218': { type: 'untraced', label: '!218 · no requirement', kind: 'Untraced work', full: () => '!218 · Cache warm-up script', status: 'Open · not linked to any requirement', born: D(11, 16, 0) },
+    'code-job': { type: 'code', label: 'refreshLaborHours.ts', kind: 'Code · GitLab !219', full: () => 'src/jobs/refreshLaborHours.ts', status: T >= D(OCT8, 14, 24) ? 'Hourly · matches R4 v1.1' : 'Polls every 15 minutes, as R4 v1 says', born: D(9, 18, 5) },
+    'code-ui': { type: 'code', label: 'Overview.tsx', kind: 'Code · GitLab !219', full: () => 'src/ui/Overview.tsx', status: T >= D(OCT8, 14, 26) ? 'Shows the real last-sync time' : 'Label says every 15 min', born: D(9, 18, 5) },
+    'code-dept': { type: 'code', label: 'departmentTotals.ts', kind: 'Code · GitLab !205', full: () => 'src/api/departmentTotals.ts', status: 'Merged', born: D(10, 15, 30) },
+    'code-filter': { type: 'code', label: 'ShiftFilter.tsx', kind: 'Code · GitLab !212', full: () => 'src/ui/ShiftFilter.tsx', status: 'Open', born: D(12, 14, 0) },
+    Overview: { type: 'figma', label: 'Overview frame', kind: 'Figma frame', full: () => 'Dashboard / Overview', status: T >= D(OCT8, 14, 26) ? 'Label shows last sync time' : 'Label: “Updated every 15 min”', born: D(9, 11, 0) },
+    Filters: { type: 'figma', label: 'Filters frame', kind: 'Figma frame', full: () => 'Dashboard / Filters', status: 'Priya Shah', born: D(9, 13, 0) },
+    'ev-spec': { type: 'evidence', label: 'Spec §3.2', kind: 'Evidence on R4', full: () => 'timekeeping-api.md §3.2: “batch-loaded at the top of each hour (PT1H)”', status: 'Edited Mar 2023 · attached Oct 8, 1:52 PM', born: D(OCT8, 13, 52) },
+    'ev-api': { type: 'evidence', label: 'API response', kind: 'Evidence on R4', full: () => 'Sandbox GET /v2/labor/hours · sync_interval: PT1H', status: 'Oct 8, 1:40 PM', born: D(OCT8, 13, 40) },
+    'ev-log': { type: 'evidence', label: 'Changelog L58–60', kind: 'Evidence on R4', full: () => 'Data owner Ravi Patel: sync stays hourly, no faster feed before 2027', status: 'Sep 12, 2026 · attached Oct 8, 2:19 PM', born: D(OCT8, 14, 19) },
+    'cl-shift': { type: 'cluster', label: 'Shift Handoff · R2', kind: 'Other project · same API', full: () => 'Shift Handoff PRD · R2: Show hours worked this shift', status: ch ? 'Reads the timekeeping API · owner notified of v1.1' : 'Reads the timekeeping API', born: 0 },
+    'cl-comp': { type: 'cluster', label: 'Compliance · R6', kind: 'Other project · same API', full: () => 'Compliance Tracker PRD · R6: Report hours against labor rules daily', status: ch ? 'Reads the timekeeping API · owner notified of v1.1' : 'Reads the timekeeping API', born: 0 },
+  };
+  for (const [id, [short, text, born, st]] of Object.entries(REQ)) {
+    const s = st(T);
+    n[id] = { type: 'req', label: `${id} · ${short}`, kind: `Requirement · ${WORD[s]}`, full: () => (id === 'R4' ? (st4 === 'changed' ? R4_NEW : R4_OLD) : text), status: id === 'R4' && ch ? 'Was every 15 minutes · approved by Dana' : WORD[s], born, st: s };
+  }
+  for (const [id, p] of Object.entries(PEOPLE)) if (!['astra', 'codex'].includes(id)) n[id] = { type: 'people', person: id, label: p[0], kind: 'Person', full: () => p[0], status: p[3], born: 0 };
+  return n;
+}
+
+const LINKS = [
+  ['prd', 'E1'], ['prd', 'E2'], ['prd', 'E3'], ['prd', 'goal'], ['prd', '!218'],
+  ['E1', 'R1'], ['E1', 'R2'], ['E1', 'R4'], ['E1', 'R6'], ['E2', 'R3'], ['E2', 'R5'], ['E3', 'R7'], ['E3', 'R8'],
+  ['R6', 'Overview'], ['R7', 'R2'], ['R7', 'kim'], ['R8', 'sam'],
+  ['!219', 'code-job'], ['!219', 'code-ui'], ['Overview', 'code-ui'], ['!205', 'code-dept'], ['!212', 'code-filter'], ['Filters', 'code-filter'],
+  ['R1', 'LAB-12'], ['R1', '!205'], ['R1', 'Overview'],
+  ['R2', 'LAB-13'], ['R2', 'Overview'], ['R2', 'goal'],
+  ['R4', 'LAB-15'], ['R4', '!219'], ['R4', 'Overview'], ['R4', 'ev-spec'], ['R4', 'ev-api'], ['R4', 'ev-log'], ['R4', 'goal'], ['R4', 'dana'],
+  ['R3', 'LAB-14'], ['R3', '!212'], ['R3', 'Filters'],
+  ['!205', 'marcus'], ['!219', 'marcus'], ['!212', 'marcus'], ['!218', 'marcus'],
+  ['Overview', 'priya'], ['Filters', 'priya'], ['LAB-13', 'jordan'], ['goal', 'kim'],
+  ['ev-api', 'cl-shift'], ['ev-api', 'cl-comp'],
+];
+
+// Events: [req, time, kind, who, text, chips, reviewer, path, tone]. path = links the event travels.
+const EV = [
+  ['R4', D(0, 10, 18), 'person', 'kim', 'Kickoff call: “If leads can see it by lunch, they can move people before it turns into overtime.”', ['Kickoff transcript 18:40'], null, [['kim', 'kickoff'], ['kickoff', 'R4'], ['goal', 'R4']], 'gray'],
+  ['R4', D(0, 16, 0), 'ai', 'astra', 'Drafted R4 “Refresh data every 15 minutes” from the kickoff transcript.', [], 'Dana Ortiz', [['kickoff', 'R4'], ['R4', 'dana']], 'blue'],
+  ['R4', PUB, 'person', 'dana', 'Published PRD v1 with R4 still assumed. The assumption check flagged it first.', ['Assumption check · Oct 1'], null, [['dana', 'R4'], ['R4', 'E1'], ['E1', 'prd']], 'gray'],
+  ['R4', D(8, 11, 20), 'ai', 'astra', 'Created Jira LAB-15 from R4: refresh labor hours every 15 minutes.', ['Jira LAB-15'], 'Dana Ortiz', [['R4', 'LAB-15']], 'blue'],
+  ['R4', D(9, 14, 40), 'person', 'priya', 'Added an “Updated every 15 min” label to the Overview frame.', ['Figma · Overview'], null, [['R4', 'Overview'], ['Overview', 'priya']], 'gray'],
+  ['R4', D(9, 18, 5), 'ai', 'codex', 'Wrote the refresh job on a 15-minute schedule, as R4 says. Opened !219.', ['GitLab !219'], 'Marcus Lee', [['R4', '!219'], ['!219', 'code-job'], ['!219', 'marcus']], 'blue'],
+  ['R4', D(OCT8, 13, 40), 'open', 'codex', 'Build test: the timekeeping API returns sync_interval PT1H. R4 is contradicted.', ['API response · Oct 8', 'Spec §3.2 · 2023'], 'Marcus Lee', [['code-job', '!219'], ['!219', 'R4'], ['ev-api', 'R4']], 'amber'],
+  ['R4', D(OCT8, 13, 52), 'open', 'marcus', 'Proposed changing R4 to an hourly refresh. Dana and Priya see it as pending.', ['Proposal · R4'], null, [['marcus', '!219'], ['!219', 'R4'], ['ev-spec', 'R4'], ['R4', 'dana'], ['R4', 'Overview'], ['Overview', 'priya']], 'amber'],
+  ['R4', D(OCT8, 13, 58), 'person', 'priya', 'Agreed in the Figma plugin: “I’ll relabel ‘Updated every 15 min’ to show the actual last sync time.”', [], null, [['priya', 'Overview'], ['Overview', 'R4']], 'gray'],
+  ['R4', D(OCT8, 14, 8), 'open', 'dana', 'Asked for more evidence: the linked spec section is from 2023.', [], null, [['dana', 'R4'], ['R4', '!219'], ['!219', 'marcus']], 'amber'],
+  ['R4', D(OCT8, 14, 19), 'open', 'marcus', 'Added changelog lines 58–60 (data owner confirmed hourly in Sept) and resent.', ['Changelog L58–60 · Sep 2026'], null, [['marcus', '!219'], ['!219', 'R4'], ['ev-log', 'R4']], 'amber'],
+  ['R4', D(OCT8, 14, 19), 'person', 'kim', 'Agreed in Teams: “Hourly still gets us there by lunch.”', [], null, [['kim', 'goal'], ['goal', 'R4']], 'gray'],
+  ['R4', D(OCT8, 14, 21), 'done', 'dana', 'Approved R4. Astra published PRD v1.1, updated LAB-15, flagged the Overview frame, posted to Teams, and told the two other PRDs that read this API.', ['Decision record · R4', 'PRD v1.1', 'Jira LAB-15', 'Teams'], null, [['dana', 'R4'], ['R4', 'E1'], ['E1', 'prd'], ['R4', 'LAB-15'], ['R4', 'Overview'], ['Overview', 'priya'], ['R4', 'goal'], ['goal', 'kim'], ['R4', 'ev-api'], ['ev-api', 'cl-shift'], ['ev-api', 'cl-comp'], ['R4', '!219']], 'green'],
+  ['R4', D(OCT8, 14, 24), 'done', 'marcus', 'Updated the refresh job to hourly (5 * * * *).', ['GitLab !219'], null, [['marcus', '!219'], ['!219', 'code-job']], 'green'],
+  ['R4', D(OCT8, 14, 26), 'done', 'priya', 'Relabeled the Overview: “Last synced 1:00 PM · next 2:05 PM”.', ['Figma · Overview'], null, [['priya', 'Overview'], ['Overview', 'code-ui']], 'green'],
+
+  ['R1', D(0, 16, 0), 'ai', 'astra', 'Drafted R1 from the kickoff transcript.', [], 'Dana Ortiz', [['kickoff', 'R1'], ['E1', 'R1']], 'blue'],
+  ['R1', D(9, 11, 0), 'person', 'priya', 'Drew the department bars on the Overview frame.', ['Figma · Overview'], null, [['R1', 'Overview'], ['Overview', 'priya']], 'gray'],
+  ['R1', D(10, 15, 30), 'person', 'marcus', 'Merged !205, the department hours endpoint.', ['GitLab !205'], null, [['marcus', '!205'], ['!205', 'R1'], ['!205', 'code-dept']], 'gray'],
+  ['R1', D(11, 9, 0), 'done', 'astra', 'Jira LAB-12 moved to Done.', ['Jira LAB-12'], null, [['R1', 'LAB-12']], 'green'],
+  ['R2', D(9, 11, 30), 'person', 'priya', 'Added the over-85% highlight state to the Overview frame.', ['Figma · Overview'], null, [['R2', 'Overview'], ['Overview', 'priya']], 'gray'],
+  ['R2', D(11, 10, 0), 'person', 'jordan', 'Started Jira LAB-13, the overtime flag.', ['Jira LAB-13'], null, [['jordan', 'LAB-13'], ['LAB-13', 'R2']], 'gray'],
+  ['R3', D(9, 13, 0), 'person', 'priya', 'Designed the Filters frame.', ['Figma · Filters'], null, [['priya', 'Filters'], ['Filters', 'R3']], 'gray'],
+  ['R3', D(12, 14, 0), 'person', 'marcus', 'Opened !212, the shift filter UI.', ['GitLab !212'], null, [['marcus', '!212'], ['!212', 'R3']], 'gray'],
+  ['R5', D(7, 9, 30), 'ai', 'astra', 'Drafted R5 from crew lead notes. Nobody has accepted it.', ['Lead notes'], null, [['leadnotes', 'R5'], ['E2', 'R5']], 'blue'],
+  ['R6', D(9, 10, 40), 'ai', 'astra', 'Added R6 as assumed from the Oct 3 lead sync call.', ['Lead sync · Oct 3'], 'Dana Ortiz', [['leadsync', 'R6'], ['E1', 'R6'], ['R6', 'Overview']], 'blue'],
+  ['R7', D(0, 10, 31), 'person', 'kim', 'Kickoff call: asked for a Teams alert when a department nears overtime.', ['Kickoff transcript 31:20'], null, [['kim', 'kickoff'], ['kickoff', 'R7'], ['kim', 'R7']], 'gray'],
+  ['R8', D(10, 15, 5), 'ai', 'astra', 'Added R8 as assumed from the Oct 4 SME sync.', ['SME sync · Oct 4'], 'Dana Ortiz', [['smesync', 'R8'], ['sam', 'R8']], 'blue'],
+];
+const PATTERN = '<p><b>Pattern across 3 PRDs · early signal</b></p><p class="q">Across 3 PRDs, 3 of 4 requirements set from a kickoff quote and never checked against the source system changed after the build started.</p><p class="q">This was shown on R4 at the assumption check on Oct 1. v1 was published anyway, and R4 changed a week later.</p><p class="tm">Counts requirements and sources, never people.</p>';
+
+const TYPE_ORDER = ['prd', 'epic', 'req', 'jira', 'gitlab', 'code', 'figma', 'evidence', 'goal', 'people', 'cluster', 'untraced'];
+const ADJ = {};
+for (const [a, b] of LINKS) { (ADJ[a] = ADJ[a] || new Set()).add(b); (ADJ[b] = ADJ[b] || new Set()).add(a); }
+const byType = (n) => (a, b) => TYPE_ORDER.indexOf(n[a].type) - TYPE_ORDER.indexOf(n[b].type);
+
+// Sources that aren't records in Astra: the conversations requirements were written from.
+const SOURCES = {
+  kickoff: ['Kickoff call', 'Sep 24', D(0, 10, 0), 'Kickoff transcript · Kim Alvarez, Dana Ortiz, Sam Reed'],
+  leadnotes: ['Lead notes', 'Oct 1', D(7, 9, 0), 'Crew lead notes, shared in SharePoint'],
+  leadsync: ['Lead sync call', 'Oct 3', D(9, 10, 0), 'Weekly crew lead sync · Sam Reed'],
+  smesync: ['SME sync', 'Oct 4', D(10, 14, 30), 'SME sync on weekly labor reviews · Sam Reed'],
+};
+const REQ_SOURCES = { R1: ['kickoff'], R2: ['kickoff'], R3: ['kickoff'], R4: ['kickoff', 'ev-spec', 'ev-api', 'ev-log'], R5: ['leadnotes'], R6: ['leadsync'], R7: ['kickoff'], R8: ['smesync'] };
+const WORK_TYPES = ['jira', 'gitlab', 'figma', 'goal', 'untraced'];
+
+// ================= state =================
+// focus = the card in the center. track = the requirement whose record the tape plays (null = every event in scope).
+let T = D(OCT8, 13, 40), playing = null, follow = false, focus = 'R4', track = 'R4', scope = 'LAB-E1', menuOpen = false, showCurrent = false;
+let NODES = N(LIVE);
+const $ = (id) => document.getElementById(id);
+const TIPS = {}; let tipN = 0;
+const tip = (html) => { const k = 't' + tipN++; TIPS[k] = html; return `data-tip="${k}"`; };
+const av = (id, s = 22) => { const p = PEOPLE[id]; return `<span class="av" style="background:${p[2]};width:${s}px;height:${s}px">${p[1]}</span>`; };
+const scopeReqs = () => (scope === 'all' ? EPICS.flatMap((e) => e[2]) : EPICS.find((e) => e[0] === scope)[2]);
+const scopeFocus = () => (scope === 'all' ? 'prd' : { 'LAB-E1': 'E1', 'LAB-E2': 'E2', 'LAB-E3': 'E3' }[scope]);
+const events = () => EV.filter((e) => scopeReqs().includes(e[0]) && (!track || e[0] === track));
+const evAtT = () => { const ts = events().filter((e) => e[1] <= T); if (!ts.length || T >= LIVE) return []; const last = ts[ts.length - 1][1]; return ts.filter((e) => e[1] === last); };
+const evTip = (e) => {
+  const [req, t, kind, who, text, chips, rev] = e, p = PEOPLE[who];
+  const ai = rev ? `<span class="chip blue">AI action · reviewed by ${rev}</span>` : kind === 'ai' ? '<span class="chip blue">AI action · not reviewed</span>' : '';
+  return tip(`<div class="th">${av(who)}<div><div class="tn">${p[0]}</div><div class="tm">${req} · ${whenStr(t)}</div></div></div><p>${text}</p><div class="chips">${ai}${chips.map((c) => `<span class="chip">${c}</span>`).join('')}</div>`);
+};
+const ICON = {
+  doc: '<path d="M4 2h5l3 3v9H4z M9 2v3h3"/>', list: '<path d="M3 4h10M3 8h10M3 12h7"/>', box: '<path d="M2.5 5 8 2l5.5 3v6L8 14l-5.5-3z M2.5 5 8 8l5.5-3 M8 8v6"/>',
+  branch: '<circle cx="4.5" cy="3.5" r="1.5"/><circle cx="4.5" cy="12.5" r="1.5"/><circle cx="11.5" cy="6" r="1.5"/><path d="M4.5 5v6M11.5 7.5c0 2.5-7 1.5-7 3.5"/>',
+  code: '<path d="m6 4-4 4 4 4M10 4l4 4-4 4"/>', frame: '<path d="M5 2v12M11 2v12M2 5h12M2 11h12"/>', target: '<circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="2"/>',
+  link: '<path d="M7 9a3 3 0 0 0 4 0l2-2a3 3 0 0 0-4-4l-1 1M9 7a3 3 0 0 0-4 0L3 9a3 3 0 0 0 4 4l1-1"/>', mic: '<rect x="6" y="2" width="4" height="7" rx="2"/><path d="M4 7a4 4 0 0 0 8 0M8 11v3"/>',
+  api: '<path d="m5 5-3 3 3 3M11 5l3 3-3 3"/>', people: '<circle cx="6" cy="6" r="2.5"/><path d="M2 13c.5-2.5 2-3.5 4-3.5s3.5 1 4 3.5M11 4a2 2 0 0 1 0 4M12 9.5c1.3.4 2 1.5 2.3 3.5"/>',
+};
+const TYPE_ICON = { prd: 'doc', epic: 'list', req: 'doc', jira: 'box', gitlab: 'branch', code: 'code', figma: 'frame', evidence: 'doc', goal: 'target', cluster: 'link', untraced: 'code', people: 'people' };
+const svgIcon = (k) => `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
+const icon = (t) => svgIcon(TYPE_ICON[t] || 'doc');
+
+// ================= controls =================
+const chev = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m4 6 4 4 4-4"/></svg>';
+const reqDot = (id) => { const s = REQ[id][3](T); return s === 'contested' ? 'var(--amber)' : s === 'changed' ? 'var(--green)' : ''; };
+function renderTabs() {
+  const ep = EPICS.find((e) => e[0] === scope);
+  const label = ep ? `<span class="id">${ep[0]}</span>${ep[1]}` : 'Overview · all epics';
+  const flag = (reqs) => { const d = reqs.map(reqDot).find(Boolean); return d ? `<span class="sd" style="background:${d}"></span>` : `<span class="c">${reqs.length}</span>`; };
+  const opt = (id, name, n) => `<button class="opt${scope === id ? ' on' : ''}" data-scope="${id}"><span class="id">${id === 'all' ? '' : id}</span><span class="n">${name}</span>${n}</button>`;
+  let menu = opt('all', 'Overview · all epics', flag(EPICS.flatMap((e) => e[2]))) + '<div class="msep"></div>';
+  for (const [id, name, reqs] of EPICS) menu += opt(id, name, flag(reqs));
+  const btn = (v, text, d) => `<button class="tab${(REQ[v] ? track === v : !track) ? ' on' : ''}" data-v="${v}">${d ? `<span class="sd" style="background:${d}"></span>` : ''}${text}</button>`;
+  const group = btn(scopeFocus(), scope === 'all' ? 'PRD' : 'Epic', '') + scopeReqs().map((r) => btn(r, r, reqDot(r))).join('');
+  const inGroup = focus === scopeFocus() || scopeReqs().includes(focus);
+  $('tabs').innerHTML = `<div class="dd"><button class="ddbtn" id="ddbtn" aria-haspopup="listbox" aria-expanded="${menuOpen}">${label}${chev}</button><div class="menu${menuOpen ? ' open' : ''}" role="listbox">${menu}</div></div>
+    <div class="bgrp" role="group" aria-label="Center the map on">${group}</div>
+    ${inGroup ? '' : `<span class="trail">Centered on <b>${NODES[focus] ? NODES[focus].label : focus}</b></span>`}
+    <span class="grow"></span><span class="chip amber" style="cursor:help" ${tip(PATTERN)}>Pattern · 3 of 4</span>`;
+  $('ddbtn').onclick = (e) => { e.stopPropagation(); menuOpen = !menuOpen; renderTabs(); };
+  $('tabs').querySelectorAll('[data-scope]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); menuOpen = false; scope = b.dataset.scope; center(scopeFocus()); }));
+  $('tabs').querySelectorAll('[data-v]').forEach((b) => (b.onclick = () => center(b.dataset.v)));
+  bindTips($('tabs'));
+}
+document.addEventListener('click', () => { if (menuOpen) { menuOpen = false; renderTabs(); } });
+
+function center(id) {
+  stop();
+  focus = id;
+  if (REQ[id] && !scopeReqs().includes(id)) scope = EPICS.find((e) => e[2].includes(id))[0];
+  if (REQ[id]) track = id; else if (id === scopeFocus()) track = null;
+  layout();
+}
+
+// ================= map: columns joined by curved connectors =================
+// Left: what it came from. Center: the record. Right: the work it drives. Below: the people on it.
+const neighbors = (id) => [...(ADJ[id] || [])].filter((n) => NODES[n]);
+const epicOf = (req) => ({ R1: 'E1', R2: 'E1', R4: 'E1', R6: 'E1', R3: 'E2', R5: 'E2', R7: 'E3', R8: 'E3' }[req]);
+const peopleFor = (id) => {
+  const set = new Set(neighbors(id).filter((n) => NODES[n].type === 'people'));
+  for (const e of EV) if (e[0] === id && PEOPLE[e[3]] && NODES[e[3]]) set.add(e[3]);
+  if (id === 'R4') ['dana', 'marcus', 'priya', 'kim', 'sam'].forEach((p) => set.add(p));
+  return ['dana', 'marcus', 'priya', 'kim', 'sam', 'jordan'].filter((p) => set.has(p));
+};
+
+const row = (attrs, ic, label, meta = '') => `<div class="mrow" ${attrs}>${ic}<span class="ml">${label}</span>${meta ? `<span class="mm">${meta}</span>` : ''}</div>`;
+// Record rows put their live status on a second line so labels never get squeezed.
+const nodeRow = (id) => `<div class="mrow two" data-n="${id}">${icon(NODES[id].type)}<span class="ml"><span class="l1">${NODES[id].label}</span><span class="l2" data-stat="${id}"></span></span></div>`;
+const srcRow = (id) => (SOURCES[id] ? row(`data-src="${id}"`, svgIcon('mic'), SOURCES[id][0], SOURCES[id][1]) : row(`data-n="${id}"`, svgIcon(id === 'ev-api' ? 'api' : 'doc'), NODES[id].label, `<span data-new="${id}"></span>`));
+const cardHead = (ic, title, extra = '') => `<div class="mhead">${ic}<span class="mt">${title}</span>${extra}</div>`;
+const workCard = (id) => {
+  const n = NODES[id], code = neighbors(id).filter((k) => NODES[k].type === 'code');
+  return `<div class="mcard" data-n="${id}" data-anchor="right">${cardHead(icon(n.type), n.label)}<div class="mstat" data-stat="${id}"></div>${code.map((c) => nodeRow(c)).join('')}</div>`;
+};
+const smallCard = (id, side) => { const n = NODES[id]; return `<div class="mcard" data-n="${id}" data-anchor="${side}">${cardHead(icon(n.type), n.label)}<div class="mstat" data-stat="${id}"></div></div>`; };
+const reqCard = (id, side) => `<div class="mcard" data-n="${id}" data-anchor="${side}">${cardHead(icon('req'), `<b class="rid">${id}</b>${REQ[id][0]}`, `<span class="chip" data-chip="${id}"></span>`)}<div class="mstat clamp" data-text="${id}"></div></div>`;
+const peopleCard = (ids) => (ids.length ? `<div class="mcard people" data-anchor="bottom" data-group="${ids.join(' ')}">${cardHead(svgIcon('people'), 'People', `<span class="mc">${ids.length}</span>`)}<div class="pchips">${ids.map((p) => `<button class="pchip" data-n="${p}"><span class="knew" data-knew="${p}">${av(p, 20)}</span><span><span class="pn">${PEOPLE[p][0]}</span><span class="ps" data-kw="${p}"></span></span></button>`).join('')}</div></div>` : '');
+
+function centerCard(id) {
+  const n = NODES[id];
+  if (n.type === 'req') return `<div class="mcard center" data-n="${id}" id="ccard">
+      ${cardHead(icon('req'), `<b class="rid">${id}</b>${REQ[id][0]}`, `<span class="chip" data-chip="${id}"></span>`)}
+      <div class="cbody"><div class="cseg" id="cseg"></div><div class="ctext" id="ctext"></div><div class="cmeta" id="cmeta"></div></div>
+      <div class="cfoot" id="cfoot"></div></div>`;
+  return `<div class="mcard center" data-n="${id}" id="ccard">${cardHead(icon(n.type), n.label, n.type === 'prd' ? '<span class="chip" id="cver"></span>' : '')}
+      <div class="cbody"><div class="fkind">${n.kind}</div><div class="ctext">${n.full()}</div><div class="cmeta" data-stat="${id}"></div></div></div>`;
+}
+
+function buildColumns() {
+  const n = NODES[focus], L = [], R = [];
+  let crumbs = [];
+  if (n.type === 'req') {
+    crumbs = ['prd', epicOf(focus)];
+    L.push(`<div class="mcard" data-anchor="rows">${cardHead(svgIcon('doc'), 'Sources', `<span class="mc">${REQ_SOURCES[focus].length}</span>`)}${REQ_SOURCES[focus].map(srcRow).join('')}</div>`);
+    if (focus === 'R4') L.push(`<div class="mcard" data-anchor="loop" data-from="ev-api">${cardHead(svgIcon('link'), 'Also reads this API')}${['cl-shift', 'cl-comp'].map((c) => nodeRow(c)).join('')}</div>`);
+    for (const k of neighbors(focus).filter((k) => WORK_TYPES.includes(NODES[k].type)).sort(byType(NODES))) R.push(workCard(k));
+  } else if (n.type === 'epic') {
+    crumbs = ['prd'];
+    const reqs = neighbors(focus).filter((k) => NODES[k].type === 'req');
+    const srcs = [...new Set(reqs.flatMap((r) => REQ_SOURCES[r]).filter((s) => SOURCES[s]))];
+    L.push(`<div class="mcard" data-anchor="rows">${cardHead(svgIcon('doc'), 'Sources', `<span class="mc">${srcs.length}</span>`)}${srcs.map(srcRow).join('')}</div>`);
+    for (const r of reqs) R.push(reqCard(r, 'right'));
+  } else if (n.type === 'prd') {
+    L.push(`<div class="mcard" data-anchor="rows">${cardHead(svgIcon('doc'), 'Sources', '<span class="mc">4</span>')}${Object.keys(SOURCES).map(srcRow).join('')}</div>`);
+    for (const [eid, name, reqs] of EPICS) {
+      const e = { 'LAB-E1': 'E1', 'LAB-E2': 'E2', 'LAB-E3': 'E3' }[eid];
+      R.push(`<div class="mcard" data-n="${e}" data-anchor="right">${cardHead(icon('epic'), `<b class="rid">${eid}</b>${name}`)}${reqs.map((r) => row(`data-n="${r}"`, `<span class="sd" data-sd="${r}"></span>`, `${r} · ${REQ[r][0]}`, `<span data-word="${r}" class="tiny"></span>`)).join('')}</div>`);
+    }
+  } else {
+    // Any other record: requirements it serves on the left, everything else it touches on the right.
+    crumbs = ['prd'];
+    const nb = neighbors(focus).sort(byType(NODES));
+    for (const k of nb.filter((k) => NODES[k].type === 'req')) L.push(reqCard(k, 'left'));
+    for (const k of nb.filter((k) => !['req', 'people'].includes(NODES[k].type))) R.push(smallCard(k, 'right'));
+  }
+  const ppl = n.type === 'people' ? [] : n.type === 'prd' ? ['dana', 'marcus', 'priya', 'kim', 'sam', 'jordan'] : n.type === 'epic' ? [...new Set(neighbors(focus).filter((k) => REQ[k]).flatMap(peopleFor))] : n.type === 'req' ? peopleFor(focus) : neighbors(focus).filter((k) => NODES[k].type === 'people');
+  return { L, R, crumbs, ppl };
+}
+
+function layout() {
+  NODES = N(LIVE);
+  const { L, R, crumbs, ppl } = buildColumns();
+  const crumbHtml = crumbs.filter(Boolean).map((c) => `<button class="crumb" data-n="${c}">${NODES[c].label}</button>`).join('<span class="sep">›</span>');
+  $('stage').innerHTML = `<svg class="msvg" id="msvg"></svg>
+    <div class="mgrid">
+      <div class="mcol left">${L.join('')}</div>
+      <div class="mcol mid"><div class="crumbs">${crumbHtml}</div>${centerCard(focus)}${peopleCard(ppl)}</div>
+      <div class="mcol right">${R.join('')}</div>
+    </div>`;
+  $('stage').querySelectorAll('[data-n]').forEach((el) => {
+    const id = el.dataset.n;
+    el.addEventListener('click', (ev) => { ev.stopPropagation(); if (id !== focus && NODES[id]) center(id); });
+    el.addEventListener('mouseenter', (ev) => { ev.stopPropagation(); showTip(nodeTip(id), ev); });
+    el.addEventListener('mousemove', moveTip); el.addEventListener('mouseleave', hideTip);
+  });
+  $('stage').querySelectorAll('[data-src]').forEach((el) => { const s = SOURCES[el.dataset.src]; el.onmouseenter = (ev) => showTip(`<div class="tm">Source · ${s[1]}</div><p class="tn">${s[0]}</p><p class="q">${s[3]}</p>`, ev); el.onmousemove = moveTip; el.onmouseleave = hideTip; });
+  AX = makeAxis(scopeReqs().includes('R4') && (!track || track === 'R4'));
+  renderStrip();
+  update();
+}
+
+// Connectors are drawn from the laid-out cards, so they follow whatever the columns hold.
+function connectors() {
+  const st = $('stage'), sr = st.getBoundingClientRect(), k = sr.width / st.offsetWidth;
+  const box = (el) => { const r = el.getBoundingClientRect(); return { l: (r.left - sr.left) / k, r: (r.right - sr.left) / k, t: (r.top - sr.top) / k, b: (r.bottom - sr.top) / k, cy: (r.top + r.height / 2 - sr.top) / k, cx: (r.left + r.width / 2 - sr.left) / k }; };
+  const c = box($('ccard')), out = [];
+  const ids = (el) => [el.dataset.n, ...[...el.querySelectorAll('[data-n]')].map((x) => x.dataset.n), ...(el.dataset.group || '').split(' ')].filter(Boolean);
+  st.querySelectorAll('[data-anchor]').forEach((el) => {
+    const a = el.dataset.anchor, b = box(el);
+    if (a === 'rows') el.querySelectorAll('.mrow').forEach((r, i, all) => { const rb = box(r); const y2 = c.t + 40 + (i - (all.length - 1) / 2) * 10 + 30; out.push({ d: hz(b.r, rb.cy, c.l, Math.min(c.b - 16, Math.max(c.t + 20, y2))), ids: [r.dataset.n || r.dataset.src, focus] }); });
+    if (a === 'left') out.push({ d: hz(b.r, b.cy, c.l, c.cy), ids: [...ids(el), focus] });
+    if (a === 'right') out.push({ d: hz(c.r, c.cy, b.l, Math.min(b.cy, b.t + 22)), ids: [focus, ...ids(el)] });
+    if (a === 'bottom') out.push({ d: vt(c.cx, c.b, b.cx, b.t), ids: [focus, ...ids(el)], people: true });
+    if (a === 'loop') { const from = st.querySelector(`.mrow[data-n="${el.dataset.from}"]`); if (from) { const fb = box(from); out.push({ d: `M ${fb.l} ${fb.cy} C ${fb.l - 26} ${fb.cy}, ${b.l - 26} ${b.t + 22}, ${b.l} ${b.t + 22}`, ids: [el.dataset.from, ...ids(el)] }); } }
+  });
+  return out;
+}
+const hz = (x1, y1, x2, y2) => { const dx = Math.max(24, (x2 - x1) / 2); return `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`; };
+const vt = (x1, y1, x2, y2) => { const dy = Math.max(12, (y2 - y1) / 2); return `M ${x1} ${y1} C ${x1} ${y1 + dy}, ${x2} ${y2 - dy}, ${x2} ${y2}`; };
+
+function nodeTip(id) {
+  const n = N(T)[id];
+  let h = `<div class="th">${n.person ? av(id) : ''}<div><div class="tm">${n.kind}</div><div class="tn">${n.full()}</div></div></div>`;
+  if (T < n.born) return h + `<p class="q">Not created yet at ${whenStr(T)}. Appears ${whenStr(n.born)}.</p>`;
+  h += `<p class="q">${n.status}</p>`;
+  const kw = knewAt(id, T);
+  if (kw) h += `<p class="tm">${kw === 'cur' ? 'On v1.1' : kw === 'knows' ? `Knew R4 was wrong · ${KNEW[id][1]}` : 'Working from v1, not told R4 was wrong'}</p>`;
+  if (LAG[id] && T >= LAG[id][0] && T < LAG[id][1]) h += `<p class="tm" style="color:var(--amber)">Behind for ${T - LAG[id][0]} min so far. ${LAG[id][2]}</p>`;
+  const last = EV.filter((e) => e[1] <= T && e[7].some((l) => l.includes(id))).pop();
+  if (last) h += `<p class="tm">Last · ${fmt(last[1]).date} ${fmt(last[1]).short}: ${last[4]}</p>`;
+  if (id !== focus) h += '<p class="tm">Click to center the map here.</p>';
+  return h;
+}
+
+// ================= tape =================
+function renderStrip() {
+  const strip = $('strip');
+  SW = strip.clientWidth;
+  AX = makeAxis(AX && AX.length > 1);
+  let h = `<span class="stlab">${track ? track + ' events' : 'Events'}</span><div class="base"></div>`, off = 0;
+  for (const s of AX) {
+    if (s.k === 'days') { const cw = s.w / s.days.length; s.days.forEach((d, i) => { h += `<span class="t" style="left:${off + i * cw + cw / 2}px">${d === 0 ? 'Sep 24' : d === 7 || cw > 60 ? dayName(d) : d - 6}</span>`; }); }
+    else if (s.k === 'brk') h += `<span class="brk" style="left:${off + 2}px;width:${s.w - 4}px" ${tip('<p><b>The scale changes here</b></p><p class="q">Sep 24 to Oct 7 get one column per day. Oct 8 is drawn minute by minute, 1:30 to 2:30 PM.</p>')}></span>`;
+    else { h += `<span class="t l strong" style="left:${off}px">Oct 8</span>`; for (let m = ZFROM + 15; m <= ZTO; m += 15) h += `<span class="t" style="left:${off + ((m - ZFROM) / (ZTO - ZFROM)) * s.w - (m === ZTO ? 10 : 0)}px">${clock(m)}</span>`; }
+    off += s.w;
+  }
+  let last = -99;
+  for (const e of [...events()].sort((p, q) => p[1] - q[1])) { let x = xOf(e[1]); if (x - last < 11) x = last + 11; last = x; h += `<span class="tick ${e[2]}" data-t="${e[1]}" style="left:${x}px" ${evTip(e)}></span>`; }
+  h += '<div class="smask" id="smask"></div><div class="shead" id="shead"></div><span class="htime" id="htime"></span>';
+  strip.innerHTML = h;
+  strip.querySelectorAll('.tick').forEach((t) => (t.onclick = () => { stop(); T = +t.dataset.t; update(); }));
+  bindTips(strip);
+  bindDrag();
+}
+
+// ================= update for time T =================
+const STATUS_WORD_SHORT = { v1: 'On v1', knows: 'Knew R4 was wrong', cur: 'On v1.1' };
+function update() {
+  const live = T >= LIVE, nT = N(T), cur = evAtT(), st4 = R4ST(T);
+  const touched = new Set(cur.flatMap((e) => e[7].flat()));
+  const st = $('stage');
+  // every record shown anywhere on the map
+  st.querySelectorAll('[data-n]').forEach((el) => {
+    const id = el.dataset.n, n = nT[id]; if (!n) return;
+    el.classList.toggle('ghost', T < n.born);
+    el.classList.toggle('active', touched.has(id) && T >= n.born);
+  });
+  st.querySelectorAll('[data-src]').forEach((el) => { el.classList.toggle('ghost', T < SOURCES[el.dataset.src][2]); el.classList.toggle('active', touched.has(el.dataset.src)); });
+  st.querySelectorAll('[data-stat]').forEach((el) => {
+    const id = el.dataset.stat, n = nT[id], lag = LAG[id] && T >= LAG[id][0] && T < LAG[id][1];
+    el.textContent = T < n.born ? 'Not created yet' : lag ? `${id === 'prd' ? 'Behind the build' : id === 'Overview' ? 'Label needs update' : 'Needs update'} · ${T - LAG[id][0]} min` : n.status;
+    el.classList.toggle('warn', !!lag);
+    el.classList.toggle('ok', !!(LAG[id] && T >= LAG[id][1] && T < LIVE));
+  });
+  st.querySelectorAll('[data-new]').forEach((el) => { const n = nT[el.dataset.new]; el.textContent = T < n.born ? '' : T - n.born < 30 && T < LIVE ? 'new' : n.status.split(' · ')[0]; el.className = T >= n.born && T - n.born < 30 && T < LIVE ? 'newtag' : ''; });
+  st.querySelectorAll('[data-chip]').forEach((el) => { const s = REQ[el.dataset.chip][3](T); el.textContent = WORD[s]; el.className = 'chip ' + TONE[s]; });
+  st.querySelectorAll('[data-text]').forEach((el) => (el.textContent = nT[el.dataset.text].full()));
+  st.querySelectorAll('[data-sd]').forEach((el) => { const s = REQ[el.dataset.sd][3](T); el.style.background = s === 'contested' ? 'var(--amber)' : s === 'changed' ? 'var(--green)' : s === 'draft' ? 'var(--blue)' : s === 'assumed' ? 'transparent' : 'var(--muted)'; el.style.boxShadow = s === 'assumed' ? 'inset 0 0 0 1.5px var(--muted)' : 'none'; });
+  st.querySelectorAll('[data-word]').forEach((el) => (el.textContent = WORD[REQ[el.dataset.word][3](T)]));
+  st.querySelectorAll('[data-knew]').forEach((el) => { const s = knewAt(el.dataset.knew, T); el.style.setProperty('--kc', s === 'cur' ? 'var(--green)' : s === 'knows' ? 'var(--amber)' : s === 'v1' ? '#4a4f56' : 'transparent'); });
+  st.querySelectorAll('[data-kw]').forEach((el) => { const s = knewAt(el.dataset.kw, T); el.textContent = s ? STATUS_WORD_SHORT[s] : PEOPLE[el.dataset.kw][3].split(' · ')[0]; });
+  if ($('cver')) { $('cver').textContent = T >= CUR ? 'v1.1' : T >= PUB ? 'v1' : 'v1 draft'; $('cver').className = 'chip' + (T >= CUR ? ' green' : ''); }
+  // center requirement card
+  if (REQ[focus] && $('ctext')) {
+    const s = REQ[focus][3](T), proposed = focus === 'R4' && T >= D(OCT8, 13, 52) && T < CUR;
+    $('cseg').innerHTML = proposed ? `<button class="${showCurrent ? 'on' : ''}" data-cur="1">Current</button><button class="${showCurrent ? '' : 'on'}" data-cur="0">Suggested</button>` : '';
+    $('cseg').style.display = proposed ? '' : 'none';
+    $('cseg').querySelectorAll('button').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); showCurrent = b.dataset.cur === '1'; update(); }));
+    if (proposed && !showCurrent) { $('ctext').innerHTML = 'Refresh data <mark>hourly, 5 minutes after the timekeeping system syncs</mark>. <mark>Show the real last-sync time.</mark>'; $('cmeta').textContent = 'Suggested by Marcus Lee · 1:52 PM'; }
+    else {
+      $('ctext').textContent = T < REQ[focus][2] ? 'Not written yet.' : nT[focus].full();
+      $('cmeta').innerHTML = focus !== 'R4' ? nT[focus].status : s === 'changed' ? 'Approved by Dana Ortiz · 2:21 PM · was every 15 minutes' : s === 'contested' ? (proposed ? 'Current text · the build contradicts it' : '<span class="warn">The build contradicted this at 1:40 PM</span>') : s === 'assumed' ? 'Assumed · from the kickoff call, never checked' : 'AI draft from the kickoff transcript';
+    }
+    const ev = EV.filter((e) => e[0] === focus && e[1] <= T);
+    $('cfoot').innerHTML = `<span>${ev.length} event${ev.length === 1 ? '' : 's'}</span><span>${REQ_SOURCES[focus].length} source${REQ_SOURCES[focus].length === 1 ? '' : 's'}</span><span>${neighbors(focus).filter((k) => WORK_TYPES.includes(NODES[k].type)).length} linked</span>`;
+  }
+  // connectors: neutral, the current event's brighten
+  const paths = connectors();
+  const on = (p) => p.ids.filter((i) => touched.has(i)).length >= 2 || (p.people && touched.has(focus) && p.ids.some((i) => i !== focus && touched.has(i)));
+  $('msvg').innerHTML = paths.map((p) => `<path class="conn${on(p) ? ' on' : ''}${cur.length && !on(p) ? ' dim' : ''}" d="${p.d}"/>`).join('');
+  // tape
+  const x = xOf(Math.min(T, LIVE));
+  $('shead').style.left = x + 'px'; $('smask').style.left = x + 'px';
+  const ht = $('htime'); ht.textContent = live ? 'Live' : T >= D(OCT8, 0, 0) && AX.length > 1 ? fmt(T).time : `${fmt(T).date} · ${fmt(T).time}`;
+  { const w = ht.offsetWidth; ht.style.left = Math.max(w / 2 - 120, Math.min(SW - w / 2, x)) + 'px'; }
+  $('strip').querySelectorAll('.tick').forEach((t) => t.classList.toggle('cur', cur.some((e) => e[1] === +t.dataset.t)));
+  $('strip').querySelectorAll('.t').forEach((t) => (t.style.visibility = Math.abs(parseFloat(t.style.left) - x) < 12 ? 'hidden' : ''));
+  // top bar + transport
+  const v11 = T >= CUR;
+  $('ver').textContent = v11 ? 'v1.1' : T >= PUB ? 'v1' : 'v1 draft'; $('ver').className = 'chip' + (v11 ? ' green' : '');
+  $('unv').textContent = `${Object.keys(REQ).filter((id) => T >= REQ[id][2] && !['verified', 'changed'].includes(REQ[id][3](T))).length} unverified`;
+  $('state').className = 'state' + (live ? '' : ' replay'); $('state').querySelector('span').textContent = live ? 'Live' : 'Replaying';
+  $('signoff').disabled = !live;
+  $('clock').textContent = live ? `Live · Oct 8 · ${fmt(LIVE).time}` : whenStr(T);
+  $('live').style.visibility = live ? 'hidden' : 'visible';
+  const notTold = Object.keys(KNEW).filter((id) => knewAt(id, T) === 'v1').map((id) => PEOPLE[id][0].split(' ')[0]);
+  const knew = Object.keys(KNEW).filter((id) => knewAt(id, T) === 'knows').map((id) => PEOPLE[id][0].split(' ')[0]);
+  let c;
+  if (live) c = 'Live. Everyone is on v1.1. Hover any card for its history, or press play to replay.';
+  else if (cur.length && cur[0][1] === CUR) c = '<strong class="g">2:21 PM: v1.1 goes out from R4</strong> to the PRD, Jira, Figma, Teams and the two other PRDs that read this API.';
+  else if (st4 === 'contested' && (!track || track === 'R4')) c = `<strong class="a">${knew.length === 1 ? 'Only ' + knew[0] + ' knew' : knew.join(', ') + ' knew'} R4 was wrong.</strong> ${notTold.length ? notTold.join(', ') + (notTold.length > 1 ? ' were' : ' was') + ' still working from v1.' : 'The PRD still said every 15 minutes.'}`;
+  else if (cur.length) c = `${fmt(cur[0][1]).date} · ${cur[0][4]}`;
+  else c = 'Nothing has happened yet at this point.';
+  $('callout').innerHTML = c;
+  renderTabs();
+}
+
+// ================= interactions =================
+const tipEl = $('tip');
+function showTip(html, e) { tipEl.innerHTML = html; tipEl.style.display = 'block'; moveTip(e); }
+function moveTip(e) { const h = tipEl.offsetHeight; tipEl.style.left = Math.min(window.innerWidth - 300, e.clientX + 14) + 'px'; tipEl.style.top = (e.clientY + h + 24 > window.innerHeight ? e.clientY - h - 12 : e.clientY + 16) + 'px'; }
+function hideTip() { tipEl.style.display = 'none'; }
+function bindTips(root) { root.querySelectorAll('[data-tip]').forEach((n) => { n.onmouseenter = (e) => showTip(TIPS[n.dataset.tip], e); n.onmousemove = moveTip; n.onmouseleave = hideTip; }); }
+function bindDrag() {
+  const strip = $('strip');
+  const move = (e) => { const r = strip.getBoundingClientRect(), k = r.width / strip.offsetWidth; T = tOf((e.clientX - r.left) / k); update(); };
+  strip.onmousedown = (e) => { if (e.target.classList.contains('tick')) return; stop(); move(e); const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); }; window.addEventListener('mousemove', move); window.addEventListener('mouseup', up); e.preventDefault(); };
+}
+const times = () => [...new Set(events().map((e) => e[1]))].sort((a, b) => a - b);
+function step(dir) {
+  const ts = times(); const i = dir > 0 ? ts.findIndex((t) => t > T) : ts.findLastIndex((t) => t < T);
+  T = i >= 0 ? ts[i] : dir > 0 ? LIVE : T;
+  if (follow && T < LIVE) {
+    // Follow: center on whoever acted (or the first record on the event's path).
+    const e = evAtT()[0]; const target = e && (NODES[e[3]] ? e[3] : e[7].flat().find((id) => id !== focus && NODES[id]));
+    if (target && target !== focus) { focus = target; layout(); return; }
+  }
+  update();
+}
+const stop = () => { clearInterval(playing); playing = null; };
+$('prev').onclick = () => { stop(); step(-1); };
+$('next').onclick = () => { stop(); step(1); };
+$('live').onclick = () => { stop(); T = LIVE; update(); };
+$('play').onclick = () => { if (playing) return stop(); if (T >= LIVE) T = times()[0] - 1; playing = setInterval(() => { step(1); if (T >= LIVE) stop(); }, 1400); step(1); };
+$('follow').onclick = () => { follow = !follow; $('follow').classList.toggle('on', follow); $('follow').setAttribute('aria-pressed', follow); };
+document.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { stop(); step(1); } if (e.key === 'ArrowLeft') { stop(); step(-1); } });
+
+function fit() { const k = Math.min(1, (window.innerWidth - 32) / 1280); $('scaler').style.transform = `scale(${k})`; $('scaler').style.height = 832 * k + 'px'; $('artlabel').style.width = 1280 * k + 'px'; if (NODES && $('ccard')) update(); }
+window.addEventListener('resize', fit);
+fit();
+SW = $('strip').clientWidth; AX = makeAxis(true);
+layout();
+</script>
+</body>
+</html>
