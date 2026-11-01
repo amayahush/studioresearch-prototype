@@ -211,7 +211,9 @@ function peopleFor(id, nodes, events) {
 }
 
 // ---------- the view ----------
-const SPEED = 140; // tape pixels per second while playing
+// Playback: tape pixels per second at 1×, and how long the playhead rests on each event so its change can land.
+const SPEED = 60, DWELL = 900;
+const SPEEDS = [[0.5, '0.5×'], [1, '1×'], [2, '2×']];
 
 export function RecorderMap({ selected, setSelected }) {
   const { state } = useStore();
@@ -222,6 +224,7 @@ export function RecorderMap({ selected, setSelected }) {
   const [T, setT] = useState(rec.live);
   const [playing, setPlaying] = useState(false);
   const [follow, setFollow] = useState(false);
+  const [speed, setSpeed] = useState(1);
   const [menu, setMenu] = useState(false);
   const [showNow, setShowNow] = useState(false);
   const [tip, setTip] = useState(null);
@@ -251,17 +254,21 @@ export function RecorderMap({ selected, setSelected }) {
   const tRef = useRef(T); tRef.current = T;
   useEffect(() => {
     if (!playing) return;
-    let raf, last = performance.now();
+    let raf, last = performance.now(), restUntil = 0;
     const tick = (now) => {
       const dt = (now - last) / 1000; last = now;
-      const nt = Math.max(tRef.current + 0.01, tOf(ax, xOf(ax, tRef.current, 0) + SPEED * dt, live));
+      if (now < restUntil) { raf = requestAnimationFrame(tick); return; }
+      let nt = Math.max(tRef.current + 0.01, tOf(ax, xOf(ax, tRef.current, 0) + SPEED * speed * dt, live));
+      // Stop on each event for a moment so its cards and connectors can change before moving on.
+      const next = events.find((e) => e.t > tRef.current && e.t <= nt);
+      if (next) { nt = next.t; restUntil = now + DWELL / speed; }
       setT(Math.min(nt, live));
       if (nt >= live) { setPlaying(false); return; }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, ax.length, tapeW, live, track, scope]);
+  }, [playing, speed, ax.length, tapeW, live, track, scope]);
 
   // Follow mode: center on whoever acted.
   const lastCur = cur[0];
@@ -353,6 +360,7 @@ export function RecorderMap({ selected, setSelected }) {
         <button className="icon-btn" onClick=${() => step(1)} aria-label="Next event"><${SkipForward} size=${14} strokeWidth=${1.5} /></button>
         <span className="rec-clock mono">${isLive ? `Now · ${when(live)}` : when(T)}</span>
         <span className="rec-callout"><${Callout} rec=${rec} T=${T} cur=${cur} isLive=${isLive} track=${track} /></span>
+        <div className="seg sm rec-speed" role="group" aria-label="Playback speed">${SPEEDS.map(([v, l]) => html`<button key=${v} className=${cx('seg-btn', speed === v && 'active')} aria-pressed=${speed === v} onClick=${() => setSpeed(v)}>${l}</button>`)}</div>
         <label className="rec-follow"><input type="checkbox" checked=${follow} onChange=${(e) => setFollow(e.target.checked)} /><span className="rec-switch" aria-hidden="true" />Follow events</label>
         ${!isLive && html`<button className="btn sm" onClick=${() => { setPlaying(false); setT(live); }}>Back to now</button>`}
       </div>
