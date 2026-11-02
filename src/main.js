@@ -35,7 +35,7 @@ function App() {
     <div className="app">
       <${TesterBar} />
       <main className="stage">
-        ${Screen ? html`<${Screen} key=${state.role} />` : html`<${RolePicker} />`}
+        ${Screen ? html`<${Screen} key=${`${state.role}:${state.run || 0}`} />` : html`<${RolePicker} />`}
         ${Screen && state.role !== 'explore' && html`<${Guide} />`}
       </main>
     </div>

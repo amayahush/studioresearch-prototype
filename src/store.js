@@ -195,6 +195,18 @@ export function reducer(state, action) {
       return { ...state, r5: 'discarded', log: log(state, 'dana', 'Discarded the AI draft of R5', 'Now') };
     case 'RESET':
       return { ...initialState };
+    case 'RESTART': {
+      // Top bar reset: start the current scenario over from its first step, without leaving it.
+      // After an end card sends someone exploring, this restarts the path they played.
+      if (!state.role) return state;
+      const fresh = state.startedAs
+        ? reducer(state, { type: 'START_ROLE', role: state.startedAs })
+        : state.role === 'explore'
+          ? reducer(state, { type: 'EXPLORE_ASTRA' })
+          : { ...initialState, role: state.role };
+      // `run` remounts the screen so open panels, files and overlays close too.
+      return { ...fresh, run: (state.run || 0) + 1 };
+    }
     default:
       return state;
   }

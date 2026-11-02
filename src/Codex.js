@@ -565,7 +565,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <${StanceRow} id="kim" what="owns the success metric" stance=${state.kim.stance} />
         <div className="info-row"><${GitBranch} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Branch tagged pending-R4. Keep working.</div>
       </div>
-      <div className="sp-foot"><span className="grow" /><button className="btn" onClick=${onSentClose}>Back to code</button></div>
+      <div className="sp-foot"><span className="grow" /><button className="btn" onClick=${onSentClose}>Close</button></div>
     </div>`;
   }
 
@@ -634,7 +634,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
       </div>
       <div className="sp-foot">
         ${state.codeUpdated
-          ? html`<span className="green small grow"><${Check} size=${14} strokeWidth=${2} aria-hidden="true" /> Code matches v1.1</span><button className="btn" onClick=${close}>Back to code</button>`
+          ? html`<span className="green small grow"><${Check} size=${14} strokeWidth=${2} aria-hidden="true" /> Code matches v1.1</span><button className="btn" onClick=${close}>Close</button>`
           : html`<button className="btn btn-ghost" onClick=${() => onFinish(false)}>Not now</button>
               <span className="grow" />
               <button className="btn btn-primary" onClick=${() => onFinish(true)}>Update the code to match</button>`}
@@ -651,7 +651,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <div className="small">${TEXT.r4Old}</div>
         <div className="muted small">Your draft polls every 15 minutes, as written. The branch is no longer tagged pending-R4.</div>
       </div>
-      <div className="sp-foot"><span className="grow" /><button className="btn" onClick=${close}>Back to code</button></div>
+      <div className="sp-foot"><span className="grow" /><button className="btn" onClick=${close}>Close</button></div>
     </div>`;
   }
   return null;

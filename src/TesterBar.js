@@ -17,7 +17,7 @@ export function TesterBar() {
   const [showLog, setShowLog] = useState(false);
 
   return html`<header className="tester-bar">
-    <button className="tb-brand" onClick=${() => dispatch({ type: 'SET_ROLE', role: null })}>
+    <button className="tb-brand" onClick=${() => dispatch({ type: 'SET_ROLE', role: null })} title="Back to scenarios">
       <span className="tb-logo"><${AstraMark} /></span> Astra
     </button>
     <span className="grow" />
@@ -33,7 +33,7 @@ export function TesterBar() {
           )}
         </div>`}
       </div>
-      <button className="icon-btn" onClick=${() => { dispatch({ type: 'RESET' }); setShowLog(false); }} title="Reset the story" aria-label="Reset the story"><${RotateCcw} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
+      <button className="icon-btn" onClick=${() => { dispatch({ type: 'RESTART' }); setShowLog(false); }} disabled=${!state.role} title="Restart this scenario" aria-label="Restart this scenario"><${RotateCcw} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
     </div>
   </header>`;
 }

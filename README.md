@@ -18,7 +18,7 @@ Then open http://localhost:4173. Set `PORT` to use a different port if needed.
 1. The participant picks a role on the start screen: engineer, designer or product manager.
 2. The bar at the top lets the facilitator switch roles at any point. **Next up** shows whose turn it is in the story, and a dot marks that role.
 3. The story is shared: what one role does shows up for the others. It is saved in the browser, so a reload keeps it.
-4. **↺** in the top bar resets the story between participants. The clock icon shows a log of what happened.
+4. **↺** in the top bar restarts the current scenario from its first step. Click **Astra** (top left) to go back to the start screen between participants. The clock icon shows a log of what happened.
 
 ## Story path
 
