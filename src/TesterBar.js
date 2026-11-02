@@ -1,7 +1,7 @@
 import { html } from './lib.js';
 import { useStore } from './store.js';
 import { TOUR_STEPS, tourKey } from './tourSteps.js';
-import { RotateCcw, Lightbulb } from 'lucide-react';
+import { RotateCcw, Lightbulb, House } from 'lucide-react';
 
 function AstraMark() {
   return html`<svg className="astra-mark" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -20,6 +20,7 @@ export function TesterBar() {
     <button className="tb-brand" onClick=${() => dispatch({ type: 'SET_ROLE', role: null })} title="Back to scenarios">
       <span className="tb-logo"><${AstraMark} /></span> Astra
     </button>
+    <button className="icon-btn tb-home" onClick=${() => dispatch({ type: 'SET_ROLE', role: null })} disabled=${!state.role} title="Back to scenarios" aria-label="Back to scenarios"><${House} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
     <span className="grow" />
     <div className="tb-actions">
       <button className="icon-btn" onClick=${() => { dispatch({ type: 'RESTART' }); }} disabled=${!state.role} title="Restart this scenario" aria-label="Restart this scenario"><${RotateCcw} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
