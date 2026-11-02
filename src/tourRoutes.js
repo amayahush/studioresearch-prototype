@@ -6,6 +6,7 @@ import { TEXT, TIMES } from './store.js';
 //
 // Each route:
 //   stage    the story stage the step lives in (the screen restarts at this point when the stage differs)
+//   view     Explore only: the Astra view to switch to
 //   actions  clicks to make, in order: { click: selector, text?: button text, skipIf?: selector } or { key: 'alt+p' }
 //            skipIf skips a click when that selector is already on screen (for buttons that toggle).
 //            optional clicks only happen if the element is there (no waiting).
@@ -92,5 +93,12 @@ export const ROUTES = {
     deny: { stage: 'proposed' },
     record: { stage: 'approved', actions: [openR4] },
     end: { stage: 'approved', actions: [openR4, { click: 'button.btn-primary', text: 'Approve', exact: true }] },
+  },
+  explore: {
+    'map-reach': { view: 'map' },
+    'map-tape': { view: 'map' },
+    'map-replay': { view: 'map' },
+    'present-audience': { view: 'present' },
+    'present-slide': { view: 'present' },
   },
 };

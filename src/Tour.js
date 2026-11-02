@@ -1,6 +1,6 @@
 import { html, useState, useEffect, useLayoutEffect, useRef, cx } from './lib.js';
 import { useStore } from './store.js';
-import { TOUR_STEPS } from './tourSteps.js';
+import { TOUR_STEPS, tourKey } from './tourSteps.js';
 import { ROUTES, STAGE_STATE } from './tourRoutes.js';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -22,10 +22,11 @@ function visible(el) {
 }
 
 // Which steps can show right now, in story order.
-function availableSteps(steps, stage) {
+function availableSteps(steps, stage, view) {
   const modal = document.querySelector(MODALS);
   return steps.filter((s) => {
-    if (s.stage !== '*' && !s.stage.includes(stage)) return false;
+    if (s.stage && s.stage !== '*' && !s.stage.includes(stage)) return false;
+    if (s.view && s.view !== view) return false;
     const el = document.querySelector(s.target);
     if (!el || !visible(el)) return false;
     // While a time skip or end card is up, only steps about it can show.
@@ -80,7 +81,8 @@ function placeCard(r, h) {
 
 export function Tour() {
   const { state, dispatch } = useStore();
-  const steps = TOUR_STEPS[state.role] || [];
+  const key = tourKey(state);
+  const steps = TOUR_STEPS[key] || [];
   const [avail, setAvail] = useState([]);
   const [cur, setCur] = useState(null);
   const [rect, setRect] = useState(null);
@@ -102,7 +104,7 @@ export function Tour() {
   // Follow the scenario: poll what's on screen (panels and time skips open and close without telling us).
   useEffect(() => {
     const tick = () => {
-      const now = availableSteps(steps, state.stage);
+      const now = availableSteps(steps, state.stage, state.astraView);
       const prev = prevAvail.current;
       let next = curRef.current;
       if (navRef.current) {
@@ -117,7 +119,7 @@ export function Tour() {
         // Just turned on: start at the first step for where the story is now, so it can be read in order.
         const forStage = now.filter((id) => {
           const s = steps.find((x) => x.id === id);
-          return s.stage !== '*' && s.stage.includes(state.stage);
+          return !s.stage || (s.stage !== '*' && s.stage.includes(state.stage));
         });
         next = forStage[0] || now[now.length - 1] || null;
       } else {
@@ -136,7 +138,7 @@ export function Tour() {
     const t = setInterval(tick, 200);
     window.addEventListener('resize', tick);
     return () => { clearInterval(t); window.removeEventListener('resize', tick); };
-  }, [state.role, state.stage]);
+  }, [key, state.stage, state.astraView]);
 
   // Bring the highlighted element into view when the step changes.
   useEffect(() => {
@@ -158,7 +160,7 @@ export function Tour() {
     if (!id) return;
     if (avail.includes(id)) { setCur(id); return; }
     const target = steps.find((s) => s.id === id);
-    const route = (ROUTES[state.role] || {})[id];
+    const route = (ROUTES[key] || {})[id];
     if (!target || !route) return;
     const run = ++runRef.current;
     navRef.current = id;
@@ -169,7 +171,7 @@ export function Tour() {
     // If the clicks still don't bring the step on screen (say a file is open over it), restart and try once more.
     const attempt = async (restart) => {
       if (restart) {
-        dispatch({ type: 'TOUR_GO', patch: STAGE_STATE[state.role][route.stage] });
+        dispatch({ type: 'TOUR_GO', patch: STAGE_STATE[key][route.stage] });
         await sleep(250);
       }
       for (const a of route.actions || []) {
@@ -187,9 +189,13 @@ export function Tour() {
         await sleep(250);
       }
     };
-    const away = route.stage !== stateRef.current.stage || document.querySelector(MODALS);
+    // Explore steps switch views instead of restarting the story.
+    if (route.view) {
+      if (stateRef.current.astraView !== route.view) { dispatch({ type: 'SET_VIEW', view: route.view }); await sleep(300); }
+    }
+    const away = !!route.stage && (route.stage !== stateRef.current.stage || !!document.querySelector(MODALS));
     await attempt(away);
-    if (!away && run === runRef.current && navRef.current && !(await waitFor(() => onScreen() || !navRef.current, 2200))) await attempt(true);
+    if (route.stage && !away && run === runRef.current && navRef.current && !(await waitFor(() => onScreen() || !navRef.current, 2200))) await attempt(true);
     // Give the step time to appear (end cards wait for an animation), then stop waiting.
     await waitFor(() => run !== runRef.current || !navRef.current, 3000);
     if (run === runRef.current && navRef.current) { navRef.current = null; setBusy(false); }
@@ -204,7 +210,7 @@ export function Tour() {
 
   if (!step) {
     return html`<div className="tour-wait" role="status">
-      <span>Keep going in the prototype, or use the arrows.</span>
+      <span>${key === 'explore' ? 'Open the Map or Present, or use the arrows.' : 'Keep going in the prototype, or use the arrows.'}</span>
       <button className="tour-exit" onClick=${exit}>Exit guide</button>
       <button className="tour-arrow" onClick=${() => goTo(prevId)} disabled=${!prevId} aria-label="Previous step"><${ChevronLeft} size=${16} aria-hidden="true" /></button>
       <button className="tour-arrow primary" onClick=${() => goTo(nextId || steps[0].id)} aria-label="Next step"><${ChevronRight} size=${16} aria-hidden="true" /></button>

@@ -1,6 +1,6 @@
 import { html, useState } from './lib.js';
 import { useStore, PEOPLE } from './store.js';
-import { TOUR_STEPS } from './tourSteps.js';
+import { TOUR_STEPS, tourKey } from './tourSteps.js';
 import { RotateCcw, History, Lightbulb } from 'lucide-react';
 
 function AstraMark() {
@@ -36,7 +36,7 @@ export function TesterBar() {
       </div>
       <button className="icon-btn" onClick=${() => { dispatch({ type: 'RESET' }); setShowLog(false); }} title="Reset the story" aria-label="Reset the story"><${RotateCcw} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
     </div>
-    ${TOUR_STEPS[state.role] && html`<span className="tb-sep" aria-hidden="true" />
+    ${state.role && TOUR_STEPS[tourKey(state)] && html`<span className="tb-sep" aria-hidden="true" />
     <button
       className=${state.guided ? 'tb-guided on' : 'tb-guided'}
       onClick=${() => dispatch({ type: 'SET_GUIDED', on: !state.guided })}

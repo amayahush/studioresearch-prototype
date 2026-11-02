@@ -4,7 +4,8 @@
 // Each step:
 //   id        unique name
 //   stage     story stages where it can show ('*' = any). Stages: unpublished, flagged, proposed,
-//             moreEvidence, resent, approved, denied
+//             moreEvidence, resent, approved, denied. Explore steps leave it out (any stage).
+//   view      Explore only: the Astra view the step is on ('map' or 'present')
 //   target    CSS selector of the element to spotlight. A step only shows while its target is on screen.
 //   scenario  "What's happening" line: where we are in the story
 //   title     the design decision in a few words
@@ -267,4 +268,62 @@ export const TOUR_STEPS = {
     },
     END_CARD('Dana’s part of the story is done.'),
   ],
+
+  // Explore: a short tour of the Map and Present views. Shown in Explore Astra, and after an end card
+  // sends someone exploring, instead of a role's tour.
+  explore: [
+    {
+      id: 'map-reach',
+      view: 'map',
+      target: '.rec-cols',
+      scenario: 'The Map puts one requirement in the middle, with everything built from it around it.',
+      title: 'One requirement, everything it touches',
+      decision: 'R4 sits in the center, linked to the code, Figma frames, Jira tickets and people that depend on it, so a change shows its reach before anyone approves it.',
+      tags: ['T2', 'P5'],
+      evidence: 'P5 keeps requirements across emails, slides, Word and Jira, and wants them in one place.',
+    },
+    {
+      id: 'map-tape',
+      view: 'map',
+      target: '.rec-tape',
+      scenario: 'Every event on R4 sits on one timeline, from kickoff to v1.1.',
+      title: 'A flight recorder for requirements',
+      decision: 'Like a black box, the tape keeps every change, who made it and when. The team can replay how a decision happened instead of piecing it together from memory.',
+      tags: ['T3', 'P1'],
+      evidence: 'P1 keeps AI changes in separate commits to see exactly what changed.',
+    },
+    {
+      id: 'map-replay',
+      view: 'map',
+      target: '.rec-trans',
+      scenario: 'Press play to watch R4 change over time.',
+      title: 'Who knew, and who didn’t',
+      decision: 'As the replay moves, the callout names who knew R4 was wrong and who was still working from the old version.',
+      tags: ['T2', 'T3'],
+      evidence: 'Official records lag behind decisions made in conversation (T3), so intent gets lost between people (T2).',
+    },
+    {
+      id: 'present-audience',
+      view: 'present',
+      target: '.present-bar',
+      scenario: 'Present turns the PRD into slides for a meeting.',
+      title: 'Slides from the same source',
+      decision: 'Slides are generated from the PRD records and filtered by audience, so the deck can’t drift away from the requirements.',
+      tags: ['T3'],
+      evidence: 'Documents lag behind decisions made in conversation (T3). A separate deck is one more copy to fall behind.',
+    },
+    {
+      id: 'present-slide',
+      view: 'present',
+      target: '.slide',
+      scenario: 'The Decision slide lists changes still waiting on approval.',
+      title: 'Open changes show as decisions, not facts',
+      decision: 'Mid-story, R4’s proposed change would sit here as a decision still to make, never as settled fact, so nobody presents an unapproved requirement as final.',
+      tags: ['T1'],
+      evidence: 'Requirements are discovered through iteration (T1), so the deck has to show what’s still open.',
+    },
+  ],
 };
+
+// Which tour applies: the role's own path, or the Explore tour once someone is exploring.
+export const tourKey = (s) => (s.role === 'explore' || (s.startedAs && s.role !== s.startedAs) ? 'explore' : s.role);
