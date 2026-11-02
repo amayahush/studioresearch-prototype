@@ -288,7 +288,7 @@ export const TOUR_STEPS = {
       target: '.rec-tape',
       scenario: 'Every event on R4 sits on one timeline, from kickoff to v1.1.',
       title: 'A flight recorder for requirements',
-      decision: 'Like a black box, the tape keeps every change, who made it and when. The team can replay how a decision happened instead of piecing it together from memory.',
+      decision: 'This keeps every change, who made it and when. The team can replay how a decision happened instead of piecing it together from memory.',
       tags: ['T3', 'P1'],
       evidence: 'P1 keeps AI changes in separate commits to see exactly what changed.',
     },
