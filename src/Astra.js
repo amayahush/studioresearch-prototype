@@ -332,7 +332,7 @@ function DocView({ selected, setSelected, story }) {
 function ReqRow({ req, selected, onSelect }) {
   const pending = req.status === 'pending';
   const draft = req.status === 'draft';
-  return html`<button className=${cx('req', selected && 'selected', pending && 'pending', req.changed && 'verified', draft && 'draft')} onClick=${onSelect} aria-pressed=${selected}>
+  return html`<button className=${cx('req', selected && 'selected', pending && 'pending', req.changed && 'verified', draft && 'draft')} data-req=${req.id} onClick=${onSelect} aria-pressed=${selected}>
     <span className="req-id mono">${req.id}</span>
     <span className="req-main">
       <span className="req-text">${req.text}</span>
@@ -485,7 +485,7 @@ function AssumptionCheck({ reqs, onSelect, onPublish }) {
   const [asked, setAsked] = useState({});
   const [toast, setToast] = useState('');
   const open = reqs.filter((r) => r.assume !== 'verified');
-  return html`<div className="sp">
+  return html`<div className="sp" data-tour="assume-check">
     <div className="insp-head"><span className="insp-title">Assumption check · before v1</span></div>
     <div className="sp-body">
       <p className="muted">${open.length} requirements rest on something nobody has confirmed. Each one names who could confirm it, so the check happens before anyone builds on it.</p>

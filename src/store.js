@@ -104,19 +104,26 @@ export const initialState = {
   r5: 'draft',
   updates: { jira: true, figma: true, teams: true, metric: true },
   log: [],
+  // Guided mode (design rationale tour). Kept across resets so it stays on during a demo.
+  guided: false,
 };
 
 const log = (state, who, text, time) => [...state.log, { who, text, time }];
 
 export function reducer(state, action) {
   switch (action.type) {
+    case 'SET_GUIDED':
+      return { ...state, guided: action.on };
+    case 'TOUR_GO':
+      // Guided mode's arrows: restart this role's screen at a stage (tourRun remounts it, clearing open panels).
+      return { ...initialState, codexStreamed: true, ...action.patch, role: state.role, startedAs: state.role, guided: true, tourRun: (state.tourRun || 0) + 1 };
     case 'SET_ROLE':
       return { ...state, role: action.role };
     case 'EXPLORE_ASTRA':
-      return { ...initialState, role: 'explore' };
+      return { ...initialState, role: 'explore', guided: state.guided };
     case 'START_ROLE': {
       // Each role path starts fresh at its own point in the story (brief §8).
-      const fresh = { ...initialState, role: action.role, startedAs: action.role };
+      const fresh = { ...initialState, role: action.role, startedAs: action.role, guided: state.guided };
       const proposed = { who: 'marcus', text: 'Proposed a change to R4', time: TIMES.proposed };
       if (action.role === 'priya') return { ...fresh, stage: 'proposed', codexStreamed: true, log: [proposed] };
       // Dana starts a week earlier, about to publish v1 (screen 00).
@@ -194,7 +201,7 @@ export function reducer(state, action) {
     case 'DISCARD_DRAFT':
       return { ...state, r5: 'discarded', log: log(state, 'dana', 'Discarded the AI draft of R5', 'Now') };
     case 'RESET':
-      return { ...initialState };
+      return { ...initialState, guided: state.guided };
     case 'RESTART': {
       // Top bar reset: start the current scenario over from its first step, without leaving it.
       // After an end card sends someone exploring, this restarts the path they played.
@@ -203,7 +210,7 @@ export function reducer(state, action) {
         ? reducer(state, { type: 'START_ROLE', role: state.startedAs })
         : state.role === 'explore'
           ? reducer(state, { type: 'EXPLORE_ASTRA' })
-          : { ...initialState, role: state.role };
+          : { ...initialState, role: state.role, guided: state.guided };
       // `run` remounts the screen so open panels, files and overlays close too.
       return { ...fresh, run: (state.run || 0) + 1 };
     }

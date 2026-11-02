@@ -1,6 +1,7 @@
 import { html } from './lib.js';
 import { useStore } from './store.js';
-import { RotateCcw } from 'lucide-react';
+import { TOUR_STEPS, tourKey } from './tourSteps.js';
+import { RotateCcw, Lightbulb } from 'lucide-react';
 
 function AstraMark() {
   return html`<svg className="astra-mark" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -15,7 +16,7 @@ function AstraMark() {
 export function TesterBar() {
   const { state, dispatch } = useStore();
 
-  return html`<header className="tester-bar">
+  return html`<header className=${state.guided ? 'tester-bar guided' : 'tester-bar'}>
     <button className="tb-brand" onClick=${() => dispatch({ type: 'SET_ROLE', role: null })} title="Back to scenarios">
       <span className="tb-logo"><${AstraMark} /></span> Astra
     </button>
@@ -23,5 +24,16 @@ export function TesterBar() {
     <div className="tb-actions">
       <button className="icon-btn" onClick=${() => { dispatch({ type: 'RESTART' }); }} disabled=${!state.role} title="Restart this scenario" aria-label="Restart this scenario"><${RotateCcw} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
     </div>
+    ${state.role && TOUR_STEPS[tourKey(state)] && html`<span className="tb-sep" aria-hidden="true" />
+    <button
+      className=${state.guided ? 'tb-guided on' : 'tb-guided'}
+      onClick=${() => dispatch({ type: 'SET_GUIDED', on: !state.guided })}
+      aria-pressed=${state.guided}
+      title="Guided mode: why each part is designed this way"
+    >
+      <${Lightbulb} size=${14} strokeWidth=${1.5} aria-hidden="true" />
+      Guided
+      <span className="tb-switch" aria-hidden="true"><span /></span>
+    </button>`}
   </header>`;
 }

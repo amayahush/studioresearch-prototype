@@ -7,6 +7,8 @@ import { Codex } from './Codex.js';
 import { Figma } from './Figma.js';
 import { Astra } from './Astra.js';
 import { Guide } from './Guide.js';
+import { Tour } from './Tour.js';
+import { TOUR_STEPS, tourKey } from './tourSteps.js';
 
 const STORAGE_KEY = 'astra-prototype-state-v1';
 
@@ -35,8 +37,9 @@ function App() {
     <div className="app">
       <${TesterBar} />
       <main className="stage">
-        ${Screen ? html`<${Screen} key=${`${state.role}:${state.run || 0}`} />` : html`<${RolePicker} />`}
-        ${Screen && state.role !== 'explore' && html`<${Guide} />`}
+        ${Screen ? html`<${Screen} key=${`${state.role}:${state.run || 0}:${state.tourRun || 0}`} />` : html`<${RolePicker} />`}
+        ${Screen && state.role !== 'explore' && !(state.guided && TOUR_STEPS[tourKey(state)]) && html`<${Guide} />`}
+        ${Screen && state.guided && TOUR_STEPS[tourKey(state)] && html`<${Tour} key=${`${tourKey(state)}:${state.run || 0}`} />`}
       </main>
     </div>
   <//>`;

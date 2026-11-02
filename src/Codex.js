@@ -202,8 +202,8 @@ function Step({ children }) {
   return html`<div className="cx-step">${children}</div>`;
 }
 
-function Notice({ isNew, handled, children, onView }) {
-  return html`<div className=${cx('cx-notice', isNew && !handled && 'new', handled && 'handled')}>
+function Notice({ isNew, handled, children, onView, tour }) {
+  return html`<div className=${cx('cx-notice', isNew && !handled && 'new', handled && 'handled')} data-tour=${tour}>
     <${Layers} size=${14} strokeWidth=${1.5} aria-hidden="true" />
     <span className="cx-notice-text"><strong>Astra</strong> <span>${children}</span></span>
     ${handled ? html`<span className="cx-notice-done">Handled</span>` : html`<button className="cx-notice-open" onClick=${onView}>Open in panel</button>`}
@@ -284,7 +284,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
       ['  "next_sync": "2026-10-08T14:00:00"'],
       ['}'],
     ]} />`,
-    html`<${Notice} handled=${s !== 'flagged'} onView=${openNote}>R4 was never checked against this API. Your build just tested it.<//>`,
+    html`<${Notice} tour="notice-flag" handled=${s !== 'flagged'} onView=${openNote}>R4 was never checked against this API. Your build just tested it.<//>`,
     html`<${Step}>Writing src/jobs/refreshLaborHours.ts<//>`,
     html`<${Code} title="src/jobs/refreshLaborHours.ts" meta=${html`<span className="green">+5</span>`} lines=${[
       [html`+ export const schedule = <span className="tk-str">'*/15 * * * *'</span>  <span className="muted">// PRD R4 as written</span>`, 'green'],
@@ -306,7 +306,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
     ${past('moreEvidence') && (s === 'moreEvidence' || state.danaAsk) &&
     html`<${Fragment}>
       <${Divider}>${TIMES.moreEvidence}<//>
-      <${Notice} isNew handled=${s !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>
+      <${Notice} tour="notice-ask" isNew handled=${s !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>
     <//>`}
 
     ${afterEvidence && html`<${Step}>Astra · changelog L58–60 added as evidence · resent to Dana<//>`}
@@ -411,8 +411,8 @@ function SpecFile({ onToast, openNote }) {
 }
 
 // The conflict, facts only (frame 02): what R4 says next to what the API does.
-function StatusCard({ title, tag, rows, children }) {
-  return html`<div className="rl-status pending">
+function StatusCard({ title, tag, rows, children, tour }) {
+  return html`<div className="rl-status pending" data-tour=${tour}>
     <div className="rl-status-top"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="grow">${title}</span><${Tag} tone="amber">${tag}<//></div>
     <div className="rl-compare">
       ${rows.map(([label, value, meta, mono]) => html`<div key=${label} className="rl-compare-row">
@@ -455,13 +455,13 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <button className="rl-icon" aria-label="Close Astra" onClick=${close}><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
       </div>
       <div className="rl-body">
-        <${StatusCard} title="Refresh interval" tag="Unresolved" rows=${[
+        <${StatusCard} tour="check-compare" title="Refresh interval" tag="Unresolved" rows=${[
           ['PRD says', html`Every <b>15</b> minutes`, 'R4, v1'],
           ['API does', html`Every <b>60</b> minutes`, 'PT1H', true],
         ]}>Polling every 15 minutes returns the same data 3 out of 4 times.<//>
         <div className="rl-divider" />
-        <div className="rl-label-row"><span className="rl-label">Status of R4</span><${StatusChip} status="assumed" /></div>
-        <p className="rl-text">Set at kickoff on Oct 1. Approved in v1 without anyone checking it against the timekeeping API.</p>
+        <div data-tour="check-status"><div className="rl-label-row"><span className="rl-label">Status of R4</span><${StatusChip} status="assumed" /></div>
+        <p className="rl-text">Set at kickoff on Oct 1. Approved in v1 without anyone checking it against the timekeeping API.</p></div>
         <div className="rl-divider" />
         <div className="rl-label">Why R4 exists</div>
         <div className="why-card">
@@ -517,7 +517,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
   }
 
   if (panel === 'propose') {
-    return html`<div className="sp">
+    return html`<div className="sp" data-tour="propose">
       <${PanelHead} title="Propose a change to R4" onClose=${close} />
       <div className="sp-body">
         <${SectionLabel}>Proposed text<//>
@@ -547,7 +547,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
     return html`<div className="sp">
       <${PanelHead} title=${resent ? 'Evidence resent to Dana' : 'Proposal sent to Dana'} onClose=${onSentClose} />
       <div className="sp-body">
-        <div className="rl-status pending">
+        <div className="rl-status pending" data-tour="sent-status">
           <div className="rl-status-top"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="grow">Waiting on Dana</span><${Tag} tone="amber">Pending<//></div>
           <div className="steps">
             <span className="step"><${Check} size=${13} strokeWidth=${2} aria-hidden="true" />Sent ${resent ? TIMES.resent : TIMES.proposed}</span><span className="step-line" />
@@ -606,7 +606,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
 
   if (panel === 'changed') {
     const u = state.updates;
-    return html`<div className="sp">
+    return html`<div className="sp" data-tour="changed">
       <${PanelHead} title="R4 changed · PRD v1.1" right=${html`<${Tag} tone="green">Approved<//>`} onClose=${close} />
       <div className="sp-body">
         <div className="person-row"><${Avatar} id="dana" size=${26} /><div className="grow"><div className="strong-500">Dana approved your proposal</div><div className="small muted">Product manager · ${TIMES.approved}</div></div></div>

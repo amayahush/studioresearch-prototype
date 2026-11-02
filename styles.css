@@ -1397,3 +1397,44 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .rec-bot { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--bg-3); color: var(--text); font: 600 9px var(--mono); flex: none; }
 .rec-bot.astra { background: #7C3AED; color: #fff; }
 @media (prefers-reduced-motion: reduce) { .rec-cols, .rec-trace { animation: none; stroke-dashoffset: 0; } .rec-card, .rec-row, .rec-ring, .rec-reveal { transition: none; } .rec-conn { animation: none; } }
+
+/* ---------- guided mode (Tour.js) ---------- */
+.tester-bar.guided { position: relative; z-index: 320; }
+.tb-sep { width: 1px; height: 20px; background: var(--line-2); }
+.tb-guided { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px 0 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--text-2); font: 500 12px/18px var(--sans); white-space: nowrap; }
+.tb-guided:hover { color: var(--text); background: var(--bg-2); }
+.tb-guided.on { color: var(--text); box-shadow: inset 0 0 0 1px var(--blue); background: var(--r-blue-bg); }
+.tb-guided:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.tb-switch { position: relative; width: 28px; height: 16px; border-radius: 999px; background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--line-2); transition: background 0.2s ease; }
+.tb-switch > span { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--text-2); transition: left 0.2s ease, background 0.2s ease; }
+.tb-guided.on .tb-switch { background: var(--blue); box-shadow: none; }
+.tb-guided.on .tb-switch > span { left: 14px; background: #0F1114; }
+
+.tour-spot { position: fixed; z-index: 300; border-radius: 10px; pointer-events: none; box-shadow: 0 0 0 9999px rgba(6, 7, 8, 0.66); transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease; }
+.tour-card { position: fixed; z-index: 310; max-width: calc(100vw - 24px); max-height: calc(100vh - 68px); overflow: auto; display: flex; flex-direction: column; border-radius: 14px; background: var(--bg-1); box-shadow: inset 0 0 0 1px var(--line-2), 0 18px 48px rgba(0, 0, 0, 0.6); font-family: var(--sans); color: var(--text); transition: top 0.3s ease, left 0.3s ease; animation: notice-in 0.2s ease-out both; }
+.tour-card.busy { opacity: 0.55; transition: opacity 0.15s ease; }
+.tour-scene { display: grid; gap: 2px; padding: 12px 18px; background: var(--bg-2); border-bottom: 1px solid var(--line); border-radius: 14px 14px 0 0; }
+.tour-scene p { color: var(--text-2); }
+.tour-body { display: grid; gap: 12px; padding: 16px 18px 14px; }
+.tour-body h3 { margin: 0; font-size: 16px; line-height: 22px; font-weight: 600; letter-spacing: -0.01em; }
+.tour-sec { display: grid; gap: 3px; }
+.tour-sec p.muted { color: var(--text-2); }
+.tour-label { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.tour-label.accent { color: var(--blue); }
+.tour-label-row { display: flex; align-items: center; gap: 6px; }
+.tour-tag { font: 600 11px/16px var(--sans); color: var(--blue); background: var(--r-blue-bg); border-radius: 4px; padding: 0 6px; }
+.tour-hint { font-size: 12px; line-height: 18px; color: var(--muted); }
+.tour-foot { display: flex; align-items: center; gap: 8px; padding: 10px 12px 12px 18px; border-top: 1px solid var(--line); }
+.tour-progress { display: grid; gap: 6px; font-size: 12px; line-height: 16px; color: var(--text-2); }
+.tour-dots { display: flex; align-items: center; gap: 4px; }
+.tour-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--line-2); transition: width 0.2s ease; }
+.tour-dot.done { background: #4A5A8C; }
+.tour-dot.on { width: 16px; background: var(--blue); }
+.tour-exit { height: 32px; padding: 0 8px; border-radius: 8px; color: var(--text-2); font-size: 12px; white-space: nowrap; }
+.tour-exit:hover { color: var(--text); background: var(--bg-3); }
+.tour-arrow { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--text); }
+.tour-arrow:hover:not(:disabled) { background: var(--bg-3); }
+.tour-arrow.primary { background: var(--text); color: #0F1114; box-shadow: none; }
+.tour-arrow.primary:hover:not(:disabled) { background: #fff; }
+.tour-arrow:focus-visible, .tour-exit:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.tour-wait { position: fixed; z-index: 310; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 999px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line-2), 0 12px 30px rgba(0, 0, 0, 0.5); color: var(--text-2); font: 13px/20px var(--sans); white-space: nowrap; max-width: calc(100vw - 24px); }
