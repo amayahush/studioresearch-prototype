@@ -332,7 +332,7 @@ function DocView({ selected, setSelected, story }) {
 function ReqRow({ req, selected, onSelect }) {
   const pending = req.status === 'pending';
   const draft = req.status === 'draft';
-  return html`<button className=${cx('req', selected && 'selected', pending && 'pending', req.changed && 'verified', draft && 'draft')} onClick=${onSelect} aria-pressed=${selected}>
+  return html`<button className=${cx('req', selected && 'selected', pending && 'pending', req.changed && 'verified', draft && 'draft')} data-req=${req.id} onClick=${onSelect} aria-pressed=${selected}>
     <span className="req-id mono">${req.id}</span>
     <span className="req-main">
       <span className="req-text">${req.text}</span>

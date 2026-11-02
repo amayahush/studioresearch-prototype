@@ -114,6 +114,9 @@ export function reducer(state, action) {
   switch (action.type) {
     case 'SET_GUIDED':
       return { ...state, guided: action.on };
+    case 'TOUR_GO':
+      // Guided mode's arrows: restart this role's screen at a stage (tourRun remounts it, clearing open panels).
+      return { ...initialState, codexStreamed: true, ...action.patch, role: state.role, startedAs: state.role, guided: true, tourRun: (state.tourRun || 0) + 1 };
     case 'SET_ROLE':
       return { ...state, role: action.role };
     case 'EXPLORE_ASTRA':

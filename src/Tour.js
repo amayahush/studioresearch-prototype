@@ -1,6 +1,7 @@
 import { html, useState, useEffect, useLayoutEffect, useRef, cx } from './lib.js';
 import { useStore } from './store.js';
 import { TOUR_STEPS } from './tourSteps.js';
+import { ROUTES, STAGE_STATE } from './tourRoutes.js';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Guided mode: spotlights one part of the screen at a time and explains why it's designed that way.
@@ -30,6 +31,28 @@ function availableSteps(steps, stage) {
     // While a time skip or end card is up, only steps about it can show.
     return modal ? modal.contains(el) : true;
   }).map((s) => s.id);
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Wait until find() returns something, or give up after `ms`.
+async function waitFor(find, ms = 3000) {
+  for (let t = 0; t < ms; t += 100) {
+    const v = find();
+    if (v) return v;
+    await sleep(100);
+  }
+  return null;
+}
+
+// The element an action clicks: matches the selector (and button text, if given), on screen and enabled.
+function actionEl(a) {
+  return [...document.querySelectorAll(a.click)].find((el) => {
+    if (!visible(el) || el.disabled) return false;
+    if (!a.text) return true;
+    const t = el.textContent.trim();
+    return a.exact ? t === a.text : t.includes(a.text);
+  });
 }
 
 function rectOf(sel) {
@@ -62,10 +85,17 @@ export function Tour() {
   const [cur, setCur] = useState(null);
   const [rect, setRect] = useState(null);
   const [cardH, setCardH] = useState(300);
+  const [busy, setBusy] = useState(false);
   const prevAvail = useRef(null);
   const curRef = useRef(null);
+  const lastRef = useRef(null); // last step shown, for the arrows on the "keep going" card
+  const navRef = useRef(null); // step the arrows are driving the prototype to
+  const runRef = useRef(0);
+  const stateRef = useRef(state);
   const cardRef = useRef(null);
   curRef.current = cur;
+  stateRef.current = state;
+  if (cur) lastRef.current = cur;
 
   const step = steps.find((s) => s.id === cur);
 
@@ -75,7 +105,15 @@ export function Tour() {
       const now = availableSteps(steps, state.stage);
       const prev = prevAvail.current;
       let next = curRef.current;
-      if (prev === null) {
+      if (navRef.current) {
+        // The arrows are driving the prototype: wait for that step, ignore the ones that flash past.
+        prevAvail.current = now;
+        setAvail((a) => (sameList(a, now) ? a : now));
+        if (!now.includes(navRef.current)) return;
+        next = navRef.current;
+        navRef.current = null;
+        setBusy(false);
+      } else if (prev === null) {
         // Just turned on: start at the first step for where the story is now, so it can be read in order.
         const forStage = now.filter((id) => {
           const s = steps.find((x) => x.id === id);
@@ -115,18 +153,64 @@ export function Tour() {
 
   const exit = () => dispatch({ type: 'SET_GUIDED', on: false });
 
+  // Arrows: go to a step even if the story isn't there yet, by doing what a person would click.
+  const goTo = async (id) => {
+    if (!id) return;
+    if (avail.includes(id)) { setCur(id); return; }
+    const target = steps.find((s) => s.id === id);
+    const route = (ROUTES[state.role] || {})[id];
+    if (!target || !route) return;
+    const run = ++runRef.current;
+    navRef.current = id;
+    setBusy(true);
+    const onScreen = () => { const el = document.querySelector(target.target); return el && visible(el); };
+
+    // Restart the screen at the step's stage when the story is elsewhere or an overlay is in the way.
+    // If the clicks still don't bring the step on screen (say a file is open over it), restart and try once more.
+    const attempt = async (restart) => {
+      if (restart) {
+        dispatch({ type: 'TOUR_GO', patch: STAGE_STATE[state.role][route.stage] });
+        await sleep(250);
+      }
+      for (const a of route.actions || []) {
+        if (run !== runRef.current || onScreen()) return;
+        if (a.skipIf && document.querySelector(a.skipIf)) continue;
+        if (a.key === 'alt+p') {
+          window.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', altKey: true, bubbles: true }));
+          await sleep(250);
+          continue;
+        }
+        const el = await waitFor(() => actionEl(a));
+        if (!el || run !== runRef.current) return;
+        el.click();
+        await sleep(250);
+      }
+    };
+    const away = route.stage !== stateRef.current.stage || document.querySelector(MODALS);
+    await attempt(away);
+    if (!away && run === runRef.current && navRef.current && !(await waitFor(() => onScreen() || !navRef.current, 2200))) await attempt(true);
+    // Give the step time to appear (end cards wait for an animation), then stop waiting.
+    await waitFor(() => run !== runRef.current || !navRef.current, 3000);
+    if (run === runRef.current && navRef.current) { navRef.current = null; setBusy(false); }
+  };
+
+  // Arrows move through every step in story order; the prototype follows along.
+  const at = steps.findIndex((s) => s.id === (cur || lastRef.current));
+  const prevId = at > 0 ? steps[at - 1].id : null;
+  const nextId = at < steps.length - 1 ? steps[at + 1].id : null;
+
+  if (busy) return null;
+
   if (!step) {
     return html`<div className="tour-wait" role="status">
-      <span>Keep going. The next design decision shows up as the story moves.</span>
+      <span>Keep going in the prototype, or use the arrows.</span>
       <button className="tour-exit" onClick=${exit}>Exit guide</button>
+      <button className="tour-arrow" onClick=${() => goTo(prevId)} disabled=${!prevId} aria-label="Previous step"><${ChevronLeft} size=${16} aria-hidden="true" /></button>
+      <button className="tour-arrow primary" onClick=${() => goTo(nextId || steps[0].id)} aria-label="Next step"><${ChevronRight} size=${16} aria-hidden="true" /></button>
     </div>`;
   }
 
-  const i = avail.indexOf(cur);
-  const prevId = i > 0 ? avail[i - 1] : null;
-  const nextId = i >= 0 && i < avail.length - 1 ? avail[i + 1] : null;
-  const num = steps.findIndex((s) => s.id === cur) + 1;
-  const moreLater = !nextId && num < steps.length;
+  const num = at + 1;
   const pos = placeCard(rect, cardH);
 
   return html`<div className="tour" aria-live="polite">
@@ -149,7 +233,6 @@ export function Tour() {
           </div>
           <p className="muted">${step.evidence}</p>
         </div>
-        ${moreLater && html`<p className="tour-hint">Keep going in the scenario to reach the next decision.</p>`}
       </div>
       <div className="tour-foot">
         <div className="tour-progress">
@@ -160,8 +243,8 @@ export function Tour() {
         </div>
         <span className="grow" />
         <button className="tour-exit" onClick=${exit}>Exit guide</button>
-        <button className="tour-arrow" onClick=${() => setCur(prevId)} disabled=${!prevId} aria-label="Previous step"><${ChevronLeft} size=${16} aria-hidden="true" /></button>
-        <button className="tour-arrow primary" onClick=${() => setCur(nextId)} disabled=${!nextId} aria-label="Next step"><${ChevronRight} size=${16} aria-hidden="true" /></button>
+        <button className="tour-arrow" onClick=${() => goTo(prevId)} disabled=${!prevId} aria-label="Previous step"><${ChevronLeft} size=${16} aria-hidden="true" /></button>
+        <button className="tour-arrow primary" onClick=${() => goTo(nextId)} disabled=${!nextId} aria-label="Next step"><${ChevronRight} size=${16} aria-hidden="true" /></button>
       </div>
     </div>
   </div>`;

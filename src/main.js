@@ -37,7 +37,7 @@ function App() {
     <div className="app">
       <${TesterBar} />
       <main className="stage">
-        ${Screen ? html`<${Screen} key=${state.role} />` : html`<${RolePicker} />`}
+        ${Screen ? html`<${Screen} key=${`${state.role}:${state.tourRun || 0}`} />` : html`<${RolePicker} />`}
         ${Screen && state.role !== 'explore' && !(state.guided && TOUR_STEPS[state.role]) && html`<${Guide} />`}
         ${Screen && state.guided && TOUR_STEPS[state.role] && html`<${Tour} key=${state.role} />`}
       </main>
