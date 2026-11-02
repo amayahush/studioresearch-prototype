@@ -104,19 +104,23 @@ export const initialState = {
   r5: 'draft',
   updates: { jira: true, figma: true, teams: true, metric: true },
   log: [],
+  // Guided mode (design rationale tour). Kept across resets so it stays on during a demo.
+  guided: false,
 };
 
 const log = (state, who, text, time) => [...state.log, { who, text, time }];
 
 export function reducer(state, action) {
   switch (action.type) {
+    case 'SET_GUIDED':
+      return { ...state, guided: action.on };
     case 'SET_ROLE':
       return { ...state, role: action.role };
     case 'EXPLORE_ASTRA':
-      return { ...initialState, role: 'explore' };
+      return { ...initialState, role: 'explore', guided: state.guided };
     case 'START_ROLE': {
       // Each role path starts fresh at its own point in the story (brief §8).
-      const fresh = { ...initialState, role: action.role, startedAs: action.role };
+      const fresh = { ...initialState, role: action.role, startedAs: action.role, guided: state.guided };
       const proposed = { who: 'marcus', text: 'Proposed a change to R4', time: TIMES.proposed };
       if (action.role === 'priya') return { ...fresh, stage: 'proposed', codexStreamed: true, log: [proposed] };
       // Dana starts a week earlier, about to publish v1 (screen 00).
@@ -194,7 +198,7 @@ export function reducer(state, action) {
     case 'DISCARD_DRAFT':
       return { ...state, r5: 'discarded', log: log(state, 'dana', 'Discarded the AI draft of R5', 'Now') };
     case 'RESET':
-      return { ...initialState };
+      return { ...initialState, guided: state.guided };
     default:
       return state;
   }

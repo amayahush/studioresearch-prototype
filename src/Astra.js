@@ -485,7 +485,7 @@ function AssumptionCheck({ reqs, onSelect, onPublish }) {
   const [asked, setAsked] = useState({});
   const [toast, setToast] = useState('');
   const open = reqs.filter((r) => r.assume !== 'verified');
-  return html`<div className="sp">
+  return html`<div className="sp" data-tour="assume-check">
     <div className="insp-head"><span className="insp-title">Assumption check · before v1</span></div>
     <div className="sp-body">
       <p className="muted">${open.length} requirements rest on something nobody has confirmed. Each one names who could confirm it, so the check happens before anyone builds on it.</p>

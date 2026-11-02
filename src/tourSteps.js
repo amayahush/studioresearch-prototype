@@ -1,0 +1,270 @@
+// Guided mode content: why each part of Astra is designed the way it is.
+// Edit the copy here; Tour.js reads it. No code changes needed to reword a step.
+//
+// Each step:
+//   id        unique name
+//   stage     story stages where it can show ('*' = any). Stages: unpublished, flagged, proposed,
+//             moreEvidence, resent, approved, denied
+//   target    CSS selector of the element to spotlight. A step only shows while its target is on screen.
+//   scenario  "What's happening" line: where we are in the story
+//   title     the design decision in a few words
+//   decision  what I designed and why
+//   tags      research references shown as chips (themes T1–T4, participants P1–P7)
+//   evidence  the finding behind the decision
+//
+// Order matters: it's the order of the story, and "Step X of N" counts in this order.
+
+const PENDING = ['proposed', 'moreEvidence', 'resent'];
+
+// Shared by every role: the time-skip overlay between scenes.
+const TIME_SKIP = {
+  id: 'time-skip',
+  stage: '*',
+  target: '.ts-card',
+  scenario: 'Time jumps forward while the other roles respond off screen.',
+  title: 'One relay, seen from one seat',
+  decision: 'Each person plays their own part, and time skips show what everyone else did. It keeps the story short while still showing the requirement moving between people.',
+  tags: ['T2'],
+  evidence: 'Requirements break down in the handoffs between roles (T2).',
+};
+
+const END_CARD = (scenario) => ({
+  id: 'end',
+  stage: '*',
+  target: '.endcard',
+  scenario,
+  title: 'The full trail, in order',
+  decision: 'The end card replays who did what and when, the same trail Astra keeps in the decision record.',
+  tags: ['P1', 'P2'],
+  evidence: 'P1 keeps AI changes in separate commits to see exactly what changed. P2 said that with AI-written code, nobody knows it when it breaks.',
+});
+
+export const TOUR_STEPS = {
+  // Engineer: Marcus in Codex
+  marcus: [
+    {
+      id: 'prompt',
+      stage: ['flagged'],
+      target: '.cx-prompt',
+      scenario: 'Marcus, an engineer, asks Codex to build the job that refreshes the labor dashboard, following PRD requirement R4: every 15 minutes.',
+      title: 'The agent builds from the PRD as written',
+      decision: 'I start inside an AI coding agent because that is where requirements now get executed. The agent follows R4 exactly, so whatever is wrong in the PRD gets built.',
+      tags: ['T4', 'P4'],
+      evidence: 'AI executes but doesn’t define (T4). P4 uses Codex every day.',
+    },
+    {
+      id: 'flag',
+      stage: ['flagged'],
+      target: '[data-tour="notice-flag"]',
+      scenario: 'While building, Codex calls the real timekeeping API. It only updates once an hour.',
+      title: 'The conflict surfaces where the developer works',
+      decision: 'Astra flags the mismatch inside Codex instead of making Marcus go find the PRD. The agent doesn’t quietly change the code to match reality.',
+      tags: ['T1', 'P4'],
+      evidence: 'Requirements get discovered during the build, not before it (T1). P4 noted enterprise teams only get approved tools, so the requirement has to come to them.',
+    },
+    {
+      id: 'compare',
+      stage: ['flagged'],
+      target: '[data-tour="check-compare"]',
+      scenario: 'Marcus opens the Astra panel to see what’s wrong.',
+      title: 'What the PRD says, next to what the system does',
+      decision: 'I lead with a plain comparison of the PRD and the API, so the developer can judge the conflict in seconds.',
+      tags: ['T1'],
+      evidence: 'Requirements are discovered through iteration, so the gap has to be obvious the moment it appears (T1).',
+    },
+    {
+      id: 'assumed',
+      stage: ['flagged'],
+      target: '[data-tour="check-status"]',
+      scenario: 'Marcus is reviewing the conflict in the Astra panel.',
+      title: 'Approved is not the same as checked',
+      decision: 'R4 is marked Assumed: it was approved in v1, but nobody tested it against the API. I separate approval from verification so a requirement can’t look settled when it isn’t.',
+      tags: ['T1', 'T3'],
+      evidence: 'Official records lag behind what teams actually learn (T3).',
+    },
+    {
+      id: 'why',
+      stage: ['flagged'],
+      target: '.side-panel .why-card',
+      scenario: 'Marcus is reviewing the conflict in the Astra panel.',
+      title: 'The why travels with the requirement',
+      decision: 'The kickoff quote and the goal behind R4 sit right in the panel, so Marcus can propose a fix that still meets the intent, not just the number.',
+      tags: ['T2', 'P5'],
+      evidence: 'Intent gets lost in handoffs (T2). P5 wants every ticket to tell the developer exactly what problem they’re solving.',
+    },
+    {
+      id: 'propose',
+      stage: ['flagged'],
+      target: '[data-tour="propose"]',
+      scenario: 'Marcus proposes changing R4 to hourly.',
+      title: 'The agent drafts, a person decides',
+      decision: 'Codex drafts the change and the reason, but Marcus reviews and sends it, and only Dana can approve it. The PRD doesn’t change until she does.',
+      tags: ['T4', 'P2'],
+      evidence: 'P2 said when something breaks, the blame lands on the team, not the AI, so a person has to own each decision.',
+    },
+    {
+      id: 'pending',
+      stage: PENDING,
+      target: '[data-tour="sent-status"]',
+      scenario: 'The proposal is out. Dana, the product manager, hasn’t decided yet.',
+      title: 'Changes go Pending, not live',
+      decision: 'Every role sees R4 as Pending right away, but it isn’t official until Dana approves. Marcus’s branch is tagged so nobody builds on it by mistake.',
+      tags: ['T3', 'P1'],
+      evidence: 'P1 described requirements changing mid-build and causing rework.',
+    },
+    TIME_SKIP,
+    {
+      id: 'ask',
+      stage: ['moreEvidence'],
+      target: '[data-tour="notice-ask"]',
+      scenario: 'Dana asked for more evidence: the spec Marcus cited is from 2023.',
+      title: 'The PM can push back, not just approve',
+      decision: 'Dana can ask for more proof instead of only approving or denying. The change stays Pending while they work it out.',
+      tags: ['P3', 'P5'],
+      evidence: 'P5 sees the PM’s job as finding the true problem. P3 deals with stakeholders who contradict each other.',
+    },
+    {
+      id: 'evidence',
+      stage: ['moreEvidence'],
+      target: '.file-card',
+      scenario: 'Marcus opens the API doc to answer Dana.',
+      title: 'Evidence comes from the source',
+      decision: 'Marcus selects the exact changelog lines and attaches them, so the decision points to proof instead of a chat message.',
+      tags: ['T3', 'P3'],
+      evidence: 'P3 thinks a meeting lost two hours because stakeholders couldn’t see the expected output.',
+    },
+    {
+      id: 'changed',
+      stage: ['approved'],
+      target: '[data-tour="changed"]',
+      scenario: 'Dana approved PRD v1.1.',
+      title: 'One approval updates everything linked',
+      decision: 'Approving R4 also updated Jira, Figma, Teams and the success metric. Marcus sees exactly which lines of his code no longer match.',
+      tags: ['T3', 'P5'],
+      evidence: 'P5 keeps requirements across emails, slides, Word and Jira, and wants them in one place.',
+    },
+    END_CARD('Marcus’s part of the story is done.'),
+  ],
+
+  // Designer: Priya in Figma
+  priya: [
+    {
+      id: 'tag',
+      stage: PENDING,
+      target: '.fg-pending-tag',
+      scenario: 'Priya, the designer, is working in Figma. Marcus just proposed changing R4.',
+      title: 'The change finds the right layer',
+      decision: 'Her “Updated every 15 min” label is linked to R4, so Astra tags that exact layer as pending. She doesn’t have to read the whole PRD to know what’s affected.',
+      tags: ['T2', 'P3'],
+      evidence: 'P3 walks developers through every state in handoff meetings. Linking layers to requirements carries that context without the meeting.',
+    },
+    {
+      id: 'plugin',
+      stage: PENDING,
+      target: '.fg-toolbar .tool.astra',
+      scenario: 'Astra’s button in the toolbar is pulsing.',
+      title: 'Astra lives inside Figma',
+      decision: 'The details open in a Figma plugin, not another app. Each role works in the tool they already use.',
+      tags: ['P5'],
+      evidence: 'P5 wants emails, backlog and Figma feedback in one place.',
+    },
+    {
+      id: 'reason',
+      stage: PENDING,
+      target: '.plugin .plg-reason',
+      scenario: 'Priya opens the plugin to see what changed.',
+      title: 'Reason and evidence come with the request',
+      decision: 'Priya sees why Marcus wants the change and the sources behind it before she’s asked to weigh in.',
+      tags: ['T3'],
+      evidence: 'Decisions made in conversation rarely reach the record (T3).',
+    },
+    {
+      id: 'stance',
+      stage: PENDING,
+      target: '.plugin .plg-stance',
+      scenario: 'Priya is asked to weigh in.',
+      title: 'Asked for a stance, not a sign-off',
+      decision: 'Priya owns the frame, so Astra asks her to agree or disagree. Only Dana approves. Priya’s note goes on the record either way.',
+      tags: ['T2', 'P3'],
+      evidence: 'P3 deals with stakeholders who contradict each other. Collecting each owner’s stance makes disagreement visible early.',
+    },
+    TIME_SKIP,
+    {
+      id: 'comment',
+      stage: ['approved'],
+      target: '.fg-comment',
+      scenario: 'Dana approved PRD v1.1. Her comment lands on Priya’s frame.',
+      title: 'The decision arrives where the work is',
+      decision: 'Dana’s approval posts as a Figma comment on the exact frame, with the fix it needs.',
+      tags: ['T2', 'P5'],
+      evidence: 'P5 wants every ticket to tell the person exactly what to solve.',
+    },
+    END_CARD('Priya’s part of the story is done.'),
+  ],
+
+  // Product manager: Dana in the Astra web app
+  dana: [
+    {
+      id: 'check',
+      stage: ['unpublished'],
+      target: '[data-tour="assume-check"]',
+      scenario: 'It’s Oct 1. Dana, the product manager, is about to publish PRD v1.',
+      title: 'Check assumptions before anyone builds',
+      decision: 'Before publishing, Astra lists every requirement nobody has confirmed and who could confirm it. R4’s “15 minutes” came from a kickoff call.',
+      tags: ['T1', 'P1'],
+      evidence: 'P1 said their team often doesn’t know the exact requirements yet.',
+    },
+    {
+      id: 'slices',
+      stage: ['unpublished', 'flagged'],
+      target: '.slices',
+      scenario: 'Dana is reviewing the PRD.',
+      title: 'Each role sees their slice',
+      decision: 'The PRD filters into slices by role, so each person sees what they act on. The full document is one click away.',
+      tags: ['T2', 'P5'],
+      evidence: 'P5 wants every ticket to tell the developer exactly what they’re solving.',
+    },
+    TIME_SKIP,
+    {
+      id: 'r4',
+      stage: PENDING,
+      target: '.req.pending',
+      scenario: 'A week later. Marcus found R4 can’t be met and proposed a change.',
+      title: 'The change waits in context',
+      decision: 'R4 shows as Pending right in the PRD, next to the requirements around it, instead of in someone’s inbox.',
+      tags: ['T3', 'P5'],
+      evidence: 'P5’s requirements live across emails, slides, Word and Jira.',
+    },
+    {
+      id: 'reason',
+      stage: PENDING,
+      target: '.approve-field',
+      scenario: 'Dana is reviewing Marcus’s proposal.',
+      title: 'Approving needs a reason',
+      decision: 'Dana can’t approve without writing why. The reason is saved with the decision, so later nobody has to guess.',
+      tags: ['T4', 'P2'],
+      evidence: 'P2 said the blame lands on the team, not the AI. A written reason makes ownership clear.',
+    },
+    {
+      id: 'deny',
+      stage: PENDING,
+      target: '.deny-btn',
+      scenario: 'Dana is reviewing Marcus’s proposal.',
+      title: 'More than yes or no',
+      decision: 'Under Deny, Dana can request more evidence. R4 stays Pending while Marcus gathers it.',
+      tags: ['P3', 'P5'],
+      evidence: 'P5 sees the PM’s job as finding the true problem. P3 deals with stakeholders who contradict each other.',
+    },
+    {
+      id: 'record',
+      stage: ['approved'],
+      target: '.record',
+      scenario: 'Dana approved PRD v1.1.',
+      title: 'A decision record, not just a new version',
+      decision: 'R4’s record shows it went from assumed, to contradicted, to verified, with who checked what and why.',
+      tags: ['T3', 'P1'],
+      evidence: 'P1 keeps AI changes in separate commits to see exactly what changed.',
+    },
+    END_CARD('Dana’s part of the story is done.'),
+  ],
+};
