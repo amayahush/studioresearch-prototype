@@ -180,6 +180,7 @@ export function Tour() {
           await sleep(250);
           continue;
         }
+        if (a.optional && !actionEl(a)) continue;
         const el = await waitFor(() => actionEl(a));
         if (!el || run !== runRef.current) return;
         el.click();
@@ -199,7 +200,7 @@ export function Tour() {
   const prevId = at > 0 ? steps[at - 1].id : null;
   const nextId = at < steps.length - 1 ? steps[at + 1].id : null;
 
-  if (busy) return null;
+  if (!step && busy) return null;
 
   if (!step) {
     return html`<div className="tour-wait" role="status">
@@ -214,8 +215,8 @@ export function Tour() {
   const pos = placeCard(rect, cardH);
 
   return html`<div className="tour" aria-live="polite">
-    ${rect && html`<div className="tour-spot" style=${{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }} />`}
-    <div ref=${cardRef} className="tour-card" role="dialog" aria-label="Why I designed this" style=${{ left: pos.left, top: pos.top, width: CARD_W }}>
+    ${rect && !busy && html`<div className="tour-spot" style=${{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }} />`}
+    <div ref=${cardRef} className=${cx('tour-card', busy && 'busy')} aria-busy=${busy} role="dialog" aria-label="Why I designed this" style=${{ left: pos.left, top: pos.top, width: CARD_W }}>
       <div className="tour-scene">
         <div className="tour-label">What's happening</div>
         <p>${step.scenario}</p>
@@ -243,8 +244,8 @@ export function Tour() {
         </div>
         <span className="grow" />
         <button className="tour-exit" onClick=${exit}>Exit guide</button>
-        <button className="tour-arrow" onClick=${() => goTo(prevId)} disabled=${!prevId} aria-label="Previous step"><${ChevronLeft} size=${16} aria-hidden="true" /></button>
-        <button className="tour-arrow primary" onClick=${() => goTo(nextId)} disabled=${!nextId} aria-label="Next step"><${ChevronRight} size=${16} aria-hidden="true" /></button>
+        <button className="tour-arrow" onClick=${() => goTo(prevId)} disabled=${!prevId || busy} aria-label="Previous step"><${ChevronLeft} size=${16} aria-hidden="true" /></button>
+        <button className="tour-arrow primary" onClick=${() => goTo(nextId)} disabled=${!nextId || busy} aria-label="Next step"><${ChevronRight} size=${16} aria-hidden="true" /></button>
       </div>
     </div>
   </div>`;

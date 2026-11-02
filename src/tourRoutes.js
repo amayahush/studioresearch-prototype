@@ -8,6 +8,7 @@ import { TEXT, TIMES } from './store.js';
 //   stage    the story stage the step lives in (the screen restarts at this point when the stage differs)
 //   actions  clicks to make, in order: { click: selector, text?: button text, skipIf?: selector } or { key: 'alt+p' }
 //            skipIf skips a click when that selector is already on screen (for buttons that toggle).
+//            optional clicks only happen if the element is there (no waiting).
 //            Actions stop early once the step's target is on screen.
 
 const L = {
@@ -52,6 +53,8 @@ export const STAGE_STATE = {
 };
 
 const altP = { key: 'alt+p' };
+// Codex's opening output ignores clicks until it finishes streaming, so skip the stream first.
+const skipStream = { click: '.cx-working', optional: true };
 const openFlag = { click: '[data-tour="notice-flag"] .cx-notice-open' };
 const openPlugin = { click: '.fg-toolbar .tool.astra', skipIf: '.plugin' };
 const openR4 = { click: '[data-req="R4"]', skipIf: '.record' };
@@ -60,10 +63,10 @@ export const ROUTES = {
   marcus: {
     prompt: { stage: 'flagged' },
     flag: { stage: 'flagged' },
-    compare: { stage: 'flagged', actions: [openFlag] },
-    assumed: { stage: 'flagged', actions: [openFlag] },
-    why: { stage: 'flagged', actions: [openFlag] },
-    propose: { stage: 'flagged', actions: [openFlag, { click: '.side-panel button', text: 'Propose change' }] },
+    compare: { stage: 'flagged', actions: [skipStream, openFlag] },
+    assumed: { stage: 'flagged', actions: [skipStream, openFlag] },
+    why: { stage: 'flagged', actions: [skipStream, openFlag] },
+    propose: { stage: 'flagged', actions: [skipStream, openFlag, { click: '.side-panel button', text: 'Propose change' }] },
     pending: { stage: 'proposed', actions: [altP] },
     'time-skip': { stage: 'proposed', actions: [altP, { click: '.side-panel button', text: 'Back to code' }] },
     ask: { stage: 'moreEvidence' },
