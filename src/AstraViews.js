@@ -522,7 +522,7 @@ export function ScreensView({ selected, setSelected }) {
         </div>
       </div>
     </div>
-    <aside className="rl-panel"><div className="sp">
+    ${(unlinked || info) && html`<aside className="rl-panel"><div className="sp">
       ${unlinked
         ? html`<${Fragment}>
             <${PanelTop} title=${unlinked.name} tag=${html`<span className="tag">${unlinked.archived ? 'Archived' : 'Not linked'}</span>`} onClose=${() => setFrame(null)} />
@@ -541,10 +541,8 @@ export function ScreensView({ selected, setSelected }) {
               <${SectionLabel}>On this frame<//>
               <p>${info[1]}</p>
             </div>`
-        : html`<${Fragment}>
-            <${PanelTop} title="Screens" />
-            <div className="sp-body"><p className="muted">Click a pin to see its requirement, or any other frame to see why it isn't linked.</p></div>`}
-    </div></aside>
+        : null}
+    </div></aside>`}
   </div>`;
 }
 

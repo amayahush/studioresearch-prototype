@@ -302,7 +302,7 @@ function DocView({ selected, setSelected, story }) {
     <div className="rl-split">
       <div className="rl-doc" onClick=${(e) => e.target === e.currentTarget && setSelected(null)}>
         <div className="rl-doc-inner">
-          <button className="doc-title" aria-pressed=${!selected || selected === 'overview'} onClick=${() => setSelected('overview')}>
+          <button className="doc-title" aria-pressed=${selected === 'overview'} onClick=${() => setSelected(selected === 'overview' ? null : 'overview')}>
             <h1>Line Labor Dashboard</h1>
             <div className="doc-meta">Owner Dana Ortiz (PM) · ${prdVersion(state)} · ${state.stage === 'approved' ? `published Oct 8, ${TIMES.approved}` : state.stage === 'unpublished' ? 'not published yet' : 'published Oct 1'} · Sources: kickoff call, lead notes, labor spreadsheet</div>
           </button>
@@ -341,7 +341,7 @@ function DocView({ selected, setSelected, story }) {
         </div>
       </div>
 
-      <aside className="rl-panel" aria-label="Details">
+      ${(selected || state.stage === 'unpublished') && html`<aside className="rl-panel" aria-label="Details">
         <${DetailPanel}
           selected=${selected}
           setSelected=${setSelected}
@@ -350,7 +350,7 @@ function DocView({ selected, setSelected, story }) {
           openMap=${openMap}
           setOpen=${(key, open) => setOpenMap((m) => ({ ...m, [key]: open }))}
         />
-      </aside>
+      </aside>`}
     </div>
   </div>`;
 }
@@ -414,7 +414,6 @@ function DetailPanel({ selected, setSelected, reqs, openMap, setOpen, story }) {
     const statusParts = [pending && '1 pending', r5Draft && '1 draft'].filter(Boolean);
     return html`<${Inspector}
       ...${shell}
-      onClose=${null}
       tag=${html`<${Tag}>PRD<//>`}
       title="Line Labor Dashboard"
       from=${`Owner Dana Ortiz (PM) · ${prdVersion(state)} · ${state.stage === 'approved' ? 'published Oct 8' : 'published Oct 1'}`}
