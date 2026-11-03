@@ -1901,3 +1901,10 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 /* Hover preview */
 .rec-tip-sum { font-size: 13px; line-height: 18px; font-weight: 500; color: var(--text); margin-top: 6px; }
 .rec-tip-foot { display: flex; gap: 4px; margin-top: 6px; }
+
+/* ---------- Light mode: primary buttons keep their color ----------
+   The light theme's charcoal hover is for neutral primaries only. Astra's blue buttons stay blue on hover,
+   and Figma's comment action uses Figma's own blue (its gray dark-mode fill had white text on it). */
+.app[data-theme="light"] :is(.astra, .astra-embed)[data-theme] .btn-primary:hover:not(:disabled) { background: var(--a-accent-hover); }
+.app[data-theme="light"] .figma .fg-comment-pop .btn-primary { background: var(--figma-blue); border-color: var(--figma-blue); color: #FFFFFF; }
+.app[data-theme="light"] .figma .fg-comment-pop .btn-primary:hover:not(:disabled) { background: #007BE5; border-color: #007BE5; }

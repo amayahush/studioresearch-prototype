@@ -462,7 +462,7 @@ export function RecorderMap({ selected, setSelected }) {
         <button className="icon-btn" onClick=${() => step(1)} aria-label="Next event"><${SkipForward} size=${14} strokeWidth=${1.5} /></button>
         <span className="rec-clock mono" ref=${clockRef} />
         <span className="rec-scope mono" title="What this timeline is showing">${track ? `${track} · LAB-${scope}` : scope === 'all' ? 'All requirements' : `LAB-${scope} · all`}</span>
-        <span className=${cx('rec-callout', !isLive && cur[0] && 'has-event')}>${!isLive && cur[0] && html`<${Who} id=${cur[0].who} />`}<span className="rec-callout-text"><${Callout} rec=${rec} T=${T} cur=${cur} isLive=${isLive} track=${track} /></span></span>
+        <span className=${cx('rec-callout', !isLive && cur[0] && 'has-event')}>${!isLive && html`<${Fragment}>${cur[0] && html`<${Who} id=${cur[0].who} />`}<span className="rec-callout-text"><${Callout} rec=${rec} T=${T} cur=${cur} isLive=${isLive} track=${track} /></span><//>`}</span>
         <div className="seg sm rec-speed" role="group" aria-label="Playback speed">${SPEEDS.map(([v, l]) => html`<button key=${v} className=${cx('seg-btn', speed === v && 'active')} aria-pressed=${speed === v} onClick=${() => setSpeed(v)}>${l}</button>`)}</div>
         <label className="rec-follow"><input type="checkbox" checked=${follow} onChange=${(e) => setFollow(e.target.checked)} /><span className="rec-switch" aria-hidden="true" />Follow events</label>
         ${!isLive && html`<button className="btn sm" onClick=${() => seek(live)}>Back to live</button>`}
