@@ -1921,3 +1921,6 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .app[data-theme="light"] .scenario-frame.scenario-frame .btn-primary { background: #16181D; color: #FFFFFF; box-shadow: none; }
 .app[data-theme="light"] .scenario-frame.scenario-frame .btn-primary:hover:not(:disabled) { background: #2E333B; }
 .app .scenario-frame.scenario-frame .btn:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; }
+
+/* Start screen: the Figma chip reads white on its blue in light mode. */
+.app[data-theme="light"] .tag-figma { color: #FFFFFF; }
