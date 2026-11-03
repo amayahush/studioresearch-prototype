@@ -69,7 +69,7 @@ export const ROUTES = {
     why: { stage: 'flagged', actions: [skipStream, openFlag] },
     propose: { stage: 'flagged', actions: [skipStream, openFlag, { click: '.side-panel button', text: 'Propose change' }] },
     pending: { stage: 'proposed', actions: [altP] },
-    'time-skip': { stage: 'proposed', actions: [altP, { click: '.side-panel button', text: 'Back to code' }] },
+    'time-skip': { stage: 'proposed', actions: [altP, { click: '.side-panel button', text: 'Close', exact: true }] },
     ask: { stage: 'moreEvidence' },
     evidence: { stage: 'moreEvidence', actions: [altP, { click: '.ev-card.dashed' }] },
     changed: { stage: 'approved', actions: [altP] },
