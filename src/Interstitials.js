@@ -43,7 +43,8 @@ export function TimeSkip({ from, to, day, title, events, onDone }) {
   }, [landed]);
 
   return html`<div className="timeskip" onClick=${advance} role="dialog" aria-modal="true" aria-live="polite" aria-label=${`Time skip to ${to}`}>
-    <div className="ts-card">
+    <div className="ts-card scenario-frame">
+      <div className="scenario-badge">Scenario · time skip</div>
       <div className="ts-clock"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" />${day && html`<span>${day} ·</span>`}<span className="mono">${fmt(now)}</span></div>
       <div className="ts-title">${title}</div>
       <div className="ts-events">
@@ -57,7 +58,7 @@ export function TimeSkip({ from, to, day, title, events, onDone }) {
         })}
       </div>
       <div className="ts-foot">
-        <span className="ts-hint muted">${landed ? 'Meanwhile, off screen' : 'Meanwhile, off screen · click to show everything'}</span>
+        <span className="ts-hint muted">${landed ? 'Meanwhile, off screen. Not part of Astra.' : 'Meanwhile, off screen · click to show everything'}</span>
         ${landed && html`<button ref=${continueRef} className="btn btn-primary" onClick=${(e) => { e.stopPropagation(); finish(); }}>Continue <${ArrowRight} size=${14} /></button>`}
       </div>
     </div>
@@ -73,8 +74,8 @@ export function EndCard({ role, title, steps, onExplore, onStart, onClose, explo
   }, []);
 
   return html`<div className="endcard-backdrop" role="dialog" aria-modal="true" aria-labelledby="endcard-title">
-    <div className="endcard">
-      <div className="tiny-label">${role} path · complete</div>
+    <div className="endcard scenario-frame">
+      <div className="scenario-badge">Scenario · ${role} path complete</div>
       <h2 id="endcard-title">${title}</h2>
       <ol className="end-steps">
         ${steps.map((s, i) => html`<li key=${i} className=${cx(s.pending && 'pending')}>
