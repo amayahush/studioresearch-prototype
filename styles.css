@@ -2121,6 +2121,29 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
   .ts-foot { flex-wrap: wrap; }
   .end-actions { flex-wrap: wrap; }
   .end-actions .btn { flex: 1 1 auto; min-height: 44px; }
+
+  /* Slices: one dropdown beside the filter instead of a scrolling tab row */
+  .astra[data-theme] .rl-subbar { padding: 8px 12px; gap: 8px; height: auto; flex: none; }
+  .m-slice-wrap { flex: 1 1 0; min-width: 0; }
+  .m-slice-wrap > .m-slice { width: 100%; justify-content: flex-start; gap: 6px; }
+  .m-slice-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+  .rl-subbar .rl-filter { min-height: 40px; }
+  .rl-subbar .menu { min-width: 220px; }
+  .rl-subbar .menu-item { min-height: 44px; }
+  .rl-subbar .menu-item strong { display: flex; align-items: center; gap: 8px; width: 100%; }
+
+  /* End card: the main action on top, the two quieter ones side by side under it */
+  .end-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .end-actions > .grow { display: none; }
+  .end-actions > .btn-primary { grid-column: 1 / -1; order: -1; }
+  .end-actions > .btn { justify-content: center; text-align: center; width: 100%; min-height: 44px; }
+  .app .endcard .end-actions > .btn-ghost { box-shadow: inset 0 0 0 1px var(--line-2); }
+
+  /* Sheet footers: every button the same 44px height, centered on one line */
+  .app .m-sheet :is(.sp-foot, .rl-actions) { align-items: center; }
+  .app .m-sheet :is(.sp-foot, .rl-actions) :is(.export-wrap, .deny-btn, .rl-more) { display: inline-flex; align-items: center; gap: 6px; }
+  .app .m-sheet :is(.sp-foot, .rl-actions) .btn { height: 44px; min-height: 44px; }
+  .app .m-sheet :is(.sp-foot, .rl-actions) .btn-square { width: 44px; height: 44px; }
 }
 
 /* Landscape tablets and small laptops (901–1100px): desktop layout with room to breathe. */

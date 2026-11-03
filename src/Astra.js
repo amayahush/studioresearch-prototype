@@ -273,6 +273,7 @@ function DocView({ selected, setSelected, story }) {
   const [closedEpics, setClosedEpics] = useState({});
   const phone = useMedia(PHONE);
   const [checkOpen, setCheckOpen] = useState(false);
+  const [sliceOpen, setSliceOpen] = useState(false);
   // Guided mode opens on the assumption check, which phones keep behind the dock: open it
   // when guided mode starts here (not when the tour's arrows jump to a later step).
   const guidedWas = useRef(state.guided);
@@ -299,14 +300,25 @@ function DocView({ selected, setSelected, story }) {
 
   return html`<div className="rl-doc-wrap">
     <div className="rl-subbar">
-      <nav className="slices" aria-label="Slices">
+      ${phone ? html`<div className="export-wrap m-slice-wrap">
+        <button className="rl-filter btn-soft m-slice" aria-haspopup="menu" aria-expanded=${sliceOpen} onClick=${() => { setSliceOpen(!sliceOpen); setFilterOpen(false); }}>
+          ${(() => { const [, label, Icon] = SLICES.find(([id]) => id === slice); return html`<${Icon} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span className="m-slice-label">${label}</span>`; })()}
+          ${pending && slice !== 'sme' && html`<span className="dot amber" aria-label="has a pending change" />`}
+          <${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" />
+        </button>
+        ${sliceOpen && html`<div className="menu" role="menu" aria-label="Slices">
+          ${SLICES.map(([id, label, Icon]) => html`<button key=${id} role="menuitemradio" aria-checked=${slice === id} className=${cx('menu-item row', slice === id && 'on')} onClick=${() => { setSlice(id); setSliceOpen(false); }}>
+            <strong><${Icon} size=${14} strokeWidth=${1.5} aria-hidden="true" />${label}<span className="grow" />${pending && id !== 'sme' && html`<span className="dot amber" aria-label="has a pending change" />`}</strong>
+          </button>`)}
+        </div>`}
+      </div>` : html`<nav className="slices" aria-label="Slices">
         ${SLICES.map(([id, label, Icon]) => html`<button key=${id} className=${cx('slice', slice === id && 'active')} aria-current=${slice === id ? 'true' : undefined} onClick=${() => setSlice(id)}>
           <${Icon} size=${14} strokeWidth=${1.5} aria-hidden="true" />${label}${pending && id !== 'sme' && html`<span className="dot amber" aria-label="has a pending change" />`}
         </button>`)}
-      </nav>
+      </nav>`}
       <span className="grow" />
       <div className="export-wrap">
-        <button className="rl-filter btn-soft" aria-haspopup="menu" aria-expanded=${filterOpen} onClick=${() => setFilterOpen(!filterOpen)}>
+        <button className="rl-filter btn-soft" aria-haspopup="menu" aria-expanded=${filterOpen} onClick=${() => { setFilterOpen(!filterOpen); setSliceOpen(false); }}>
           ${filterLabel} <span className="muted">${count(filter)}</span><${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" />
         </button>
         ${filterOpen && html`<div className="menu" role="menu">
