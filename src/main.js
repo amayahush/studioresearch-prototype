@@ -34,7 +34,7 @@ function App() {
   const Screen = screens[state.role];
 
   return html`<${StoreContext.Provider} value=${{ state, dispatch }}>
-    <div className="app">
+    <div className="app" data-theme=${state.theme === 'light' ? 'light' : 'dark'}>
       <${TesterBar} />
       <main className="stage">
         ${Screen ? html`<${Screen} key=${`${state.role}:${state.run || 0}:${state.tourRun || 0}`} />` : html`<${RolePicker} />`}

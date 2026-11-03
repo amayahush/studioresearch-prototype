@@ -5,7 +5,7 @@ import { TimeSkip, EndCard } from './Interstitials.js';
 import {
   FileText, FileCode, Code as Code2, GitBranch, X, PanelLeft, GitPullRequestArrow, CheckCircle2, MessageSquare, Paperclip,
   AlertTriangle, Plus, Check, Clock, Layers, FolderClosed, House, Box, BookOpen, AtSign, Ellipsis, Bell, Search,
-  SquarePen, Mic, ArrowUp, Copy, Link2, Scan,
+  SquarePen, Mic, ArrowUp, Copy, Link2, Scan, MoreHorizontal, Bookmark,
 } from 'lucide-react';
 
 const PANEL_FOR_STAGE = {
@@ -181,7 +181,7 @@ export function Codex() {
       </main>
 
       ${panel &&
-      html`<aside className="side-panel rl" aria-label="Astra">
+      html`<aside className="side-panel rl astra-embed" data-theme=${state.theme === 'light' ? 'light' : 'dark'} aria-label="Astra">
         <${CodexPanel} panel=${panel} setPanel=${setPanel} setToast=${setToast} openFile=${() => setFile('spec')} onSentClose=${afterSent} onResend=${resend} onFinish=${finish} />
       </aside>`}
     </div>
@@ -206,7 +206,7 @@ function Notice({ isNew, handled, children, onView, tour }) {
   return html`<div className=${cx('cx-notice', isNew && !handled && 'new', handled && 'handled')} data-tour=${tour}>
     <${Layers} size=${14} strokeWidth=${1.5} aria-hidden="true" />
     <span className="cx-notice-text"><strong>Astra</strong> <span>${children}</span></span>
-    ${handled ? html`<span className="cx-notice-done">Handled</span>` : html`<button className="cx-notice-open" onClick=${onView}>Open in panel</button>`}
+    ${handled ? html`<span className="cx-notice-done">Handled</span>` : html`<button className="cx-notice-open" onClick=${onView}>Open</button>`}
   </div>`;
 }
 
@@ -444,6 +444,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
   const [people, setPeople] = useState(false);
   const [peopleQuery, setPeopleQuery] = useState('');
   const [linkedPeople, setLinkedPeople] = useState(['priya', 'kim', 'jordan']);
+  const [more, setMore] = useState(false);
   const peopleMatches = Object.entries(PEOPLE).filter(([, person]) => person.name.toLowerCase().includes(peopleQuery.toLowerCase()));
 
   if (panel === 'check') {
@@ -459,17 +460,17 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
           ['PRD says', html`Every <b>15</b> minutes`, 'R4, v1'],
           ['API does', html`Every <b>60</b> minutes`, 'PT1H', true],
         ]}>Polling every 15 minutes returns the same data 3 out of 4 times.<//>
-        <div className="rl-divider" />
-        <div data-tour="check-status"><div className="rl-label-row"><span className="rl-label">Status of R4</span><${StatusChip} status="assumed" /></div>
-        <p className="rl-text">Set at kickoff on Oct 1. Approved in v1 without anyone checking it against the timekeeping API.</p></div>
-        <div className="rl-divider" />
+        <section className="rl-card" data-tour="check-status"><div className="rl-label-row"><span className="rl-label">Status of R4</span><${StatusChip} status="assumed" /></div>
+        <p className="rl-text">Set at kickoff on Oct 1. Approved in v1 without anyone checking it against the timekeeping API.</p></section>
+        <section className="rl-card">
         <div className="rl-label">Why R4 exists</div>
         <div className="why-card">
           <p className="why-quote">“${R4_INTENT.quote}”</p>
           <div className="muted">${R4_INTENT.speaker} · ${R4_INTENT.source}</div>
           <div className="why-goal">Intent: ${R4_INTENT.goal}</div>
         </div>
-        <div className="rl-divider" />
+        </section>
+        <section className="rl-card">
         <div className="rl-label-row"><span className="rl-label">Linked to R4</span>
           <span className="rl-avatars" title=${linkedPeople.map((id) => PEOPLE[id].name).join(', ')}>
             ${linkedPeople.map((id) => html`<${Avatar} key=${id} id=${id} size=${22} />`)}
@@ -499,18 +500,25 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
           </div>`}
           <div className="chips"><span className="chip static">Jira LAB-15</span><span className="chip static">Figma · Overview</span><span className="chip static">Success metric</span></div>
         </div>
-        <div className="rl-divider" />
+        </section>
+        <section className="rl-card">
         <div className="rl-label">Evidence · where this comes from</div>
         <div className="chips"><${EvidenceChip} id="api" /><${EvidenceChip} id="spec" /></div>
         <div className="rl-hint"><${Scan} size=${15} strokeWidth=${1.5} aria-hidden="true" />Select code or text to add more evidence</div>
+        </section>
       </div>
       <div className="rl-foot">
         <p className="rl-disclaimer">AI can make mistakes. Check the evidence.</p>
         <div className="rl-actions">
-          <button className="pill pill-text" onClick=${close}>Save for later</button>
+          <div className="export-wrap rl-more">
+            <button className="btn btn-soft" onClick=${() => { close(); setToast('Note dismissed. R4 stays as written; reopen it from the Astra pill.'); }}>Deny</button>
+            <button className="icon-btn btn-square" aria-haspopup="menu" aria-expanded=${more} aria-label="More actions" title="More actions" onClick=${() => setMore(!more)}><${MoreHorizontal} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
+            ${more && html`<div className="menu up" role="menu">
+              <button role="menuitem" className="menu-item" onClick=${close}><strong><${Bookmark} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Save for later</strong><span className="muted tiny">Closes the note. Reopen it from the Astra pill.</span></button>
+            </div>`}
+          </div>
           <span className="grow" />
-          <button className="pill pill-outline" onClick=${() => { close(); setToast('Note dismissed. R4 stays as written; reopen it from the Astra pill.'); }}>Deny</button>
-          <button className="pill pill-primary" onClick=${() => setPanel('propose')}>Propose change</button>
+          <button className="btn btn-primary" onClick=${() => setPanel('propose')}>Propose change</button>
         </div>
       </div>
     </div>`;

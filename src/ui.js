@@ -14,7 +14,7 @@ export function Tag({ tone = 'neutral', children, className }) {
 
 // Assumption status (decision record spec §2). Verified shows nothing unless it changed in this version.
 const STATUS_CHIP = {
-  assumed: ['amber', () => 'Assumed'],
+  assumed: ['outline', () => 'Assumed'],
   conflicting: ['danger', (n) => `Conflicting · ${n || 2} sources`],
   contradicted: ['danger', () => 'Contradicted by build'],
 };

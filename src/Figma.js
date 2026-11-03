@@ -320,7 +320,7 @@ function AstraPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {
     <//>`;
   }
 
-  return html`<div className="plugin">
+  return html`<div className="plugin astra-embed" data-theme=${state.theme === 'light' ? 'light' : 'dark'}>
     <div className="plg-head"><${Layers} size=${16} strokeWidth=${1.5} aria-hidden="true" /><span className="plg-name">Astra</span><span className="muted small">plugin</span><span className="grow" /><button className="icon-btn sm" aria-label="Minimize plugin" onClick=${onClose}><${Minus} size=${14} strokeWidth=${1.5} /></button><button className="icon-btn sm" aria-label="Close plugin" onClick=${onClose}><${X} size=${14} strokeWidth=${1.5} /></button></div>
     ${body}
   </div>`;

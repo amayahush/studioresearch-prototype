@@ -7,7 +7,8 @@ import { RecorderMap } from './RecorderMap.js';
 import { dashboardLabel } from './Figma.js';
 import {
   ChevronDown, Search, Inbox, CircleUser, FileText, Settings, HelpCircle, X, History, Check, Clock, PanelLeft,
-  Box, GitBranch, Frame, MessageSquare, Folder, Code, Upload,
+  Box, GitBranch, Frame, MessageSquare, Folder, Code, Upload, Sun, Moon, MoreHorizontal, MessageSquareText,
+  Code2, PanelsTopLeft, ShieldCheck, BarChart3,
 } from 'lucide-react';
 
 export const TOOLS = [['Jira', '2m', Box], ['GitLab', '5m', GitBranch], ['Figma', '1m', Frame], ['Teams', 'live', MessageSquare], ['SharePoint', '10m', Folder], ['Codex', 'live', Code]];
@@ -148,7 +149,8 @@ export function Astra() {
 
   const notSimulated = (what) => () => setToast(`${what} is not simulated in this prototype.`);
 
-  return html`<div className="astra">
+  return html`<div className="astra" data-theme=${state.theme === 'light' ? 'light' : 'dark'}>
+    <div className="astra-row">
     <nav className=${cx('rl-side', !navOpen && 'collapsed')} aria-label="Workspace">
       ${navOpen
         ? html`<${Fragment}>
@@ -168,11 +170,9 @@ export function Astra() {
             <button className="rl-nav active" aria-current="page" onClick=${openProject}><${FileText} ...${ICON} /><span className="rl-nav-label">Line Labor Dashboard</span></button>
             <button className="rl-nav" onClick=${notSimulated('Other projects')}><${FileText} ...${ICON} /><span className="rl-nav-label">Compliance Tracker</span></button>
             <button className="rl-nav" onClick=${notSimulated('Other projects')}><${FileText} ...${ICON} /><span className="rl-nav-label">Shift Handoff</span></button>
-            <div className="rl-group">Connected tools</div>
-            ${TOOLS.map(([t, ago, Icon]) => html`<div key=${t} className="rl-nav static"><${Icon} ...${ICON} /><span className="rl-nav-label">${t}</span><span className="rl-meta mono">${ago}</span></div>`)}
             <span className="grow" />
             <button className="rl-nav" onClick=${notSimulated('Settings')}><${Settings} ...${ICON} /><span className="rl-nav-label">Settings</span></button>
-            <button className="rl-nav" onClick=${notSimulated('Help')}><${HelpCircle} ...${ICON} /><span className="rl-nav-label">Help</span></button>
+            <div className="rl-user"><${Avatar} id="dana" size=${22} /><span className="rl-nav-label">Dana Ortiz</span></div>
           <//>`
         : html`<div className="rl-rail">
             <button className="rail-btn" onClick=${() => setNavOpen(true)} aria-label="Expand sidebar" aria-expanded="false" data-tip="Expand sidebar">
@@ -192,13 +192,19 @@ export function Astra() {
 
     <section className="rl-main">
       <header className="rl-top">
-        <span className="rl-top-title">Line Labor Dashboard</span>
-        <${Tag} tone=${pending ? 'amber' : state.stage === 'approved' ? 'green' : 'neutral'}>${prdVersion(state)}${pending ? ' · 1 pending' : ''}<//>
-        <span className="tag tag-outline" title="Requirements nobody has confirmed yet">${unverified(getReqs(state))} unverified</span>
+        <nav className="rl-crumbs" aria-label="Breadcrumb">
+          <button className="rl-crumb" onClick=${openProject}>Projects</button>
+          <span className="rl-crumb-sep" aria-hidden="true">/</span>
+          <span className="rl-top-title">Line Labor Dashboard</span>
+          <span className="rl-ver mono">${prdVersion(state)}${state.stage === 'approved' ? ' · Oct 8' : state.stage === 'unpublished' ? '' : ' · Oct 1'}</span>
+          ${pending ? html`<${Tag} tone="amber">1 pending<//>` : state.stage === 'approved' ? html`<${Tag} tone="green">Published<//>` : null}
+          <span className="tag tag-outline" title="Requirements nobody has confirmed yet">${unverified(getReqs(state))} unverified</span>
+        </nav>
         <span className="grow" />
         <div className="seg" role="group" aria-label="View">
           ${VIEWS.map(([id, label]) => html`<button key=${id} className=${cx('seg-btn', view === id && 'active')} aria-pressed=${view === id} onClick=${() => dispatch({ type: 'SET_VIEW', view: id })}>${label}</button>`)}
         </div>
+        <span className="rl-top-sep" aria-hidden="true" />
         <div className="export-wrap">
           <button className="icon-btn rl-export" onClick=${() => setExportOpen(!exportOpen)} aria-label="Export" aria-haspopup="menu" aria-expanded=${exportOpen} title="Export"><${Upload} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
           ${exportOpen && html`<div className="menu" role="menu">
@@ -207,11 +213,13 @@ export function Astra() {
             )}
           </div>`}
         </div>
-        <button className="btn" onClick=${() => setToast('Sharing is not simulated in this prototype.')}>Share</button>
-        <span className="rl-me"><${Avatar} id="dana" size=${28} /></span>
+        <button className="btn btn-soft sm" onClick=${() => setToast('Sharing is not simulated in this prototype.')}>Share</button>
+        <button className="icon-btn btn-square" onClick=${notSimulated('More options')} aria-label="More options" title="More options"><${MoreHorizontal} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
       </header>
       <${Body} selected=${selected} setSelected=${setSelected} toast=${setToast} story=${story} />
     </section>
+    </div>
+    <${StatusBar} onRecorder=${() => dispatch({ type: 'SET_VIEW', view: 'map' })} onToast=${setToast} />
     ${skip && html`<${TimeSkip} ...${skip} onDone=${() => { skip.onDone(); setSkip(null); }} />`}
     ${endCard && html`<${EndCard}
       role="Product manager"
@@ -226,7 +234,25 @@ export function Astra() {
   </div>`;
 }
 
-const SLICES = [['main', 'Main PRD'], ['dev', 'Developer'], ['design', 'Design'], ['sme', 'SME'], ['business', 'Business']];
+const SLICES = [['main', 'Main PRD', FileText], ['dev', 'Developer', Code2], ['design', 'Design', PanelsTopLeft], ['sme', 'SME', ShieldCheck], ['business', 'Business', BarChart3]];
+
+// Bottom bar: the recorder is always on (click to open the replay on the Map), tool sync, theme, help and feedback.
+function StatusBar({ onRecorder, onToast }) {
+  const { state, dispatch } = useStore();
+  const light = state.theme === 'light';
+  const since = state.stage === 'unpublished' ? 'draft, not published yet' : state.stage === 'approved' ? 'v1.1 published Oct 8' : 'since v1 · Oct 1';
+  return html`<footer className="rl-statusbar">
+    <button className="rl-sb rl-rec" onClick=${onRecorder} title="Open the replay on the Map"><span className="rl-rec-dot" aria-hidden="true" />Recording<span className="mono rl-sb-meta">· ${since}</span></button>
+    <span className="rl-sb-sep" aria-hidden="true" />
+    ${TOOLS.map(([t, ago]) => html`<span key=${t} className="rl-sb" title=${`${t} synced ${ago === 'live' ? 'live' : ago + ' ago'}`}><span className="rl-sync" aria-hidden="true" />${t} ${ago}</span>`)}
+    <span className="grow" />
+    <button className="rl-sb" onClick=${() => dispatch({ type: 'SET_THEME', theme: light ? 'dark' : 'light' })} aria-label=${light ? 'Switch to dark mode' : 'Switch to light mode'} title=${light ? 'Dark mode' : 'Light mode'}>
+      ${light ? html`<${Moon} size=${13} strokeWidth=${1.5} aria-hidden="true" />` : html`<${Sun} size=${13} strokeWidth=${1.5} aria-hidden="true" />`}
+    </button>
+    <button className="rl-sb" onClick=${() => onToast('Help is not simulated in this prototype.')} aria-label="Help" title="Help"><${HelpCircle} size=${13} strokeWidth=${1.5} aria-hidden="true" /></button>
+    <button className="rl-sb" onClick=${() => onToast('Sending feedback is not simulated in this prototype.')}><${MessageSquareText} size=${13} strokeWidth=${1.5} aria-hidden="true" />Feedback</button>
+  </footer>`;
+}
 
 const FILTERS = [['all', 'All requirements'], ['approved', 'Approved'], ['pending', 'Pending'], ['draft', 'Draft']];
 
@@ -256,13 +282,13 @@ function DocView({ selected, setSelected, story }) {
   return html`<div className="rl-doc-wrap">
     <div className="rl-subbar">
       <nav className="slices" aria-label="Slices">
-        ${SLICES.map(([id, label]) => html`<button key=${id} className=${cx('slice', slice === id && 'active')} aria-current=${slice === id ? 'true' : undefined} onClick=${() => setSlice(id)}>
-          ${label}${pending && id !== 'sme' && html`<span className="dot amber" aria-label="has a pending change" />`}
+        ${SLICES.map(([id, label, Icon]) => html`<button key=${id} className=${cx('slice', slice === id && 'active')} aria-current=${slice === id ? 'true' : undefined} onClick=${() => setSlice(id)}>
+          <${Icon} size=${14} strokeWidth=${1.5} aria-hidden="true" />${label}${pending && id !== 'sme' && html`<span className="dot amber" aria-label="has a pending change" />`}
         </button>`)}
       </nav>
       <span className="grow" />
       <div className="export-wrap">
-        <button className="rl-filter" aria-haspopup="menu" aria-expanded=${filterOpen} onClick=${() => setFilterOpen(!filterOpen)}>
+        <button className="rl-filter btn-soft" aria-haspopup="menu" aria-expanded=${filterOpen} onClick=${() => setFilterOpen(!filterOpen)}>
           ${filterLabel} <span className="muted">${count(filter)}</span><${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" />
         </button>
         ${filterOpen && html`<div className="menu" role="menu">
@@ -276,7 +302,7 @@ function DocView({ selected, setSelected, story }) {
     <div className="rl-split">
       <div className="rl-doc" onClick=${(e) => e.target === e.currentTarget && setSelected(null)}>
         <div className="rl-doc-inner">
-          <button className="doc-title" aria-pressed=${!selected || selected === 'overview'} onClick=${() => setSelected('overview')}>
+          <button className="doc-title" aria-pressed=${selected === 'overview'} onClick=${() => setSelected(selected === 'overview' ? null : 'overview')}>
             <h1>Line Labor Dashboard</h1>
             <div className="doc-meta">Owner Dana Ortiz (PM) · ${prdVersion(state)} · ${state.stage === 'approved' ? `published Oct 8, ${TIMES.approved}` : state.stage === 'unpublished' ? 'not published yet' : 'published Oct 1'} · Sources: kickoff call, lead notes, labor spreadsheet</div>
           </button>
@@ -315,7 +341,7 @@ function DocView({ selected, setSelected, story }) {
         </div>
       </div>
 
-      <aside className="rl-panel" aria-label="Details">
+      ${(selected || state.stage === 'unpublished') && html`<aside className="rl-panel" aria-label="Details">
         <${DetailPanel}
           selected=${selected}
           setSelected=${setSelected}
@@ -324,7 +350,7 @@ function DocView({ selected, setSelected, story }) {
           openMap=${openMap}
           setOpen=${(key, open) => setOpenMap((m) => ({ ...m, [key]: open }))}
         />
-      </aside>
+      </aside>`}
     </div>
   </div>`;
 }
@@ -388,7 +414,6 @@ function DetailPanel({ selected, setSelected, reqs, openMap, setOpen, story }) {
     const statusParts = [pending && '1 pending', r5Draft && '1 draft'].filter(Boolean);
     return html`<${Inspector}
       ...${shell}
-      onClose=${null}
       tag=${html`<${Tag}>PRD<//>`}
       title="Line Labor Dashboard"
       from=${`Owner Dana Ortiz (PM) · ${prdVersion(state)} · ${state.stage === 'approved' ? 'published Oct 8' : 'published Oct 1'}`}
@@ -656,14 +681,14 @@ function R4Panel({ onClose, openMap, setOpen, story }) {
       <button className=${cx('link small', reason && 'hidden')} onClick=${() => setReason(TEXT.approvalReason)}>Use suggested reason</button>
     </div>`}
     foot=${html`
-      <span className="grow" />
-      <div className="export-wrap">
-        <button className="btn deny-btn" aria-haspopup="menu" aria-expanded=${menu} onClick=${() => setMenu(!menu)}>Deny <${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" /></button>
+      <div className="export-wrap deny-btn">
+        <button className="btn btn-soft" onClick=${() => { setMenu(false); setMode('confirmDeny'); }}>Deny</button>
+        <button className="icon-btn btn-square" aria-haspopup="menu" aria-expanded=${menu} aria-label="More review actions" title="More review actions" onClick=${() => setMenu(!menu)}><${MoreHorizontal} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
         ${menu && html`<div className="menu up" role="menu">
           <button role="menuitem" className="menu-item" disabled=${waiting} onClick=${() => { setMenu(false); setMode('request'); }}><strong><${History} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Request more evidence</strong><span className="muted tiny">Keeps R4 pending and asks Marcus for more.</span></button>
-          <button role="menuitem" className="menu-item" onClick=${() => { setMenu(false); setMode('confirmDeny'); }}><strong><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Deny</strong><span className="muted tiny">Closes the proposal. R4 stays as written.</span></button>
         </div>`}
       </div>
+      <span className="grow" />
       <button className="btn btn-primary" disabled=${!reason.trim()} title=${reason.trim() ? undefined : 'Add a reason first'} onClick=${() => { dispatch({ type: 'APPROVE', updates, reason: reason.trim() }); story.approved(); }}>${resent ? 'Approve and publish v1.1' : 'Approve & publish'}</button>`}
   />`;
 }

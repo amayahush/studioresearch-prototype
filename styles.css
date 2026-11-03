@@ -1440,3 +1440,412 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .tour-arrow.primary:hover:not(:disabled) { background: #fff; }
 .tour-arrow:focus-visible, .tour-exit:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
 .tour-wait { position: fixed; z-index: 310; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 999px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line-2), 0 12px 30px rgba(0, 0, 0, 0.5); color: var(--text-2); font: 13px/20px var(--sans); white-space: nowrap; max-width: calc(100vw - 24px); }
+
+/* ==========================================================================
+   Astra design system v2 (design-system-v2 branch)
+   Scoped to the Astra web app (.astra). The Codex and Figma shells, and the Astra
+   panels inside them, sit outside .astra[data-theme] and keep their own look.
+   Panels are separated by surface tone, not borders. Secondary buttons are soft gray
+   fills, one blue primary per view, slices are connected document tabs.
+   ========================================================================== */
+.astra[data-theme="dark"], .astra-embed[data-theme="dark"] {
+  --a-chrome: #131414; --a-doc: #1E1F1F; --a-panel: #171818; --a-status: #0F1010;
+  --a-fill: #2A2C2C; --a-fill-hover: #333535; --a-seg: #1E2020; --a-segon: #2D2F2F; --a-segshadow: none;
+  --a-navon: #232525; --a-card: #222424; --a-cardline: #2E3030; --a-inset: #2A2C2C; --a-chip: #262828; --a-epic: #262828;
+  --a-dot: #2A2C2C; --a-wire: #4A4D4F; --a-accent: #2563EB; --a-accent-hover: #1D4ED8; --a-accent-text: #8EB0FF;
+  --a-rec: #F08473; --a-rec-glow: rgba(240, 132, 115, 0.18); --a-amber-line: #E8AA4E; --a-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+  --bg: #1E1F1F; --bg-1: #242626; --bg-2: #2A2C2C; --bg-3: #313333; --line: #2A2C2C; --line-2: #3A3C3C;
+  --text: #E6E8EC; --text-2: #9BA2AD; --muted: #878E99;
+  --amber: #E8AA4E; --amber-soft: #372D1E; --green: #5DC79A; --green-soft: #1C2F27; --red: #F08473; --blue: #8EA6FF;
+  --r-app: #1E1F1F; --r-sidebar: #131414; --r-panel: #171818; --r-card: #222424; --r-row: #2D2F2F; --r-line: #2E3030; --r-line-strong: #3A3C3C;
+  --r-text: #E6E8EC; --r-muted: #9BA2AD; --r-label: #878E99; --r-blue: #8EA6FF; --r-blue-bg: #1E2537; --r-amber: #E8AA4E; --r-amber-bg: #372D1E;
+  --r-green: #5DC79A; --r-green-bg: #1C2F27; --r-red: #F08473;
+  color-scheme: dark;
+}
+.astra[data-theme="light"], .astra-embed[data-theme="light"] {
+  --a-chrome: #F7F7F8; --a-doc: #FFFFFF; --a-panel: #FAFAFB; --a-status: #F1F2F3;
+  --a-fill: #ECEDEF; --a-fill-hover: #E1E3E6; --a-seg: #EBECEE; --a-segon: #FFFFFF; --a-segshadow: 0 1px 2px rgba(16, 24, 40, 0.1);
+  --a-navon: #E8E9EC; --a-card: #FFFFFF; --a-cardline: #E1E3E7; --a-inset: #F4F5F7; --a-chip: #EFF0F2; --a-epic: #F2F3F5;
+  --a-dot: #E1E3E6; --a-wire: #B9BEC5; --a-accent: #2563EB; --a-accent-hover: #1D4ED8; --a-accent-text: #1F5FD1;
+  --a-rec: #BF3B27; --a-rec-glow: rgba(191, 59, 39, 0.14); --a-amber-line: #E0A040; --a-shadow: 0 14px 34px rgba(16, 24, 40, 0.14);
+  --bg: #FFFFFF; --bg-1: #F7F7F8; --bg-2: #F2F3F5; --bg-3: #E9EAED; --line: #E6E8EB; --line-2: #D9DCE0;
+  --text: #16181D; --text-2: #5B626C; --muted: #636A74;
+  --amber: #9A5800; --amber-soft: #FDF0DC; --green: #1B7550; --green-soft: #E2F3EA; --red: #BF3B27; --blue: #3451C7;
+  --r-app: #FFFFFF; --r-sidebar: #F7F7F8; --r-panel: #FAFAFB; --r-card: #FFFFFF; --r-row: #E9EAED; --r-line: #E1E3E7; --r-line-strong: #D9DCE0;
+  --r-text: #16181D; --r-muted: #5B626C; --r-label: #636A74; --r-blue: #3451C7; --r-blue-bg: #E8EDFD; --r-amber: #9A5800; --r-amber-bg: #FDF0DC;
+  --r-green: #1B7550; --r-green-bg: #E2F3EA; --r-red: #BF3B27;
+  color-scheme: light;
+}
+
+/* frame */
+.astra[data-theme] { flex-direction: column; background: var(--a-doc); color: var(--text); }
+.astra-row { flex: 1; min-height: 0; display: flex; }
+
+/* sidebar */
+:is(.astra, .astra-embed)[data-theme] .rl-side { background: var(--a-chrome); border-right: 0; box-shadow: inset -1px 0 0 var(--line); padding-bottom: 8px; }
+/* The guide button sits at the right end of the sidebar's user row, so it never covers content. */
+.stage:has(.astra[data-theme]) .guide { left: 190px; bottom: 38px; }
+.stage:has(.astra[data-theme] .rl-side.collapsed) .guide { left: 12px; }
+.stage:has(.astra[data-theme]) .guide-btn { width: 32px; height: 32px; box-shadow: inset 0 0 0 1px var(--line-2); }
+.stage:has(.astra[data-theme]) .guide-btn svg { width: 16px; height: 16px; }
+.stage:has(.astra[data-theme]) .guide-dot { width: 8px; height: 8px; top: 0; right: 0; }
+:is(.astra, .astra-embed)[data-theme] .rl-org-row { height: 48px; margin-bottom: 4px; border-bottom: 0; }
+:is(.astra, .astra-embed)[data-theme] .rl-search { height: 30px; border-radius: 6px; box-shadow: none; background: var(--a-seg); color: var(--muted); font-size: 12px; }
+:is(.astra, .astra-embed)[data-theme] .rl-nav { height: 30px; border-radius: 6px; color: var(--text-2); }
+:is(.astra, .astra-embed)[data-theme] button.rl-nav:hover { background: var(--a-fill); color: var(--text); }
+:is(.astra, .astra-embed)[data-theme] .rl-nav.active { background: var(--a-navon); color: var(--text); font-weight: 500; }
+:is(.astra, .astra-embed)[data-theme] .rl-group { padding: 18px 8px 6px; font-size: 12px; letter-spacing: 0; text-transform: none; color: var(--muted); }
+:is(.astra, .astra-embed)[data-theme] .rl-user { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 8px; font-size: 12px; color: var(--text-2); }
+:is(.astra, .astra-embed)[data-theme] .rail-btn.active { background: var(--a-navon); }
+:is(.astra, .astra-embed)[data-theme] .rail-badge { box-shadow: 0 0 0 2px var(--a-chrome); }
+:is(.astra, .astra-embed)[data-theme] .rail-btn[data-tip]:hover::after, :is(.astra, .astra-embed)[data-theme] .rail-btn[data-tip]:focus-visible::after { color: var(--bg); }
+:is(.astra, .astra-embed)[data-theme] .rl-nav-toggle:hover, :is(.astra, .astra-embed)[data-theme] .rail-btn:hover { background: var(--a-fill); }
+
+/* header: breadcrumb, view switch, actions */
+:is(.astra, .astra-embed)[data-theme] .rl-top { flex: 0 0 48px; gap: 10px; padding: 0 12px 0 20px; border-bottom: 0; background: var(--a-chrome); }
+:is(.astra, .astra-embed)[data-theme] .rl-crumbs { display: flex; align-items: center; gap: 8px; min-width: 0; }
+:is(.astra, .astra-embed)[data-theme] .rl-crumb { color: var(--muted); }
+:is(.astra, .astra-embed)[data-theme] .rl-crumb:hover { color: var(--text); }
+:is(.astra, .astra-embed)[data-theme] .rl-crumb-sep { color: var(--line-2); }
+:is(.astra, .astra-embed)[data-theme] .rl-top-title { font-size: 13px; line-height: 20px; }
+:is(.astra, .astra-embed)[data-theme] .rl-ver { font-size: 11px; color: var(--muted); }
+:is(.astra, .astra-embed)[data-theme] .rl-top-sep { width: 1px; height: 18px; background: var(--line-2); flex: none; }
+:is(.astra, .astra-embed)[data-theme] .rl-export { width: 30px; height: 30px; border-radius: 6px; }
+:is(.astra, .astra-embed)[data-theme] .seg { gap: 2px; padding: 2px; border-radius: 7px; background: var(--a-seg); box-shadow: none; }
+:is(.astra, .astra-embed)[data-theme] .seg-btn { height: 26px; padding: 0 12px; border-radius: 5px; font-size: 12px; font-weight: 500; color: var(--text-2); }
+:is(.astra, .astra-embed)[data-theme] .seg-btn.active { background: var(--a-segon); color: var(--text); box-shadow: var(--a-segshadow); }
+:is(.astra, .astra-embed)[data-theme] .seg.sm .seg-btn { height: 24px; padding: 0 9px; }
+
+/* buttons: soft gray secondary, square overflow, one blue primary */
+:is(.astra, .astra-embed)[data-theme] .btn { height: 32px; padding: 0 14px; border-radius: 6px; box-shadow: none; background: var(--a-fill); color: var(--text); }
+:is(.astra, .astra-embed)[data-theme] .btn:hover:not(:disabled) { background: var(--a-fill-hover); }
+:is(.astra, .astra-embed)[data-theme] .btn.sm { height: 30px; padding: 0 12px; }
+:is(.astra, .astra-embed)[data-theme] .btn-primary { background: var(--a-accent); color: #FFFFFF; }
+:is(.astra, .astra-embed)[data-theme] .btn-primary:hover:not(:disabled) { background: var(--a-accent-hover); }
+:is(.astra, .astra-embed)[data-theme] .btn-ghost { background: transparent; }
+:is(.astra, .astra-embed)[data-theme] .btn-ghost:hover:not(:disabled) { background: var(--a-fill); }
+:is(.astra, .astra-embed)[data-theme] .btn-soft { background: var(--a-fill); box-shadow: none; }
+:is(.astra, .astra-embed)[data-theme] .btn-square { width: 30px; height: 30px; border-radius: 6px; background: var(--a-fill); color: var(--text); }
+:is(.astra, .astra-embed)[data-theme] .btn-square:hover { background: var(--a-fill-hover); }
+:is(.astra, .astra-embed)[data-theme] .sp-foot .btn-square { width: 32px; height: 32px; }
+:is(.astra, .astra-embed)[data-theme] .icon-btn { border-radius: 6px; }
+:is(.astra, .astra-embed)[data-theme] .icon-btn:hover { background: var(--a-fill); }
+:is(.astra, .astra-embed)[data-theme] .btn:focus-visible, :is(.astra, .astra-embed)[data-theme] .icon-btn:focus-visible, :is(.astra, .astra-embed)[data-theme] .seg-btn:focus-visible, :is(.astra, .astra-embed)[data-theme] .slice:focus-visible, :is(.astra, .astra-embed)[data-theme] .rl-filter:focus-visible { outline: 2px solid var(--a-accent); outline-offset: 1px; }
+
+/* slices: connected document tabs; the active tab takes the page color and joins the doc below */
+:is(.astra, .astra-embed)[data-theme] .rl-subbar { flex: 0 0 40px; gap: 0; padding: 0 12px 0 0; border-bottom: 0; background: var(--a-chrome); box-shadow: inset 0 -1px 0 var(--line); align-items: stretch; }
+:is(.astra, .astra-embed)[data-theme] .slices { gap: 0; align-items: stretch; }
+:is(.astra, .astra-embed)[data-theme] .slice { gap: 8px; padding: 0 16px; color: var(--text-2); box-shadow: inset -1px 0 0 var(--line); }
+:is(.astra, .astra-embed)[data-theme] .slice:hover { color: var(--text); }
+:is(.astra, .astra-embed)[data-theme] .slice.active { background: var(--a-doc); color: var(--a-accent-text); font-weight: 500; box-shadow: inset 1px 0 0 var(--line), inset -1px 0 0 var(--line); }
+:is(.astra, .astra-embed)[data-theme] .slice .dot { background: var(--a-amber-line); }
+:is(.astra, .astra-embed)[data-theme] .rl-subbar > .export-wrap { align-self: center; }
+:is(.astra, .astra-embed)[data-theme] .rl-filter { height: 28px; padding: 0 10px; border-radius: 6px; box-shadow: none; background: var(--a-fill); font-weight: 500; }
+:is(.astra, .astra-embed)[data-theme] .rl-filter:hover { background: var(--a-fill-hover); }
+
+/* document */
+:is(.astra, .astra-embed)[data-theme] .rl-doc { background: var(--a-doc); padding: 28px 40px 48px; }
+:is(.astra, .astra-embed)[data-theme] .doc-title:hover, :is(.astra, .astra-embed)[data-theme] .doc-sec:hover, :is(.astra, .astra-embed)[data-theme] .req:hover { background: var(--bg-1); }
+:is(.astra, .astra-embed)[data-theme] .doc-sec.selected { background: var(--bg-3); }
+:is(.astra, .astra-embed)[data-theme] .epic-head { border-radius: 6px; background: var(--a-epic); }
+:is(.astra, .astra-embed)[data-theme] .epic-head:hover { background: var(--bg-3); }
+:is(.astra, .astra-embed)[data-theme] .req.selected { background: var(--bg-1); box-shadow: inset 0 0 0 1px var(--line-2); }
+:is(.astra, .astra-embed)[data-theme] .req.selected.pending { box-shadow: inset 0 0 0 1px var(--a-amber-line); }
+:is(.astra, .astra-embed)[data-theme] .doc-chip, :is(.astra, .astra-embed)[data-theme] .chip.static { box-shadow: none; background: var(--a-chip); border-radius: 5px; }
+:is(.astra, .astra-embed)[data-theme] .tag { border-radius: 5px; }
+:is(.astra, .astra-embed)[data-theme] .tag, :is(.astra, .astra-embed)[data-theme] .tag-red, :is(.astra, .astra-embed)[data-theme] .tag-neutral, :is(.astra, .astra-embed)[data-theme] .tag-gray, :is(.astra, .astra-embed)[data-theme] .tag-purple { background: var(--a-chip); }
+:is(.astra, .astra-embed)[data-theme] .tag-amber { background: var(--amber-soft); color: var(--amber); }
+:is(.astra, .astra-embed)[data-theme] .tag-green { background: var(--green-soft); color: var(--green); }
+:is(.astra, .astra-embed)[data-theme] .tag-blue, :is(.astra, .astra-embed)[data-theme] .chip-blue { background: var(--r-blue-bg); color: var(--blue); }
+:is(.astra, .astra-embed)[data-theme] .tag-outline { background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); }
+:is(.astra, .astra-embed)[data-theme] .chip-amber { box-shadow: inset 0 0 0 1px var(--a-amber-line); }
+:is(.astra, .astra-embed)[data-theme] .doc-info { box-shadow: none; background: var(--a-inset); }
+
+/* inspector: a mid-tone panel holding cards */
+:is(.astra, .astra-embed)[data-theme] .rl-panel { border-left: 0; background: var(--a-panel); box-shadow: inset 1px 0 0 var(--line); }
+:is(.astra, .astra-embed)[data-theme] .insp-head { flex-basis: 44px; border-bottom: 0; }
+:is(.astra, .astra-embed)[data-theme] .insp-body { padding: 4px 12px 16px; }
+:is(.astra, .astra-embed)[data-theme] .insp-body > .csec, :is(.astra, .astra-embed)[data-theme] .insp-body > .insp-from + .csec, :is(.astra, .astra-embed)[data-theme] .insp-body > .csec:first-child { margin-top: 8px; padding: 0 12px; border-top: 0; border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+:is(.astra, .astra-embed)[data-theme] .csec-head { min-height: 40px; }
+:is(.astra, .astra-embed)[data-theme] .csec-body { padding: 0 0 12px 21px; }
+:is(.astra, .astra-embed)[data-theme] .rl-status { border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); padding: 12px; }
+:is(.astra, .astra-embed)[data-theme] .rl-status.pending { box-shadow: inset 0 0 0 1px var(--a-amber-line); }
+:is(.astra, .astra-embed)[data-theme] .cmp { background: var(--a-inset); box-shadow: none; border-radius: 8px; }
+:is(.astra, .astra-embed)[data-theme] .cmp-row + .cmp-row { border-top-color: var(--a-cardline); }
+:is(.astra, .astra-embed)[data-theme] .waiting-card, :is(.astra, .astra-embed)[data-theme] .decision-card, :is(.astra, .astra-embed)[data-theme] .confirm-card, :is(.astra, .astra-embed)[data-theme] .info-row, :is(.astra, .astra-embed)[data-theme] .source-row, :is(.astra, .astra-embed)[data-theme] .ev-card { background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+:is(.astra, .astra-embed)[data-theme] .quote-card, :is(.astra, .astra-embed)[data-theme] .affects-card { background: var(--a-inset); }
+:is(.astra, .astra-embed)[data-theme] .field { background: var(--a-doc); border-radius: 8px; }
+:is(.astra, .astra-embed)[data-theme] .field:focus, :is(.astra, .astra-embed)[data-theme] .field.focus { box-shadow: inset 0 0 0 1px var(--a-accent); }
+:is(.astra, .astra-embed)[data-theme] .sp-foot { gap: 6px; padding: 12px; border-top: 0; box-shadow: inset 0 1px 0 var(--line); }
+:is(.astra, .astra-embed)[data-theme] .sp-foot > .deny-btn { display: inline-flex; gap: 6px; padding: 0; }
+:is(.astra, .astra-embed)[data-theme] .update-row input { accent-color: var(--a-accent); }
+
+/* menus, toasts, popovers */
+:is(.astra, .astra-embed)[data-theme] .menu { background: var(--a-card); border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-2), var(--a-shadow); }
+:is(.astra, .astra-embed)[data-theme] .menu-item { border-radius: 5px; }
+:is(.astra, .astra-embed)[data-theme] .menu-item:hover:not(:disabled), :is(.astra, .astra-embed)[data-theme] .menu-item.on { background: var(--a-fill); }
+:is(.astra, .astra-embed)[data-theme] .sp-foot .menu.up { left: 12px; right: auto; width: 260px; bottom: calc(100% + 6px); }
+:is(.astra, .astra-embed)[data-theme] .toast { background: var(--text); color: var(--bg); }
+:is(.astra, .astra-embed)[data-theme] .ev-pop, :is(.astra, .astra-embed)[data-theme] .map-tip { background: var(--a-card); box-shadow: inset 0 0 0 1px var(--line-2), var(--a-shadow); }
+:is(.astra, .astra-embed)[data-theme] .menu-check.on { color: var(--bg); }
+
+/* status bar: recorder, tool sync, theme, help, feedback */
+:is(.astra, .astra-embed)[data-theme] .rl-statusbar { flex: 0 0 28px; height: 28px; display: flex; align-items: center; gap: 2px; padding: 0 10px; background: var(--a-status); box-shadow: inset 0 1px 0 var(--line); overflow: hidden; position: relative; z-index: 6; }
+:is(.astra, .astra-embed)[data-theme] .rl-sb { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 6px; border-radius: 4px; font-size: 11px; line-height: 16px; color: var(--text-2); white-space: nowrap; }
+:is(.astra, .astra-embed)[data-theme] button.rl-sb:hover { background: var(--a-fill); color: var(--text); }
+:is(.astra, .astra-embed)[data-theme] .rl-rec { color: var(--text); }
+:is(.astra, .astra-embed)[data-theme] .rl-rec-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--a-rec); box-shadow: 0 0 0 3px var(--a-rec-glow); animation: rec-pulse 2.4s ease-in-out infinite; }
+@keyframes rec-pulse { 50% { box-shadow: 0 0 0 1.5px var(--a-rec-glow); } }
+:is(.astra, .astra-embed)[data-theme] .rl-sb-meta { color: var(--muted); }
+:is(.astra, .astra-embed)[data-theme] .rl-sb-sep { width: 1px; height: 14px; margin: 0 4px; background: var(--line-2); }
+:is(.astra, .astra-embed)[data-theme] .rl-sync { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+@media (prefers-reduced-motion: reduce) { .astra[data-theme] .rl-rec-dot { animation: none; } }
+
+/* map (recorder) */
+:is(.astra, .astra-embed)[data-theme] .rec .map-bar { flex: 0 0 40px; height: 40px; margin: 0; padding: 0 12px 0 20px; gap: 8px; background: var(--a-chrome); border-bottom: 0; box-shadow: inset 0 -1px 0 var(--line); }
+:is(.astra, .astra-embed)[data-theme] .rec-stage { background-color: var(--a-doc); background-image: radial-gradient(var(--a-dot) 1px, transparent 1px); background-size: 16px 16px; }
+:is(.astra, .astra-embed)[data-theme] .rec-card { border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline), 0 1px 2px rgba(0, 0, 0, 0.06); }
+:is(.astra, .astra-embed)[data-theme] .rec-card-head { border-bottom-color: var(--a-cardline); }
+:is(.astra, .astra-embed)[data-theme] .rec-row { border-top-color: var(--line); }
+:is(.astra, .astra-embed)[data-theme] .rec-card.touched, :is(.astra, .astra-embed)[data-theme] .rec-row.touched, :is(.astra, .astra-embed)[data-theme] .rec-person.touched { background: var(--bg-1); box-shadow: inset 0 0 0 1px var(--text-2); }
+:is(.astra, .astra-embed)[data-theme] .rec-center { box-shadow: inset 0 0 0 1.5px var(--text-2), 0 0 0 4px var(--bg-3), 0 8px 24px rgba(0, 0, 0, 0.12); }
+:is(.astra, .astra-embed)[data-theme] .rec-center.touched { box-shadow: inset 0 0 0 1.5px var(--text), 0 0 0 4px var(--bg-3), 0 8px 24px rgba(0, 0, 0, 0.12); }
+:is(.astra, .astra-embed)[data-theme] .rec-center-foot { border-top-color: var(--a-cardline); }
+:is(.astra, .astra-embed)[data-theme] .rec-conn { stroke: var(--a-wire); }
+:is(.astra, .astra-embed)[data-theme] .rec-ring { box-shadow: 0 0 0 2px var(--a-card), 0 0 0 3.5px transparent; }
+:is(.astra, .astra-embed)[data-theme] .rec-ring.v1 { box-shadow: 0 0 0 2px var(--a-card), 0 0 0 3.5px var(--a-wire); }
+:is(.astra, .astra-embed)[data-theme] .rec-ring.knows { box-shadow: 0 0 0 2px var(--a-card), 0 0 0 3.5px var(--a-amber-line); }
+:is(.astra, .astra-embed)[data-theme] .rec-ring.cur { box-shadow: 0 0 0 2px var(--a-card), 0 0 0 3.5px var(--green); }
+:is(.astra, .astra-embed)[data-theme] .rec-tape { border-top: 0; box-shadow: inset 0 1px 0 var(--line); background: var(--a-chrome); padding: 0 12px 0 20px; }
+:is(.astra, .astra-embed)[data-theme] .rec-base { background: var(--line-2); }
+:is(.astra, .astra-embed)[data-theme] .rec-brk { background: repeating-linear-gradient(135deg, transparent 0 4px, var(--line-2) 4px 5px); }
+:is(.astra, .astra-embed)[data-theme] .rec-tick.ai { background: var(--a-chrome); }
+:is(.astra, .astra-embed)[data-theme] .rec-tick:hover, :is(.astra, .astra-embed)[data-theme] .rec-tick.cur { box-shadow: 0 0 0 2px var(--a-chrome), 0 0 0 3.5px var(--text); }
+:is(.astra, .astra-embed)[data-theme] .rec-tick.ai:hover, :is(.astra, .astra-embed)[data-theme] .rec-tick.ai.cur { box-shadow: inset 0 0 0 1.5px var(--blue), 0 0 0 2px var(--a-chrome), 0 0 0 3.5px var(--text); }
+:is(.astra, .astra-embed)[data-theme] .rec-htime { color: var(--bg); font-size: 11px; }
+:is(.astra, .astra-embed)[data-theme] .rec-trans { border-top: 0; gap: 6px; }
+:is(.astra, .astra-embed)[data-theme] .rec-trans > .icon-btn { width: 28px; height: 28px; border-radius: 6px; background: var(--a-fill); color: var(--text); }
+:is(.astra, .astra-embed)[data-theme] .rec-trans > .icon-btn:hover { background: var(--a-fill-hover); }
+:is(.astra, .astra-embed)[data-theme] .rec-trans > .rec-play { width: 32px; height: 32px; border-radius: 50%; background: var(--a-accent); color: #FFFFFF; box-shadow: none; }
+:is(.astra, .astra-embed)[data-theme] .rec-trans > .rec-play:hover { background: var(--a-accent-hover); }
+:is(.astra, .astra-embed)[data-theme] .rec-clock { font-size: 11px; color: var(--text-2); }
+:is(.astra, .astra-embed)[data-theme] .rec-callout strong { font-weight: 600; }
+:is(.astra, .astra-embed)[data-theme] .rec-switch { background: var(--a-fill); box-shadow: none; }
+:is(.astra, .astra-embed)[data-theme] .rec-follow input:checked + .rec-switch { background: var(--a-accent); }
+:is(.astra, .astra-embed)[data-theme] .rec-follow input:checked + .rec-switch::after { background: #FFFFFF; }
+
+/* screens and present */
+:is(.astra, .astra-embed)[data-theme] .fcanvas-view, :is(.astra, .astra-embed)[data-theme] .fmap-stage { background-color: var(--a-doc); background-image: radial-gradient(var(--a-dot) 1px, transparent 1px); }
+:is(.astra, .astra-embed)[data-theme] .fc-section { background: var(--a-chrome); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+:is(.astra, .astra-embed)[data-theme] .slide { background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+:is(.astra, .astra-embed)[data-theme] .slide-ev-card, :is(.astra, .astra-embed)[data-theme] .thumb { box-shadow: inset 0 0 0 1px var(--a-cardline); }
+:is(.astra, .astra-embed)[data-theme] .thumb.active { background: var(--bg-1); box-shadow: inset 0 0 0 1.5px var(--a-accent); }
+:is(.astra, .astra-embed)[data-theme] .pin.active { color: var(--bg); }
+
+/* overlays that open inside Astra */
+:is(.astra, .astra-embed)[data-theme] .ts-card, :is(.astra, .astra-embed)[data-theme] .endcard { background: var(--a-card); }
+/* Screens: Figma frames are white, so the light canvas is a step darker than the page, like Figma's own canvas. */
+.astra[data-theme="light"] .fcanvas-view { background-color: #EEEFF1; background-image: radial-gradient(#DADDE1 1px, transparent 1px); }
+:is(.astra, .astra-embed)[data-theme] .select { height: 32px; border-radius: 6px; box-shadow: none; background-color: var(--a-fill); }
+:is(.astra, .astra-embed)[data-theme] .select:hover { background-color: var(--a-fill-hover); }
+:is(.astra, .astra-embed)[data-theme] .select option { background: var(--a-card); }
+:is(.astra, .astra-embed)[data-theme] .rec-tick.open { background: var(--a-amber-line); }
+
+/* ---------- Top tester bar follows the app theme on every screen ---------- */
+.app[data-theme="light"] .tester-bar {
+  --text: #16181D; --text-2: #5B626C; --bg-2: #ECEDEF; --bg-3: #E1E3E6; --line: #E6E8EB; --line-2: #D9DCE0; --blue: #2563EB; --r-blue-bg: #E8EDFD;
+  background: #FFFFFF; border-bottom-color: var(--line); color: var(--text);
+}
+.app[data-theme="light"] .tb-logo { background: #EEE9FB; color: #16181D; }
+.app[data-theme="light"] .tb-guided.on .tb-switch > span { background: #FFFFFF; }
+.app[data-theme="light"] .tester-bar .icon-btn:hover { background: var(--bg-2); }
+
+/* ---------- Astra inside Codex and Figma (.astra-embed): same system, dark like its host ---------- */
+.side-panel.rl.astra-embed { background: var(--a-panel); border-left: 0; box-shadow: inset 1px 0 0 var(--cx-line); }
+.astra-embed .rl-head { flex-basis: 44px; border-bottom: 0; }
+.astra-embed .rl-chip-blue { border-radius: 5px; padding: 2px 8px; font-size: 11px; }
+.astra-embed .rl-icon { border-radius: 6px; }
+.astra-embed .rl-icon:hover { background: var(--a-fill); }
+.astra-embed .rl-icon.round { border-radius: 50%; box-shadow: none; background: var(--a-fill); }
+.astra-embed .rl-body { display: flex; flex-direction: column; gap: 6px; padding: 0 12px 8px; }
+.astra-embed .rl-card { padding: 8px 12px 10px; border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.astra-embed .rl-card .rl-label { margin-bottom: 4px; }
+.astra-embed .rl-card .rl-label-row { margin-bottom: 4px; }
+.astra-embed .rl-card .why-card { padding: 6px 10px; gap: 0; }
+.astra-embed .rl-card .why-card .why-goal { margin-top: 2px; padding-top: 4px; }
+.astra-embed .rl-card .rl-hint { margin-top: 6px; }
+.astra-embed .rl-status { border-radius: 10px; background: var(--a-card); }
+.astra-embed .rl-compare { background: var(--a-inset); box-shadow: none; border-radius: 8px; }
+.astra-embed .rl-compare-row + .rl-compare-row { border-top-color: var(--a-cardline); }
+.astra-embed .rl-card .why-card { background: var(--a-inset); box-shadow: none; border-radius: 8px; }
+.astra-embed .rl .chip, .astra-embed .chip { box-shadow: none; background: var(--a-chip); border-radius: 5px; }
+.astra-embed button.chip:hover { color: var(--text); background: var(--a-fill-hover); box-shadow: none; }
+.astra-embed .rl-avatars .avatar { box-shadow: 0 0 0 2px var(--a-card); }
+.astra-embed .rl-people-search .field { background: var(--a-doc); }
+.astra-embed .rl-people-results { background: var(--a-inset); }
+.astra-embed .rl-foot { padding: 10px 12px 12px; border-top: 0; box-shadow: inset 0 1px 0 var(--line); }
+.astra-embed .rl-actions { gap: 6px; }
+.astra-embed .rl-more { display: inline-flex; gap: 6px; position: relative; }
+.astra-embed .rl-more .menu.up { left: 0; right: auto; width: 260px; }
+.astra-embed .sp-body { padding: 4px 12px 16px; }
+.astra-embed .sp-foot .btn-square, .astra-embed .rl-foot .btn-square { width: 32px; height: 32px; }
+.astra-embed .kv { border-bottom-color: var(--line); }
+.astra-embed .diff-file { box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.astra-embed .diff-file-head { background: var(--a-inset); }
+.astra-embed .ev-card.dashed { box-shadow: none; border-color: var(--line-2); background: transparent; }
+
+/* Figma: the floating plugin window holds cards on a panel tone */
+.figma .plugin.astra-embed { background: var(--a-panel); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line-2), 0 18px 40px rgba(0, 0, 0, 0.55); padding-bottom: 10px; }
+.figma .plugin.astra-embed .plg-head { height: 44px; border-bottom: 0; }
+.figma .plugin.astra-embed .plg-sec, .figma .plugin.astra-embed .plg-stance { margin: 0 10px 8px; padding: 12px; border: 0; border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.figma .plugin.astra-embed .plg-stance:not(.done) { box-shadow: inset 0 0 0 1px var(--a-amber-line); }
+.figma .plugin.astra-embed .plg-reason { border-top-color: var(--a-cardline); }
+.figma .plugin.astra-embed .plg-empty { margin: 0 10px; border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.figma .plugin.astra-embed .icon-btn { border-radius: 6px; }
+.figma .plugin.astra-embed .icon-btn:hover { background: var(--a-fill); }
+.figma .plugin.astra-embed .field { background: var(--a-doc); border-radius: 8px; }
+
+/* Codex thread: the Astra note is a compact card with the pending outline and a soft Open button */
+.codex .cx-notice { padding: 4px 5px 4px 12px; border-radius: 10px; background: #222424; box-shadow: inset 0 0 0 1px #E8AA4E; }
+.codex .cx-notice-text span { color: #9BA2AD; }
+.codex .cx-notice-open { height: 26px; padding: 0 10px; border-radius: 6px; background: #2A2C2C; color: #E6E8EC; font-size: 12px; font-weight: 500; text-align: center; }
+.codex .cx-notice-open:hover { background: #333535; text-decoration: none; }
+.codex .cx-notice-open:focus-visible { outline: 2px solid #2563EB; outline-offset: 1px; }
+.codex .cx-notice.handled { background: var(--cx-card); box-shadow: none; }
+.codex .cx-astra-pill { border-radius: 6px; }
+@keyframes notice-glow { 0% { box-shadow: inset 0 0 0 1px #E8AA4E, 0 0 0 0 rgba(232, 170, 78, 0.45); } 100% { box-shadow: inset 0 0 0 1px #E8AA4E, 0 0 0 10px rgba(232, 170, 78, 0); } }
+
+/* ---------- Less amber: amber is kept for changes waiting on someone, not for defaults ---------- */
+/* Codex panel: status cards use the neutral card edge; the "Unresolved"/"Pending" tag carries the signal. */
+.astra-embed[data-theme] .rl-status.pending { box-shadow: inset 0 0 0 1px var(--a-cardline); }
+/* Codex thread: the Astra note is a neutral card. Default and handled notes share one height and one right edge. */
+.codex .cx-notice { min-height: 40px; padding: 0 6px 0 12px; gap: 10px; align-items: center; border-radius: 10px; background: #222424; box-shadow: inset 0 0 0 1px #2E3030; }
+.codex .cx-notice > svg { color: #9BA2AD; }
+.codex .cx-notice-text { line-height: 20px; }
+.codex .cx-notice-open { height: 28px; padding: 0 12px; }
+.codex .cx-notice.handled { background: transparent; box-shadow: inset 0 0 0 1px #2A2C2C; }
+.codex .cx-notice.handled .cx-notice-text strong { color: var(--cx-muted); font-weight: 500; }
+.codex .cx-notice-done { padding: 0 12px; line-height: 28px; }
+@keyframes notice-glow { 0% { box-shadow: inset 0 0 0 1px #2E3030, 0 0 0 0 rgba(230, 232, 236, 0.22); } 100% { box-shadow: inset 0 0 0 1px #2E3030, 0 0 0 8px rgba(230, 232, 236, 0); } }
+/* Codex title bar: the Astra pill is neutral; a small amber dot says something needs you. */
+.codex .cx-astra-pill.attn { background: #2A2C2C; color: #E6E8EC; }
+.codex .cx-astra-pill.attn > svg { color: #9BA2AD; }
+.codex .cx-astra-pill.attn::after { content: ''; width: 6px; height: 6px; margin-left: 2px; border-radius: 50%; background: #E8AA4E; }
+
+/* ---------- No amber outlines in any scenario. Amber stays only as tag/chip text and small dots. ---------- */
+/* PM (Doc): the selected pending requirement and the change card use the neutral edges. */
+.astra[data-theme] .req.selected.pending { box-shadow: inset 0 0 0 1px var(--line-2); }
+.astra[data-theme] .rl-status.pending, .astra-embed[data-theme] .rl-status.pending { box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.astra[data-theme] .chip-amber, .astra-embed[data-theme] .chip-amber { box-shadow: none; background: var(--amber-soft); color: var(--amber); }
+/* PM (Screens): the pending pin keeps its amber tint without an outline. */
+.astra[data-theme] .pin.pending { box-shadow: none; }
+/* Designer (Figma plugin): the stance card is a normal card. */
+.figma .plugin.astra-embed .plg-stance:not(.done) { box-shadow: inset 0 0 0 1px var(--a-cardline); }
+/* The flagged "Updated every 15 min" label on the dashboard frame loses its amber box, in Figma and in Screens. */
+.dash-label.flag { border-color: transparent; background: transparent; color: inherit; }
+/* Plugin buttons: no light border from Figma's own button styles (the white ring on the blue button). */
+.figma .plugin.astra-embed .btn { border: 0; }
+/* The guide button and its popover follow Astra's light mode. */
+.app[data-theme="light"] .stage .guide { --bg: #FFFFFF; --bg-1: #FFFFFF; --bg-2: #F2F3F5; --bg-3: #ECEDEF; --line: #E6E8EB; --line-2: #D9DCE0; --text: #16181D; --text-2: #5B626C; --muted: #636A74; color: #16181D; }
+.app[data-theme="light"] .stage .guide-btn { box-shadow: inset 0 0 0 1px var(--line-2), 0 4px 12px rgba(16, 24, 40, 0.12); }
+
+/* ---------- Guided mode follows Astra's light mode: white cards, a lighter scrim ---------- */
+.app[data-theme="light"] .stage :is(.tour, .tour-wait) {
+  --bg: #FFFFFF; --bg-1: #FFFFFF; --bg-2: #F4F5F7; --bg-3: #ECEDEF; --line: #E6E8EB; --line-2: #D9DCE0;
+  --text: #16181D; --text-2: #5B626C; --muted: #636A74; --blue: #2563EB; --r-blue-bg: #E8EDFD;
+  color: var(--text);
+}
+.app[data-theme="light"] .stage .tour-card { box-shadow: inset 0 0 0 1px var(--line-2), 0 18px 44px rgba(16, 24, 40, 0.18); }
+.app[data-theme="light"] .stage .tour-wait { box-shadow: inset 0 0 0 1px var(--line-2), 0 10px 28px rgba(16, 24, 40, 0.14); }
+.app[data-theme="light"] .stage .tour-spot { box-shadow: 0 0 0 9999px rgba(16, 24, 40, 0.38); }
+.app[data-theme="light"] .stage .tour-arrow.primary { background: var(--text); color: #FFFFFF; }
+.app[data-theme="light"] .stage .tour-arrow.primary:hover:not(:disabled) { background: #2E333B; }
+.app[data-theme="light"] .stage .tour-dot.done { background: #A9B8E8; }
+
+/* ==========================================================================
+   Light mode for every screen (.app[data-theme="light"]).
+   Dark mode is untouched: every rule below is scoped to the light theme.
+   ========================================================================== */
+.app[data-theme="light"] {
+  --bg: #FFFFFF; --bg-1: #F7F7F8; --bg-2: #F2F3F5; --bg-3: #E9EAED; --line: #E6E8EB; --line-2: #D9DCE0;
+  --text: #16181D; --text-2: #5B626C; --muted: #636A74; --accent: #16181D; --accent-soft: #E9EAED;
+  --amber: #9A5800; --amber-soft: #FDF0DC; --green: #1B7550; --green-soft: #E2F3EA; --red: #BF3B27; --red-soft: #FBE9E6; --blue: #3451C7;
+  --r-app: #FFFFFF; --r-sidebar: #F7F7F8; --r-panel: #FAFAFB; --r-card: #FFFFFF; --r-row: #E9EAED; --r-canvas: #F4F5F7; --r-dot: #E1E3E6;
+  --r-line: #E1E3E7; --r-line-strong: #D9DCE0; --r-text: #16181D; --r-muted: #5B626C; --r-label: #636A74;
+  --r-blue: #3451C7; --r-blue-bg: #E8EDFD; --r-amber: #9A5800; --r-amber-bg: #FDF0DC; --r-green: #1B7550; --r-green-bg: #E2F3EA; --r-red: #BF3B27;
+  /* Codex desktop app, light appearance */
+  --cx-chrome: #F9F9F9; --cx-threads: #F3F3F3; --cx-thread-on: #E6E6E6; --cx-conv: #FFFFFF; --cx-card: #F4F4F4;
+  --cx-input: #F4F4F4; --cx-line: #E5E5E5; --cx-text: #1A1A1A; --cx-muted: #6B6B6B; --cx-faint: #8F8F8F;
+  color-scheme: light; background: var(--bg); color: var(--text);
+}
+/* Solid dark buttons and chips flip their label to white. */
+.app[data-theme="light"] :is(.btn-primary, .toast, .pill-primary, .pin.active, .menu-check.on, .rec-htime) { color: #FFFFFF; }
+.app[data-theme="light"] .btn-primary:hover:not(:disabled), .app[data-theme="light"] .pill-primary:hover:not(:disabled) { background: #2E333B; }
+.app[data-theme="light"] .rail-btn[data-tip]:hover::after, .app[data-theme="light"] .rail-btn[data-tip]:focus-visible::after { color: #FFFFFF; }
+/* Start screen and story overlays */
+.app[data-theme="light"] .persp-card { background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--line), 0 1px 2px rgba(16, 24, 40, 0.05); }
+.app[data-theme="light"] .codex-tool-logo { filter: none; }
+.app[data-theme="light"] :is(.timeskip, .endcard-backdrop) { background: rgba(16, 24, 40, 0.32); }
+.app[data-theme="light"] :is(.ts-card, .endcard, .guide-pop) { background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--line-2), 0 24px 60px rgba(16, 24, 40, 0.18); }
+
+/* ---------- Codex, light ---------- */
+.app[data-theme="light"] .cx-rail-btn.on { background: #E6E6E6; }
+.app[data-theme="light"] .cx-thread:hover { background: #ECECEC; }
+.app[data-theme="light"] .cx-file-link { text-decoration-color: #C8C8C8; }
+.app[data-theme="light"] .cx-prompt { background: #E9EEFB; color: #1A1A1A; }
+.app[data-theme="light"] .cx-done svg, .app[data-theme="light"] .code-card-meta .green { color: #1B7550; }
+.app[data-theme="light"] .code-row.green, .app[data-theme="light"] .diff-add { color: #1B7550; }
+.app[data-theme="light"] .tk-str { color: #3D7A2B; } .app[data-theme="light"] .tk-num { color: #A3580E; }
+.app[data-theme="light"] .code-row.hl, .app[data-theme="light"] .file-line.selected, .app[data-theme="light"] .code-preview-row.hl, .app[data-theme="light"] .code-line.hl { background: rgba(232, 170, 78, 0.18); }
+.app[data-theme="light"] .file-line:hover { background: rgba(0, 0, 0, 0.03); }
+.app[data-theme="light"] .cx-input { background: linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--cx-conv) 24px); }
+.app[data-theme="light"] .cx-send { background: #1A1A1A; }
+.app[data-theme="light"] .sel-toolbar { box-shadow: inset 0 0 0 1px var(--cx-line), 0 8px 24px rgba(16, 24, 40, 0.14); }
+.app[data-theme="light"] .sel-toolbar kbd { color: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+/* The Astra note and pill in Codex */
+.app[data-theme="light"] .codex .cx-notice { background: #FFFFFF; box-shadow: inset 0 0 0 1px #E1E3E7; }
+.app[data-theme="light"] .codex .cx-notice > svg, .app[data-theme="light"] .codex .cx-notice-text span { color: #5B626C; }
+.app[data-theme="light"] .codex .cx-notice-open { background: #ECEDEF; color: #16181D; }
+.app[data-theme="light"] .codex .cx-notice-open:hover { background: #E1E3E6; }
+.app[data-theme="light"] .codex .cx-notice.handled { background: transparent; box-shadow: inset 0 0 0 1px #ECEDEF; }
+.app[data-theme="light"] .codex .cx-astra-pill { background: #ECEDEF; color: #5B626C; }
+.app[data-theme="light"] .codex .cx-astra-pill.attn { background: #ECEDEF; color: #16181D; }
+.app[data-theme="light"] .codex .cx-astra-pill.attn > svg { color: #5B626C; }
+.app[data-theme="light"] .codex .cx-astra-pill.attn::after { background: #E0A040; }
+@keyframes notice-glow-light { 0% { box-shadow: inset 0 0 0 1px #E1E3E7, 0 0 0 0 rgba(37, 99, 235, 0.18); } 100% { box-shadow: inset 0 0 0 1px #E1E3E7, 0 0 0 8px rgba(37, 99, 235, 0); } }
+.app[data-theme="light"] .cx-notice.new { animation: notice-in 0.42s ease-out both, notice-glow-light 1.6s ease-out 0.42s; }
+
+/* ---------- Figma, light ---------- */
+.app[data-theme="light"] .figma {
+  --bg: #FFFFFF; --bg-1: #FFFFFF; --bg-2: #F5F5F5; --bg-3: #EBEBEB; --line: #E6E6E6; --line-2: #D9D9D9;
+  --text: #1E1E1E; --text-2: #5E5E5E; --muted: #7A7A7A; --amber: #9A5800; --amber-soft: #FDF0DC; --green: #1B7550; --green-soft: #E2F3EA; --red: #BF3B27; --blue: #3451C7;
+  background: #E9E9EB; color: #1E1E1E;
+}
+.app[data-theme="light"] :is(.fg-left, .fg-right) { background: #FFFFFF; border-color: #E6E6E6; }
+.app[data-theme="light"] :is(.fg-file, .fg-tabs, .fg-section, .fg-right-head) { border-color: #E6E6E6; }
+.app[data-theme="light"] .fg-row { color: #1E1E1E; }
+.app[data-theme="light"] .fg-row.active { background: #F0F0F0; }
+.app[data-theme="light"] .fg-row.layer:hover { background: #F5F5F5; }
+.app[data-theme="light"] .fg-row.selected { background: #DAEBF7; }
+.app[data-theme="light"] .fg-frame-meta { color: #7A7A7A; }
+.app[data-theme="light"] .dash-frame { background: #FFFFFF; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+.app[data-theme="light"] .fg-toolbar { background: #FFFFFF; border-color: #E6E6E6; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); }
+.app[data-theme="light"] .tool { color: #1E1E1E; }
+.app[data-theme="light"] .tool:hover { background: #F0F0F0; }
+.app[data-theme="light"] .tool.active { color: #FFFFFF; }
+.app[data-theme="light"] .tool.astra { background: #F0F0F0; }
+.app[data-theme="light"] .tool.astra.on { box-shadow: inset 0 0 0 1px #CFCFCF; }
+.app[data-theme="light"] .tool-sep { background: #E6E6E6; }
+.app[data-theme="light"] .fg-props { color: #5E5E5E; }
+.app[data-theme="light"] .fg-prop-label { color: #1E1E1E; }
+.app[data-theme="light"] .fg-prop-grid span { background: #F5F5F5; }
+.app[data-theme="light"] .fg-prop-alert { border-color: #E8C98A; background: #FFF6E5; color: #8A5300; }
+.app[data-theme="light"] .fg-prop-alert:hover { background: #FDEFD4; }
+.app[data-theme="light"] .fg-prop-alert small { color: #9A6A1E; }
+.app[data-theme="light"] .swatch { box-shadow: inset 0 0 0 1px #E6E6E6; }
+.app[data-theme="light"] .fg-zoom { background: #FFFFFF; border-color: #E6E6E6; color: #5E5E5E; }
+.app[data-theme="light"] .fg-zoom:hover { color: #1E1E1E; border-color: #CFCFCF; }
+.app[data-theme="light"] .fg-comment-pop { background: #FFFFFF; border-color: #E6E6E6; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14); }
+.app[data-theme="light"] .fg-comment-pin { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18), inset 0 0 0 1px #E6E6E6; }
+.app[data-theme="light"] .figma kbd { color: var(--muted); }
+.app[data-theme="light"] .figma .plugin.astra-embed { box-shadow: inset 0 0 0 1px #E1E3E7, 0 18px 40px rgba(16, 24, 40, 0.16); }

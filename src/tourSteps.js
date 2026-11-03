@@ -252,7 +252,7 @@ export const TOUR_STEPS = {
       target: '.deny-btn',
       scenario: 'Dana is reviewing Marcus’s proposal.',
       title: 'More than yes or no',
-      decision: 'Under Deny, Dana can request more evidence. R4 stays Pending while Marcus gathers it.',
+      decision: 'Next to Deny, the ⋯ menu lets Dana request more evidence instead. R4 stays Pending while Marcus gathers it.',
       tags: ['P3', 'P5'],
       evidence: 'P5 sees the PM’s job as finding the true problem. P3 deals with stakeholders who contradict each other.',
     },

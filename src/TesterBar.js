@@ -1,7 +1,7 @@
 import { html } from './lib.js';
 import { useStore } from './store.js';
 import { TOUR_STEPS, tourKey } from './tourSteps.js';
-import { RotateCcw, Lightbulb, House } from 'lucide-react';
+import { RotateCcw, Lightbulb, House, Sun, Moon } from 'lucide-react';
 
 function AstraMark() {
   return html`<svg className="astra-mark" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -11,8 +11,8 @@ function AstraMark() {
   </svg>`;
 }
 
-// Top strip. The role is chosen once on the start screen; here the facilitator can only
-// reset to the start screen between participants.
+// Top strip. The role is chosen once on the start screen; here the facilitator can restart a
+// scenario, switch light/dark for every screen, and turn on guided mode.
 export function TesterBar() {
   const { state, dispatch } = useStore();
 
@@ -23,6 +23,9 @@ export function TesterBar() {
     <button className="icon-btn tb-home" onClick=${() => dispatch({ type: 'SET_ROLE', role: null })} disabled=${!state.role} title="Back to scenarios" aria-label="Back to scenarios"><${House} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
     <span className="grow" />
     <div className="tb-actions">
+      <button className="icon-btn" onClick=${() => dispatch({ type: 'SET_THEME', theme: state.theme === 'light' ? 'dark' : 'light' })} title=${state.theme === 'light' ? 'Dark mode' : 'Light mode'} aria-label=${state.theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
+        ${state.theme === 'light' ? html`<${Moon} size=${15} strokeWidth=${1.5} aria-hidden="true" />` : html`<${Sun} size=${15} strokeWidth=${1.5} aria-hidden="true" />`}
+      </button>
       <button className="icon-btn" onClick=${() => { dispatch({ type: 'RESTART' }); }} disabled=${!state.role} title="Restart this scenario" aria-label="Restart this scenario"><${RotateCcw} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
     </div>
     ${state.role && TOUR_STEPS[tourKey(state)] && html`<span className="tb-sep" aria-hidden="true" />
