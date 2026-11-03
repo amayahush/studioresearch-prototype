@@ -21,6 +21,14 @@ function visible(el) {
   return r.width > 0 && r.height > 0;
 }
 
+// A step's spotlight target must also be in view: on phones, anything behind an open
+// drawer or bottom sheet counts as off screen (the arrows' clicks can still reach it).
+function inView(el) {
+  if (!visible(el)) return false;
+  const over = document.querySelector('.m-sheet:not(.m-down), .m-drawer.open');
+  return !over || over.contains(el) || el.contains(over) || !!el.closest(MODALS);
+}
+
 // Which steps can show right now, in story order.
 function availableSteps(steps, stage, view) {
   const modal = document.querySelector(MODALS);
@@ -28,7 +36,7 @@ function availableSteps(steps, stage, view) {
     if (s.stage && s.stage !== '*' && !s.stage.includes(stage)) return false;
     if (s.view && s.view !== view) return false;
     const el = document.querySelector(s.target);
-    if (!el || !visible(el)) return false;
+    if (!el || !inView(el)) return false;
     // While a time skip or end card is up, only steps about it can show.
     return modal ? modal.contains(el) : true;
   }).map((s) => s.id);
@@ -165,7 +173,7 @@ export function Tour() {
     const run = ++runRef.current;
     navRef.current = id;
     setBusy(true);
-    const onScreen = () => { const el = document.querySelector(target.target); return el && visible(el); };
+    const onScreen = () => { const el = document.querySelector(target.target); return el && inView(el); };
 
     // Restart the screen at the step's stage when the story is elsewhere or an overlay is in the way.
     // If the clicks still don't bring the step on screen (say a file is open over it), restart and try once more.

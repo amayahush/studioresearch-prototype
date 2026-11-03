@@ -1,4 +1,4 @@
-import { html, useState, useEffect, cx, Fragment } from './lib.js';
+import { html, useState, useEffect, useRef, cx, Fragment, useMedia, PHONE, TABLET } from './lib.js';
 import { useStore, TEXT, TIMES, R4_INTENT, isPending, r4Text, r4Status, prdVersion } from './store.js';
 import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection, StatusChip } from './ui.js';
 import { TimeSkip, EndCard } from './Interstitials.js';
@@ -8,7 +8,7 @@ import { dashboardLabel } from './Figma.js';
 import {
   ChevronDown, Search, Inbox, CircleUser, FileText, Settings, HelpCircle, X, History, Check, Clock, PanelLeft,
   Box, GitBranch, Frame, MessageSquare, Folder, Code, Upload, Sun, Moon, MoreHorizontal, MessageSquareText,
-  Code2, PanelsTopLeft, ShieldCheck, BarChart3,
+  Code2, PanelsTopLeft, ShieldCheck, BarChart3, Menu, ListChecks,
 } from 'lucide-react';
 
 export const TOOLS = [['Jira', '2m', Box], ['GitLab', '5m', GitBranch], ['Figma', '1m', Frame], ['Teams', 'live', MessageSquare], ['SharePoint', '10m', Folder], ['Codex', 'live', Code]];
@@ -81,12 +81,19 @@ function loadNavOpen() {
 
 export function Astra() {
   const { state, dispatch } = useStore();
-  const [selected, setSelected] = useState(isPending(state) ? 'R4' : null);
+  // Desktop opens a pending change beside the doc. Phones start on the doc; the change opens as a sheet when tapped.
+  const [selected, setSelected] = useState(isPending(state) && !window.matchMedia(PHONE).matches ? 'R4' : null);
   const [skip, setSkip] = useState(null);
   const [endCard, setEndCard] = useState(false);
   const [toast, setToast] = useState('');
   const [exportOpen, setExportOpen] = useState(false);
-  const [navOpen, setNavOpen] = useState(loadNavOpen);
+  // Tablets start with the sidebar collapsed to its icon rail; desktop remembers the last choice.
+  const [navOpen, setNavOpen] = useState(() => (window.matchMedia(TABLET).matches ? false : loadNavOpen()));
+  // Phones: the sidebar is a drawer over the page, closed until the menu button opens it.
+  const phone = useMedia(PHONE);
+  const [drawer, setDrawer] = useState(false);
+  const fullNav = phone ? drawer : navOpen;
+  const closeNav = () => (phone ? setDrawer(false) : setNavOpen(false));
   const pending = isPending(state);
   const inbox = ['proposed', 'resent'].includes(state.stage) ? 1 : 0;
   const view = state.astraView;
@@ -99,12 +106,12 @@ export function Astra() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(NAV_KEY, navOpen ? 'open' : 'closed');
+      if (!window.matchMedia(TABLET).matches) localStorage.setItem(NAV_KEY, navOpen ? 'open' : 'closed');
     } catch {}
   }, [navOpen]);
 
-  const openInbox = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); if (pending) setSelected('R4'); };
-  const openProject = () => { dispatch({ type: 'SET_VIEW', view: 'doc' }); setSelected(null); };
+  const openInbox = () => { setDrawer(false); dispatch({ type: 'SET_VIEW', view: 'doc' }); if (pending) setSelected('R4'); };
+  const openProject = () => { setDrawer(false); dispatch({ type: 'SET_VIEW', view: 'doc' }); setSelected(null); };
   // The Map view is the Recorder map (src/RecorderMap.js). The earlier focus map (MapView) is kept in AstraViews.js.
   const Body = { doc: DocView, map: RecorderMap, screens: ScreensView, present: PresentView }[view];
   const ownPath = state.startedAs === 'dana';
@@ -151,14 +158,15 @@ export function Astra() {
 
   return html`<div className="astra" data-theme=${state.theme === 'light' ? 'light' : 'dark'}>
     <div className="astra-row">
-    <nav className=${cx('rl-side', !navOpen && 'collapsed')} aria-label="Workspace">
-      ${navOpen
+    ${phone && drawer && html`<div className="m-scrim" onClick=${() => setDrawer(false)} aria-hidden="true" />`}
+    <nav className=${cx('rl-side', !fullNav && 'collapsed', phone && 'm-drawer', phone && drawer && 'open')} aria-label="Workspace" aria-hidden=${phone && !drawer ? 'true' : undefined}>
+      ${fullNav
         ? html`<${Fragment}>
             <div className="rl-org-row">
               <button className="rl-org" onClick=${notSimulated('Switching workspaces')}><span className="rl-org-name">Manufacturing Systems</span><${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" /></button>
               <span className="grow" />
-              <button className="rl-nav-toggle" onClick=${() => setNavOpen(false)} aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">
-                <${PanelLeft} size=${16} strokeWidth=${1.5} aria-hidden="true" />
+              <button className="rl-nav-toggle" onClick=${closeNav} aria-label=${phone ? 'Close menu' : 'Collapse sidebar'} aria-expanded="true" title=${phone ? 'Close menu' : 'Collapse sidebar'}>
+                <${phone ? X : PanelLeft} size=${16} strokeWidth=${1.5} aria-hidden="true" />
               </button>
             </div>
             <button className="rl-search" onClick=${notSimulated('Search')}><${Search} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span className="grow">Search</span><span className="rl-kbd">⌘K</span></button>
@@ -192,6 +200,7 @@ export function Astra() {
 
     <section className="rl-main">
       <header className="rl-top">
+        ${phone && html`<button className="icon-btn m-menu" onClick=${() => setDrawer(true)} aria-label=${inbox ? `Open menu, ${inbox} in inbox` : 'Open menu'} aria-expanded=${drawer}><${Menu} size=${18} strokeWidth=${1.5} aria-hidden="true" />${inbox > 0 && html`<span className="rail-badge" />`}</button>`}
         <nav className="rl-crumbs" aria-label="Breadcrumb">
           <button className="rl-crumb" onClick=${openProject}>Projects</button>
           <span className="rl-crumb-sep" aria-hidden="true">/</span>
@@ -262,6 +271,15 @@ function DocView({ selected, setSelected, story }) {
   const [filter, setFilter] = useState('all');
   const [filterOpen, setFilterOpen] = useState(false);
   const [closedEpics, setClosedEpics] = useState({});
+  const phone = useMedia(PHONE);
+  const [checkOpen, setCheckOpen] = useState(false);
+  // Guided mode opens on the assumption check, which phones keep behind the dock: open it
+  // when guided mode starts here (not when the tour's arrows jump to a later step).
+  const guidedWas = useRef(state.guided);
+  useEffect(() => {
+    if (phone && state.guided && state.stage === 'unpublished' && (!guidedWas.current || !state.tourRun)) setCheckOpen(true);
+    guidedWas.current = state.guided;
+  }, [state.guided]);
   // Open/closed choices by section key, kept across selections that share a section.
   const [openMap, setOpenMap] = useState({});
   const reqs = getReqs(state);
@@ -341,7 +359,15 @@ function DocView({ selected, setSelected, story }) {
         </div>
       </div>
 
-      ${(selected || state.stage === 'unpublished') && html`<aside className="rl-panel" aria-label="Details">
+      ${phone && !selected && state.stage === 'unpublished' && !checkOpen && html`<button className="m-dock" onClick=${() => setCheckOpen(true)}>
+        <${ListChecks} size=${16} strokeWidth=${1.5} aria-hidden="true" />
+        <span className="grow"><strong>Assumption check</strong><small>${unverified(reqs)} requirements unconfirmed · before v1</small></span>
+        <span className="m-dock-cta">Review</span>
+      </button>`}
+      ${phone && (selected || (state.stage === 'unpublished' && checkOpen)) && html`<div className="m-scrim sheet" onClick=${() => { setSelected(null); setCheckOpen(false); }} aria-hidden="true" />`}
+      ${(selected || state.stage === 'unpublished') && (!phone || selected || checkOpen) && html`<aside className=${cx('rl-panel', phone && 'm-sheet')} aria-label="Details" role=${phone ? 'dialog' : undefined} aria-modal=${phone ? 'true' : undefined}>
+        ${phone && html`<div className="m-sheet-grab" aria-hidden="true" />`}
+        ${phone && !selected && html`<button className="icon-btn m-sheet-close" onClick=${() => setCheckOpen(false)} aria-label="Close assumption check"><${X} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>`}
         <${DetailPanel}
           selected=${selected}
           setSelected=${setSelected}

@@ -44,6 +44,16 @@ Each role starts fresh at its own point in the story, and other people's actions
 
 The Figma canvas pans and zooms like Figma: drag empty space or hold Space and drag, scroll to pan, Cmd/Ctrl + scroll to zoom, and click the zoom percentage to reset.
 
+## Phones and tablets
+
+Desktop (over 1100px) is unchanged. Smaller screens adapt:
+
+- **Phones and portrait tablets (≤900px):** one panel at a time. Sidebars (Astra's workspace nav, Codex's threads) open as a drawer from the menu button. Detail panels (a requirement, the assumption check, Codex's Astra panel, the Figma plugin) slide up as bottom sheets; tap the dimmed area or ✕ to close. The view tabs (Doc, Map, Screens, Present) sit in a full-width row under the title. Figma's canvas starts zoomed to fit, pans with one finger and zooms with a pinch. The Map's record graph scrolls sideways and opens centered on the record. In Codex, opening the spec file lowers the Astra sheet so lines can be selected; tapping a changelog line selects 58–60, and adding it brings the sheet back.
+- **Landscape tablets (901–1100px):** desktop layout, but Astra's sidebar and Codex's threads start collapsed, and Figma's properties panel is hidden.
+- **Touch screens** say "tap" instead of "click" and leave out keyboard shortcuts in hints.
+
+The breakpoints live in `src/lib.js` (`PHONE`, `TABLET`) and at the end of `styles.css`.
+
 ## Files
 
 - `src/store.js`: story state, copy, and the reducer every screen shares

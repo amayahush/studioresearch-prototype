@@ -1,4 +1,4 @@
-import { html, useState, useEffect, useRef, cx, Fragment } from './lib.js';
+import { html, useState, useEffect, useRef, cx, Fragment, PHONE } from './lib.js';
 import { TimeSkip, EndCard } from './Interstitials.js';
 import { useStore, TEXT, TIMES, isPending } from './store.js';
 import { Avatar, Tag, SectionLabel, Diff, EvidenceChip } from './ui.js';
@@ -103,7 +103,7 @@ export function Figma() {
       </div>
     </aside>
 
-    <section className=${cx('fg-canvas', (panning || spaceDown) && 'grab', panning && 'grabbing')} ref=${canvasRef} onMouseDown=${startPan}>
+    <section className=${cx('fg-canvas', (panning || spaceDown) && 'grab', panning && 'grabbing')} ref=${canvasRef} onPointerDown=${startPan}>
       <div className="fg-world" style=${{ transform: `translate(calc(-50% + ${view.x}px), calc(-50% + ${view.y}px)) scale(${view.z})` }}>
       <div className="fg-frame-wrap">
         <div className="fg-frame-meta"><span>Dashboard / Overview</span><span>1280 × 832</span></div>
@@ -184,7 +184,14 @@ export function Figma() {
 // scroll to pan, Cmd/Ctrl + scroll or pinch to zoom toward the cursor.
 function useCanvasNav(onBackgroundClick) {
   const canvasRef = useRef(null);
-  const [view, setView] = useState({ x: 0, y: 0, z: 1 });
+  // Phones start zoomed so the 620px frame fits the screen width, like Figma's "zoom to fit".
+  const fit = () => {
+    const w = window.innerWidth;
+    return window.matchMedia(PHONE).matches ? { x: 0, y: -20, z: Math.min(1, (w - 32) / 620) } : { x: 0, y: 0, z: 1 };
+  };
+  const [view, setView] = useState(fit);
+  const pointers = useRef(new Map());
+  const pinch = useRef(null);
   const [panning, setPanning] = useState(false);
   const [spaceDown, setSpaceDown] = useState(false);
   const drag = useRef(null);
@@ -209,13 +216,23 @@ function useCanvasNav(onBackgroundClick) {
     const down = (e) => { if (e.code === 'Space' && !typing(e) && !e.repeat) { e.preventDefault(); setSpaceDown(true); } };
     const up = (e) => { if (e.code === 'Space') setSpaceDown(false); };
     const move = (e) => {
+      if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const pz = pinch.current;
+      if (pz && pointers.current.size === 2) {
+        const [a, b] = [...pointers.current.values()];
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        setView((v) => ({ ...v, z: Math.min(3, Math.max(0.25, pz.z * (dist / pz.dist))) }));
+        return;
+      }
       const d = drag.current;
       if (!d) return;
       const dx = e.clientX - d.x, dy = e.clientY - d.y;
       if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
       setView((v) => ({ ...v, x: d.vx + dx, y: d.vy + dy }));
     };
-    const release = () => {
+    const release = (e) => {
+      pointers.current.delete(e.pointerId);
+      if (pointers.current.size < 2) pinch.current = null;
       const d = drag.current;
       if (!d) return;
       drag.current = null;
@@ -225,27 +242,42 @@ function useCanvasNav(onBackgroundClick) {
     el.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', release);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
     return () => {
       el.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', release);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', release);
+      window.removeEventListener('pointercancel', release);
     };
   }, []);
 
   const startPan = (e) => {
-    const onContent = e.target.closest('button, .dash-frame, .fg-comment-pop, .fg-toolbar, .plugin');
+    const touch = e.pointerType === 'touch';
+    if (touch) {
+      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.current.size === 2) {
+        // Second finger down: pinch to zoom instead of panning.
+        const [a, b] = [...pointers.current.values()];
+        setView((v) => { pinch.current = { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, z: v.z }; return v; });
+        drag.current = null;
+        return;
+      }
+    }
+    // On touch, dragging over the frame pans too (there's no hand tool on a phone); buttons still tap.
+    const onContent = e.target.closest(touch ? 'button, .fg-comment-pop, .fg-toolbar, .plugin' : 'button, .dash-frame, .fg-comment-pop, .fg-toolbar, .plugin');
+    const onFrame = touch && e.target.closest('.dash-frame');
     if (e.button === 1 || spaceDown || !onContent) {
       e.preventDefault();
-      setView((v) => { drag.current = { x: e.clientX, y: e.clientY, vx: v.x, vy: v.y, moved: false, background: !onContent }; return v; });
+      setView((v) => { drag.current = { x: e.clientX, y: e.clientY, vx: v.x, vy: v.y, moved: false, background: !onContent && !onFrame }; return v; });
       setPanning(true);
     }
   };
 
-  return { canvasRef, view, resetView: () => setView({ x: 0, y: 0, z: 1 }), startPan, panning, spaceDown };
+  return { canvasRef, view, resetView: () => setView(fit()), startPan, panning, spaceDown };
 }
 
 function AstraPlugin({ onClose, onSelectLayer, onKeepDesigning, onRelabel }) {

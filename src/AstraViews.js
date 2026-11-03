@@ -1,4 +1,4 @@
-import { html, useState, useEffect, useLayoutEffect, useRef, cx, Fragment } from './lib.js';
+import { html, useState, useEffect, useLayoutEffect, useRef, cx, Fragment, touchCopy } from './lib.js';
 import { useStore, TEXT, TIMES, EVIDENCE, isPending, r4Text, prdVersion } from './store.js';
 import { Avatar, Tag, SectionLabel } from './ui.js';
 import { DEPARTMENTS, dashboardLabel } from './Figma.js';
@@ -494,7 +494,7 @@ export function ScreensView({ selected, setSelected }) {
 
   return html`<div className="rl-split">
     <div className="screens-wrap">
-      <div className="map-bar"><span className="map-note">Linked Figma frames carry requirement pins; click a pin to see its requirement. Other frames in the file have none. Drag the canvas to look around.</span></div>
+      <div className="map-bar"><span className="map-note">${touchCopy('Linked Figma frames carry requirement pins; click a pin to see its requirement. Other frames in the file have none. Drag the canvas to look around.')}</span></div>
       <div className="fcanvas-view" ref=${viewRef} onMouseDown=${onPan}>
         <div className="fcanvas" style=${{ width: CANVAS.w, height: CANVAS.h }}>
           <div className="fc-section" style=${{ left: 1270, top: 420, width: 310, height: 260 }}><span>Archive</span></div>

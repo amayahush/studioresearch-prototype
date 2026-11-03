@@ -1,4 +1,4 @@
-import { html, useState, useEffect, useRef, cx } from './lib.js';
+import { html, useState, useEffect, useRef, cx, touchCopy } from './lib.js';
 import { Avatar } from './ui.js';
 import { Clock, Check, ArrowRight } from 'lucide-react';
 
@@ -58,7 +58,7 @@ export function TimeSkip({ from, to, day, title, events, onDone }) {
         })}
       </div>
       <div className="ts-foot">
-        <span className="ts-hint muted">${landed ? 'Meanwhile, off screen. Not part of Astra.' : 'Meanwhile, off screen · click to show everything'}</span>
+        <span className="ts-hint muted">${landed ? 'Meanwhile, off screen. Not part of Astra.' : touchCopy('Meanwhile, off screen · click to show everything')}</span>
         ${landed && html`<button ref=${continueRef} className="btn btn-primary" onClick=${(e) => { e.stopPropagation(); finish(); }}>Continue <${ArrowRight} size=${14} /></button>`}
       </div>
     </div>

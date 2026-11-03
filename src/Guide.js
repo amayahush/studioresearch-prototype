@@ -1,4 +1,4 @@
-import { html, useState, useEffect, useRef, cx } from './lib.js';
+import { html, useState, useEffect, useRef, cx, touchCopy } from './lib.js';
 import { useStore } from './store.js';
 import { MessageCircleQuestion, X, ChevronRight } from 'lucide-react';
 
@@ -125,11 +125,11 @@ export function Guide() {
         <button className="icon-btn sm" onClick=${() => setOpen(false)} aria-label="Close guide"><${X} size=${14} /></button>
       </div>
       <div className="guide-body">
-        <h3>${step.title}</h3>
-        <p>${step.body}</p>
+        <h3>${touchCopy(step.title)}</h3>
+        <p>${touchCopy(step.body)}</p>
         <div className="guide-next">
           <div className="tiny-label">What you can do</div>
-          <p>${step.next}</p>
+          <p>${touchCopy(step.next)}</p>
         </div>
         <details className="guide-terms">
           <summary><${ChevronRight} size=${13} className="guide-chev" /> Who's who and terms</summary>

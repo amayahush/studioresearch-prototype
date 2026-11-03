@@ -261,6 +261,19 @@ export function RecorderMap({ selected, setSelected }) {
   const { state } = useStore();
   const rec = useMemo(() => buildRecord(state), [state]);
   const [focus, setFocus] = useState(() => (selected && /^R\d$/.test(selected) ? selected : 'R4'));
+  // Phones: the three columns are wider than the screen, so the stage scrolls sideways.
+  // Keep the focused record in view whenever the focus changes.
+  const stageBox = useRef(null);
+  useEffect(() => {
+    const st = stageBox.current;
+    if (!st || st.scrollWidth <= st.clientWidth) return;
+    const t = setTimeout(() => {
+      const c = st.querySelector('.rec-center'); if (!c) return;
+      const cr = c.getBoundingClientRect(), sr = st.getBoundingClientRect();
+      st.scrollTo({ left: st.scrollLeft + cr.left - sr.left + cr.width / 2 - st.clientWidth / 2, behavior: 'smooth' });
+    }, 60);
+    return () => clearTimeout(t);
+  }, [focus]);
   const [track, setTrack] = useState(() => (selected && /^R\d$/.test(selected) ? selected : 'R4'));
   const [scope, setScope] = useState(() => epicOf(selected && /^R\d$/.test(selected) ? selected : 'R4'));
   const [T, setT] = useState(rec.live);
@@ -425,20 +438,20 @@ export function RecorderMap({ selected, setSelected }) {
       <span className="grow" />
     </div>
 
-    <div className="rec-stage">
+    <div className="rec-stage" ref=${stageBox}>
       <${Columns} key=${focus} ...${props} />
     </div>
 
     <div className="rec-tape">
-      <div className="rec-strip" ref=${tapeRef} onMouseDown=${(e) => {
+      <div className="rec-strip" ref=${tapeRef} onPointerDown=${(e) => {
         if (e.target.closest('.rec-tick')) return;
         setPlaying(false);
         const r = tapeRef.current.getBoundingClientRect();
         cancelAnimationFrame(seekRaf.current); seekRaf.current = 0;
         const move = (ev) => setT(tOf(ax, ev.clientX - r.left, live));
         move(e);
-        const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
-        window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+        const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); };
+        window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
       }}>
         <${Axis} ax=${ax} pastRef=${pastRef} />
         ${(!track || track === 'R4') && scopeReqs.includes('R4') && Object.entries(rec.lags).map(([id, [from, to, why]], i) => {
