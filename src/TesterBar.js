@@ -1,5 +1,6 @@
 import { html } from './lib.js';
-import { useStore } from './store.js';
+import { useStore, PEOPLE } from './store.js';
+import { Avatar } from './ui.js';
 import { TOUR_STEPS, tourKey } from './tourSteps.js';
 import { RotateCcw, Lightbulb, House, Sun, Moon } from 'lucide-react';
 
@@ -9,6 +10,14 @@ function AstraMark() {
     <circle cx="1.5" cy="3" r="1" fill="#C4A7FF" />
     <circle cx="14.5" cy="13" r="1" fill="#C4A7FF" />
   </svg>`;
+}
+
+// Which scenario is running, shown in the middle of the strip so it reads as the test frame, not Astra.
+function ScenarioName({ role }) {
+  if (!role) return null;
+  if (role === 'explore') return html`<div className="tb-scenario"><span className="tb-scenario-kind">Free explore</span><span>Exploring Astra</span></div>`;
+  const p = PEOPLE[role];
+  return html`<div className="tb-scenario"><span className="tb-scenario-kind">Scenario</span><${Avatar} id=${role} size=${18} /><span>${p.role} · ${p.name}</span></div>`;
 }
 
 // Top strip. The role is chosen once on the start screen; here the facilitator can restart a
@@ -21,6 +30,7 @@ export function TesterBar() {
       <span className="tb-logo"><${AstraMark} /></span> Astra
     </button>
     <button className="icon-btn tb-home" onClick=${() => dispatch({ type: 'SET_ROLE', role: null })} disabled=${!state.role} title="Back to scenarios" aria-label="Back to scenarios"><${House} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
+    <${ScenarioName} role=${state.role} />
     <span className="grow" />
     <div className="tb-actions">
       <button className="icon-btn" onClick=${() => dispatch({ type: 'SET_THEME', theme: state.theme === 'light' ? 'dark' : 'light' })} title=${state.theme === 'light' ? 'Dark mode' : 'Light mode'} aria-label=${state.theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
