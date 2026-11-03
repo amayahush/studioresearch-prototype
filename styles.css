@@ -1438,3 +1438,209 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .tour-arrow.primary:hover:not(:disabled) { background: #fff; }
 .tour-arrow:focus-visible, .tour-exit:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
 .tour-wait { position: fixed; z-index: 310; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 999px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line-2), 0 12px 30px rgba(0, 0, 0, 0.5); color: var(--text-2); font: 13px/20px var(--sans); white-space: nowrap; max-width: calc(100vw - 24px); }
+
+/* ==========================================================================
+   Astra design system v2 (design-system-v2 branch)
+   Scoped to the Astra web app (.astra). The Codex and Figma shells, and the Astra
+   panels inside them, sit outside .astra[data-theme] and keep their own look.
+   Panels are separated by surface tone, not borders. Secondary buttons are soft gray
+   fills, one blue primary per view, slices are connected document tabs.
+   ========================================================================== */
+.astra[data-theme="dark"] {
+  --a-chrome: #131414; --a-doc: #1E1F1F; --a-panel: #171818; --a-status: #0F1010;
+  --a-fill: #2A2C2C; --a-fill-hover: #333535; --a-seg: #1E2020; --a-segon: #2D2F2F; --a-segshadow: none;
+  --a-navon: #232525; --a-card: #222424; --a-cardline: #2E3030; --a-inset: #2A2C2C; --a-chip: #262828; --a-epic: #262828;
+  --a-dot: #2A2C2C; --a-wire: #4A4D4F; --a-accent: #2563EB; --a-accent-hover: #1D4ED8; --a-accent-text: #8EB0FF;
+  --a-rec: #F08473; --a-rec-glow: rgba(240, 132, 115, 0.18); --a-amber-line: #E8AA4E; --a-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+  --bg: #1E1F1F; --bg-1: #242626; --bg-2: #2A2C2C; --bg-3: #313333; --line: #2A2C2C; --line-2: #3A3C3C;
+  --text: #E6E8EC; --text-2: #9BA2AD; --muted: #878E99;
+  --amber: #E8AA4E; --amber-soft: #372D1E; --green: #5DC79A; --green-soft: #1C2F27; --red: #F08473; --blue: #8EA6FF;
+  --r-app: #1E1F1F; --r-sidebar: #131414; --r-panel: #171818; --r-card: #222424; --r-row: #2D2F2F; --r-line: #2E3030; --r-line-strong: #3A3C3C;
+  --r-text: #E6E8EC; --r-muted: #9BA2AD; --r-label: #878E99; --r-blue: #8EA6FF; --r-blue-bg: #1E2537; --r-amber: #E8AA4E; --r-amber-bg: #372D1E;
+  --r-green: #5DC79A; --r-green-bg: #1C2F27; --r-red: #F08473;
+  color-scheme: dark;
+}
+.astra[data-theme="light"] {
+  --a-chrome: #F7F7F8; --a-doc: #FFFFFF; --a-panel: #FAFAFB; --a-status: #F1F2F3;
+  --a-fill: #ECEDEF; --a-fill-hover: #E1E3E6; --a-seg: #EBECEE; --a-segon: #FFFFFF; --a-segshadow: 0 1px 2px rgba(16, 24, 40, 0.1);
+  --a-navon: #E8E9EC; --a-card: #FFFFFF; --a-cardline: #E1E3E7; --a-inset: #F4F5F7; --a-chip: #EFF0F2; --a-epic: #F2F3F5;
+  --a-dot: #E1E3E6; --a-wire: #B9BEC5; --a-accent: #2563EB; --a-accent-hover: #1D4ED8; --a-accent-text: #1F5FD1;
+  --a-rec: #BF3B27; --a-rec-glow: rgba(191, 59, 39, 0.14); --a-amber-line: #E0A040; --a-shadow: 0 14px 34px rgba(16, 24, 40, 0.14);
+  --bg: #FFFFFF; --bg-1: #F7F7F8; --bg-2: #F2F3F5; --bg-3: #E9EAED; --line: #E6E8EB; --line-2: #D9DCE0;
+  --text: #16181D; --text-2: #5B626C; --muted: #636A74;
+  --amber: #9A5800; --amber-soft: #FDF0DC; --green: #1B7550; --green-soft: #E2F3EA; --red: #BF3B27; --blue: #3451C7;
+  --r-app: #FFFFFF; --r-sidebar: #F7F7F8; --r-panel: #FAFAFB; --r-card: #FFFFFF; --r-row: #E9EAED; --r-line: #E1E3E7; --r-line-strong: #D9DCE0;
+  --r-text: #16181D; --r-muted: #5B626C; --r-label: #636A74; --r-blue: #3451C7; --r-blue-bg: #E8EDFD; --r-amber: #9A5800; --r-amber-bg: #FDF0DC;
+  --r-green: #1B7550; --r-green-bg: #E2F3EA; --r-red: #BF3B27;
+  color-scheme: light;
+}
+
+/* frame */
+.astra[data-theme] { flex-direction: column; background: var(--a-doc); color: var(--text); }
+.astra-row { flex: 1; min-height: 0; display: flex; }
+
+/* sidebar */
+.astra[data-theme] .rl-side { background: var(--a-chrome); border-right: 0; box-shadow: inset -1px 0 0 var(--line); padding-bottom: 60px; }
+/* The guide button sits above the status bar, below the sidebar's Settings and user row. */
+.stage:has(.astra[data-theme]) .guide { bottom: 38px; }
+.astra[data-theme] .rl-org-row { height: 48px; margin-bottom: 4px; border-bottom: 0; }
+.astra[data-theme] .rl-search { height: 30px; border-radius: 6px; box-shadow: none; background: var(--a-seg); color: var(--muted); font-size: 12px; }
+.astra[data-theme] .rl-nav { height: 30px; border-radius: 6px; color: var(--text-2); }
+.astra[data-theme] button.rl-nav:hover { background: var(--a-fill); color: var(--text); }
+.astra[data-theme] .rl-nav.active { background: var(--a-navon); color: var(--text); font-weight: 500; }
+.astra[data-theme] .rl-group { padding: 18px 8px 6px; font-size: 12px; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.astra[data-theme] .rl-user { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 8px; font-size: 12px; color: var(--text-2); }
+.astra[data-theme] .rail-btn.active { background: var(--a-navon); }
+.astra[data-theme] .rail-badge { box-shadow: 0 0 0 2px var(--a-chrome); }
+.astra[data-theme] .rail-btn[data-tip]:hover::after, .astra[data-theme] .rail-btn[data-tip]:focus-visible::after { color: var(--bg); }
+.astra[data-theme] .rl-nav-toggle:hover, .astra[data-theme] .rail-btn:hover { background: var(--a-fill); }
+
+/* header: breadcrumb, view switch, actions */
+.astra[data-theme] .rl-top { flex: 0 0 48px; gap: 10px; padding: 0 12px 0 20px; border-bottom: 0; background: var(--a-chrome); }
+.astra[data-theme] .rl-crumbs { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.astra[data-theme] .rl-crumb { color: var(--muted); }
+.astra[data-theme] .rl-crumb:hover { color: var(--text); }
+.astra[data-theme] .rl-crumb-sep { color: var(--line-2); }
+.astra[data-theme] .rl-top-title { font-size: 13px; line-height: 20px; }
+.astra[data-theme] .rl-ver { font-size: 11px; color: var(--muted); }
+.astra[data-theme] .rl-top-sep { width: 1px; height: 18px; background: var(--line-2); flex: none; }
+.astra[data-theme] .rl-export { width: 30px; height: 30px; border-radius: 6px; }
+.astra[data-theme] .seg { gap: 2px; padding: 2px; border-radius: 7px; background: var(--a-seg); box-shadow: none; }
+.astra[data-theme] .seg-btn { height: 26px; padding: 0 12px; border-radius: 5px; font-size: 12px; font-weight: 500; color: var(--text-2); }
+.astra[data-theme] .seg-btn.active { background: var(--a-segon); color: var(--text); box-shadow: var(--a-segshadow); }
+.astra[data-theme] .seg.sm .seg-btn { height: 24px; padding: 0 9px; }
+
+/* buttons: soft gray secondary, square overflow, one blue primary */
+.astra[data-theme] .btn { height: 32px; padding: 0 14px; border-radius: 6px; box-shadow: none; background: var(--a-fill); color: var(--text); }
+.astra[data-theme] .btn:hover:not(:disabled) { background: var(--a-fill-hover); }
+.astra[data-theme] .btn.sm { height: 30px; padding: 0 12px; }
+.astra[data-theme] .btn-primary { background: var(--a-accent); color: #FFFFFF; }
+.astra[data-theme] .btn-primary:hover:not(:disabled) { background: var(--a-accent-hover); }
+.astra[data-theme] .btn-ghost { background: transparent; }
+.astra[data-theme] .btn-ghost:hover:not(:disabled) { background: var(--a-fill); }
+.astra[data-theme] .btn-soft { background: var(--a-fill); box-shadow: none; }
+.astra[data-theme] .btn-square { width: 30px; height: 30px; border-radius: 6px; background: var(--a-fill); color: var(--text); }
+.astra[data-theme] .btn-square:hover { background: var(--a-fill-hover); }
+.astra[data-theme] .sp-foot .btn-square { width: 32px; height: 32px; }
+.astra[data-theme] .icon-btn { border-radius: 6px; }
+.astra[data-theme] .icon-btn:hover { background: var(--a-fill); }
+.astra[data-theme] .btn:focus-visible, .astra[data-theme] .icon-btn:focus-visible, .astra[data-theme] .seg-btn:focus-visible, .astra[data-theme] .slice:focus-visible, .astra[data-theme] .rl-filter:focus-visible { outline: 2px solid var(--a-accent); outline-offset: 1px; }
+
+/* slices: connected document tabs; the active tab takes the page color and joins the doc below */
+.astra[data-theme] .rl-subbar { flex: 0 0 40px; gap: 0; padding: 0 12px 0 0; border-bottom: 0; background: var(--a-chrome); box-shadow: inset 0 -1px 0 var(--line); align-items: stretch; }
+.astra[data-theme] .slices { gap: 0; align-items: stretch; }
+.astra[data-theme] .slice { gap: 8px; padding: 0 16px; color: var(--text-2); box-shadow: inset -1px 0 0 var(--line); }
+.astra[data-theme] .slice:hover { color: var(--text); }
+.astra[data-theme] .slice.active { background: var(--a-doc); color: var(--a-accent-text); font-weight: 500; box-shadow: inset 1px 0 0 var(--line), inset -1px 0 0 var(--line); }
+.astra[data-theme] .slice .dot { background: var(--a-amber-line); }
+.astra[data-theme] .rl-subbar > .export-wrap { align-self: center; }
+.astra[data-theme] .rl-filter { height: 28px; padding: 0 10px; border-radius: 6px; box-shadow: none; background: var(--a-fill); font-weight: 500; }
+.astra[data-theme] .rl-filter:hover { background: var(--a-fill-hover); }
+
+/* document */
+.astra[data-theme] .rl-doc { background: var(--a-doc); padding: 28px 40px 48px; }
+.astra[data-theme] .doc-title:hover, .astra[data-theme] .doc-sec:hover, .astra[data-theme] .req:hover { background: var(--bg-1); }
+.astra[data-theme] .doc-sec.selected { background: var(--bg-3); }
+.astra[data-theme] .epic-head { border-radius: 6px; background: var(--a-epic); }
+.astra[data-theme] .epic-head:hover { background: var(--bg-3); }
+.astra[data-theme] .req.selected { background: var(--bg-1); box-shadow: inset 0 0 0 1px var(--line-2); }
+.astra[data-theme] .req.selected.pending { box-shadow: inset 0 0 0 1px var(--a-amber-line); }
+.astra[data-theme] .doc-chip, .astra[data-theme] .chip.static { box-shadow: none; background: var(--a-chip); border-radius: 5px; }
+.astra[data-theme] .tag { border-radius: 5px; }
+.astra[data-theme] .tag, .astra[data-theme] .tag-red, .astra[data-theme] .tag-neutral, .astra[data-theme] .tag-gray, .astra[data-theme] .tag-purple { background: var(--a-chip); }
+.astra[data-theme] .tag-amber { background: var(--amber-soft); color: var(--amber); }
+.astra[data-theme] .tag-green { background: var(--green-soft); color: var(--green); }
+.astra[data-theme] .tag-blue, .astra[data-theme] .chip-blue { background: var(--r-blue-bg); color: var(--blue); }
+.astra[data-theme] .tag-outline { background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); }
+.astra[data-theme] .chip-amber { box-shadow: inset 0 0 0 1px var(--a-amber-line); }
+.astra[data-theme] .doc-info { box-shadow: none; background: var(--a-inset); }
+
+/* inspector: a mid-tone panel holding cards */
+.astra[data-theme] .rl-panel { border-left: 0; background: var(--a-panel); box-shadow: inset 1px 0 0 var(--line); }
+.astra[data-theme] .insp-head { flex-basis: 44px; border-bottom: 0; }
+.astra[data-theme] .insp-body { padding: 4px 12px 16px; }
+.astra[data-theme] .insp-body > .csec, .astra[data-theme] .insp-body > .insp-from + .csec, .astra[data-theme] .insp-body > .csec:first-child { margin-top: 8px; padding: 0 12px; border-top: 0; border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.astra[data-theme] .csec-head { min-height: 40px; }
+.astra[data-theme] .csec-body { padding: 0 0 12px 21px; }
+.astra[data-theme] .rl-status { border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); padding: 12px; }
+.astra[data-theme] .rl-status.pending { box-shadow: inset 0 0 0 1px var(--a-amber-line); }
+.astra[data-theme] .cmp { background: var(--a-inset); box-shadow: none; border-radius: 8px; }
+.astra[data-theme] .cmp-row + .cmp-row { border-top-color: var(--a-cardline); }
+.astra[data-theme] .waiting-card, .astra[data-theme] .decision-card, .astra[data-theme] .confirm-card, .astra[data-theme] .info-row, .astra[data-theme] .source-row, .astra[data-theme] .ev-card { background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.astra[data-theme] .quote-card, .astra[data-theme] .affects-card { background: var(--a-inset); }
+.astra[data-theme] .field { background: var(--a-doc); border-radius: 8px; }
+.astra[data-theme] .field:focus, .astra[data-theme] .field.focus { box-shadow: inset 0 0 0 1px var(--a-accent); }
+.astra[data-theme] .sp-foot { gap: 6px; padding: 12px; border-top: 0; box-shadow: inset 0 1px 0 var(--line); }
+.astra[data-theme] .sp-foot > .deny-btn { display: inline-flex; gap: 6px; padding: 0; }
+.astra[data-theme] .update-row input { accent-color: var(--a-accent); }
+
+/* menus, toasts, popovers */
+.astra[data-theme] .menu { background: var(--a-card); border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-2), var(--a-shadow); }
+.astra[data-theme] .menu-item { border-radius: 5px; }
+.astra[data-theme] .menu-item:hover:not(:disabled), .astra[data-theme] .menu-item.on { background: var(--a-fill); }
+.astra[data-theme] .sp-foot .menu.up { left: 12px; right: auto; width: 260px; bottom: calc(100% + 6px); }
+.astra[data-theme] .toast { background: var(--text); color: var(--bg); }
+.astra[data-theme] .ev-pop, .astra[data-theme] .map-tip { background: var(--a-card); box-shadow: inset 0 0 0 1px var(--line-2), var(--a-shadow); }
+.astra[data-theme] .menu-check.on { color: var(--bg); }
+
+/* status bar: recorder, tool sync, theme, help, feedback */
+.astra[data-theme] .rl-statusbar { flex: 0 0 28px; height: 28px; display: flex; align-items: center; gap: 2px; padding: 0 10px; background: var(--a-status); box-shadow: inset 0 1px 0 var(--line); overflow: hidden; position: relative; z-index: 6; }
+.astra[data-theme] .rl-sb { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 6px; border-radius: 4px; font-size: 11px; line-height: 16px; color: var(--text-2); white-space: nowrap; }
+.astra[data-theme] button.rl-sb:hover { background: var(--a-fill); color: var(--text); }
+.astra[data-theme] .rl-rec { color: var(--text); }
+.astra[data-theme] .rl-rec-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--a-rec); box-shadow: 0 0 0 3px var(--a-rec-glow); animation: rec-pulse 2.4s ease-in-out infinite; }
+@keyframes rec-pulse { 50% { box-shadow: 0 0 0 1.5px var(--a-rec-glow); } }
+.astra[data-theme] .rl-sb-meta { color: var(--muted); }
+.astra[data-theme] .rl-sb-sep { width: 1px; height: 14px; margin: 0 4px; background: var(--line-2); }
+.astra[data-theme] .rl-sync { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+@media (prefers-reduced-motion: reduce) { .astra[data-theme] .rl-rec-dot { animation: none; } }
+
+/* map (recorder) */
+.astra[data-theme] .rec .map-bar { flex: 0 0 40px; height: 40px; margin: 0; padding: 0 12px 0 20px; gap: 8px; background: var(--a-chrome); border-bottom: 0; box-shadow: inset 0 -1px 0 var(--line); }
+.astra[data-theme] .rec-stage { background-color: var(--a-doc); background-image: radial-gradient(var(--a-dot) 1px, transparent 1px); background-size: 16px 16px; }
+.astra[data-theme] .rec-card { border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline), 0 1px 2px rgba(0, 0, 0, 0.06); }
+.astra[data-theme] .rec-card-head { border-bottom-color: var(--a-cardline); }
+.astra[data-theme] .rec-row { border-top-color: var(--line); }
+.astra[data-theme] .rec-card.touched, .astra[data-theme] .rec-row.touched, .astra[data-theme] .rec-person.touched { background: var(--bg-1); box-shadow: inset 0 0 0 1px var(--text-2); }
+.astra[data-theme] .rec-center { box-shadow: inset 0 0 0 1.5px var(--text-2), 0 0 0 4px var(--bg-3), 0 8px 24px rgba(0, 0, 0, 0.12); }
+.astra[data-theme] .rec-center.touched { box-shadow: inset 0 0 0 1.5px var(--text), 0 0 0 4px var(--bg-3), 0 8px 24px rgba(0, 0, 0, 0.12); }
+.astra[data-theme] .rec-center-foot { border-top-color: var(--a-cardline); }
+.astra[data-theme] .rec-conn { stroke: var(--a-wire); }
+.astra[data-theme] .rec-ring { box-shadow: 0 0 0 2px var(--a-card), 0 0 0 3.5px transparent; }
+.astra[data-theme] .rec-ring.v1 { box-shadow: 0 0 0 2px var(--a-card), 0 0 0 3.5px var(--a-wire); }
+.astra[data-theme] .rec-ring.knows { box-shadow: 0 0 0 2px var(--a-card), 0 0 0 3.5px var(--a-amber-line); }
+.astra[data-theme] .rec-ring.cur { box-shadow: 0 0 0 2px var(--a-card), 0 0 0 3.5px var(--green); }
+.astra[data-theme] .rec-tape { border-top: 0; box-shadow: inset 0 1px 0 var(--line); background: var(--a-chrome); padding: 0 12px 0 20px; }
+.astra[data-theme] .rec-base { background: var(--line-2); }
+.astra[data-theme] .rec-brk { background: repeating-linear-gradient(135deg, transparent 0 4px, var(--line-2) 4px 5px); }
+.astra[data-theme] .rec-tick.ai { background: var(--a-chrome); }
+.astra[data-theme] .rec-tick:hover, .astra[data-theme] .rec-tick.cur { box-shadow: 0 0 0 2px var(--a-chrome), 0 0 0 3.5px var(--text); }
+.astra[data-theme] .rec-tick.ai:hover, .astra[data-theme] .rec-tick.ai.cur { box-shadow: inset 0 0 0 1.5px var(--blue), 0 0 0 2px var(--a-chrome), 0 0 0 3.5px var(--text); }
+.astra[data-theme] .rec-htime { color: var(--bg); font-size: 11px; }
+.astra[data-theme] .rec-trans { border-top: 0; gap: 6px; }
+.astra[data-theme] .rec-trans > .icon-btn { width: 28px; height: 28px; border-radius: 6px; background: var(--a-fill); color: var(--text); }
+.astra[data-theme] .rec-trans > .icon-btn:hover { background: var(--a-fill-hover); }
+.astra[data-theme] .rec-trans > .rec-play { width: 32px; height: 32px; border-radius: 50%; background: var(--a-accent); color: #FFFFFF; box-shadow: none; }
+.astra[data-theme] .rec-trans > .rec-play:hover { background: var(--a-accent-hover); }
+.astra[data-theme] .rec-clock { font-size: 11px; color: var(--text-2); }
+.astra[data-theme] .rec-callout strong { font-weight: 600; }
+.astra[data-theme] .rec-switch { background: var(--a-fill); box-shadow: none; }
+.astra[data-theme] .rec-follow input:checked + .rec-switch { background: var(--a-accent); }
+.astra[data-theme] .rec-follow input:checked + .rec-switch::after { background: #FFFFFF; }
+
+/* screens and present */
+.astra[data-theme] .fcanvas-view, .astra[data-theme] .fmap-stage { background-color: var(--a-doc); background-image: radial-gradient(var(--a-dot) 1px, transparent 1px); }
+.astra[data-theme] .fc-section { background: var(--a-chrome); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.astra[data-theme] .slide { background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.astra[data-theme] .slide-ev-card, .astra[data-theme] .thumb { box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.astra[data-theme] .thumb.active { background: var(--bg-1); box-shadow: inset 0 0 0 1.5px var(--a-accent); }
+.astra[data-theme] .pin.active { color: var(--bg); }
+
+/* overlays that open inside Astra */
+.astra[data-theme] .ts-card, .astra[data-theme] .endcard { background: var(--a-card); }
+/* Screens: Figma frames are white, so the light canvas is a step darker than the page, like Figma's own canvas. */
+.astra[data-theme="light"] .fcanvas-view { background-color: #EEEFF1; background-image: radial-gradient(#DADDE1 1px, transparent 1px); }
+.astra[data-theme] .select { height: 32px; border-radius: 6px; box-shadow: none; background-color: var(--a-fill); }
+.astra[data-theme] .select:hover { background-color: var(--a-fill-hover); }
+.astra[data-theme] .select option { background: var(--a-card); }
+.astra[data-theme] .rec-tick.open { background: var(--a-amber-line); }

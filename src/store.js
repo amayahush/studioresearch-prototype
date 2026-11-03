@@ -106,11 +106,20 @@ export const initialState = {
   log: [],
   // Guided mode (design rationale tour). Kept across resets so it stays on during a demo.
   guided: false,
+  // Astra's light/dark theme. Kept across resets and role switches. Codex and Figma keep their own look.
+  theme: 'dark',
 };
 
 const log = (state, who, text, time) => [...state.log, { who, text, time }];
 
+// The theme is a viewer setting, not part of the story, so no story action resets it.
 export function reducer(state, action) {
+  if (action.type === 'SET_THEME') return { ...state, theme: action.theme };
+  const next = storyReducer(state, action);
+  return next.theme === state.theme ? next : { ...next, theme: state.theme };
+}
+
+function storyReducer(state, action) {
   switch (action.type) {
     case 'SET_GUIDED':
       return { ...state, guided: action.on };
@@ -207,9 +216,9 @@ export function reducer(state, action) {
       // After an end card sends someone exploring, this restarts the path they played.
       if (!state.role) return state;
       const fresh = state.startedAs
-        ? reducer(state, { type: 'START_ROLE', role: state.startedAs })
+        ? storyReducer(state, { type: 'START_ROLE', role: state.startedAs })
         : state.role === 'explore'
-          ? reducer(state, { type: 'EXPLORE_ASTRA' })
+          ? storyReducer(state, { type: 'EXPLORE_ASTRA' })
           : { ...initialState, role: state.role, guided: state.guided };
       // `run` remounts the screen so open panels, files and overlays close too.
       return { ...fresh, run: (state.run || 0) + 1 };
