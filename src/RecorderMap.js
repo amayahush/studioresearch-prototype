@@ -470,7 +470,7 @@ export function RecorderMap({ selected, setSelected }) {
       <div className="rec-trans">
         <button className="icon-btn" onClick=${() => step(-1)} aria-label="Previous event"><${SkipBack} size=${14} strokeWidth=${1.5} /></button>
         ${isLive && !playing && times.length
-          ? html`<button className="btn sm rec-replay" onClick=${play} aria-label=${`Replay from ${fmt(times[0]).date}`}><${Play} size=${13} strokeWidth=${1.5} aria-hidden="true" />Replay from ${fmt(times[0]).date}</button>`
+          ? html`<button className="btn sm rec-replay" onClick=${play} aria-label=${`Replay from ${fmt(times[0]).date}`}><${Play} size=${13} strokeWidth=${1.5} aria-hidden="true" />Replay<span className="rec-replay-date"> from ${fmt(times[0]).date}</span></button>`
           : html`<button className="icon-btn rec-play" onClick=${play} aria-label=${playing ? 'Pause' : 'Play'}>${playing ? html`<${Pause} size=${14} strokeWidth=${1.5} />` : html`<${Play} size=${14} strokeWidth=${1.5} />`}</button>`}
         <button className="icon-btn" onClick=${() => step(1)} aria-label="Next event"><${SkipForward} size=${14} strokeWidth=${1.5} /></button>
         <span className="rec-clock mono" ref=${clockRef} />

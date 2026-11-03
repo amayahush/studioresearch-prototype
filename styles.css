@@ -720,6 +720,7 @@ button.rl-nav:hover { background: var(--bg-3); color: var(--text); }
 /* present (12) */
 .present { flex: 1; overflow: auto; padding: 20px 32px 28px; display: grid; gap: 16px; align-content: start; max-width: 940px; width: 100%; margin: 0 auto; }
 .present-bar { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.present-actions { display: contents; }
 .slide { border-radius: 14px; background: var(--bg-1); box-shadow: inset 0 0 0 1px var(--line); padding: 32px; min-height: 340px; display: grid; gap: 14px; align-content: start; }
 .slide-kicker { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .slide h2 { font-size: 16px; line-height: 24px; font-weight: 600; margin: 0; }
@@ -2143,6 +2144,29 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
   .app .m-sheet :is(.sp-foot, .rl-actions) :is(.export-wrap, .deny-btn, .rl-more) { display: inline-flex; align-items: center; gap: 6px; }
   .app .m-sheet :is(.sp-foot, .rl-actions) .btn { height: 44px; min-height: 44px; }
   .app .m-sheet :is(.sp-foot, .rl-actions) .btn-square { width: 44px; height: 44px; }
+
+  /* Map: epic picker and requirement chips split the row evenly */
+  .astra[data-theme] .map-bar { flex-wrap: nowrap; }
+  .map-bar > .export-wrap, .map-bar > .seg { flex: 1 1 0; min-width: 0; }
+  .map-bar > .export-wrap > .rl-filter { width: 100%; min-height: 40px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .map-bar > .seg { display: flex; }
+  .astra[data-theme] .map-bar > .seg { gap: 0; padding: 2px; }
+  .astra[data-theme] .map-bar > .seg .seg-btn { flex: 1 1 0; min-width: 0; min-height: 36px; padding: 0; gap: 2px; justify-content: center; font-size: 12px; }
+  .map-bar > .seg .seg-btn .dot { width: 5px; height: 5px; margin: 0; }
+  .map-bar > .export-wrap > .rl-filter .mono { display: none; }
+  .astra[data-theme] .map-bar > .grow { display: none; }
+
+  /* Map tape: previous, replay/play and next fill the first row in equal thirds */
+  .rec-trans { flex-wrap: wrap; row-gap: 6px; height: auto; padding: 8px 0; }
+  .rec-trans > .icon-btn, .rec-trans > .rec-replay { flex: 0 0 calc((100% - 16px) / 3); width: auto; min-height: 40px; margin: 0; justify-content: center; }
+  .rec-replay-date { display: none; }
+
+  /* Present: Customize slides bottom left, Present bottom right */
+  .astra[data-theme] .present { display: flex; flex-direction: column; }
+  .present > * { flex: none; }
+  .present-actions { margin-top: auto !important; position: sticky; bottom: 0; z-index: 5; display: flex; gap: 8px; margin: 0 -12px calc(-24px - env(safe-area-inset-bottom));
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--a-chrome, var(--bg)); box-shadow: inset 0 1px 0 var(--line); }
+  .present-actions > .btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
 }
 
 /* Landscape tablets and small laptops (901–1100px): desktop layout with room to breathe. */
