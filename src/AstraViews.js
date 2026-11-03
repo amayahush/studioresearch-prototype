@@ -648,7 +648,7 @@ export function PresentView({ toast }) {
         <button className="icon-btn" aria-label="Previous slide" onClick=${() => setIdx(Math.max(0, idx - 1))}><${ChevronLeft} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
         <span className="small">${idx + 1} / ${slides.length}</span>
         <button className="icon-btn" aria-label="Next slide" onClick=${() => setIdx(Math.min(slides.length - 1, idx + 1))}><${ChevronRight} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
-        <button className="btn sm" onClick=${() => setPresenting(false)}>Exit (Esc)</button>
+        <button className="btn sm" onClick=${() => setPresenting(false)}>${phone ? 'Exit' : 'Exit (Esc)'}</button>
       </div>
     </div>`}
   </div>`;

@@ -2034,7 +2034,9 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
   .rl-doc { padding: 18px 16px calc(96px + env(safe-area-inset-bottom)); }
   .rl-split { position: relative; }
   .rl-panel.m-sheet { background: var(--bg-1); }
-  .rl-panel.m-sheet .insp-head { padding-right: 52px; }
+  .rl-panel.m-sheet:has(.m-sheet-close) .insp-head { padding-right: 52px; }
+  .rl-panel.m-sheet .insp-head { padding-left: 16px; padding-right: 6px; }
+  .rl-panel.m-sheet .insp-head > .icon-btn:last-child { margin-left: auto; }
   .rl-panel.m-sheet .insp-head .icon-btn { width: 44px; height: 44px; }
 
   .m-dock { display: flex; position: absolute; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 20; align-items: center; gap: 12px;
@@ -2112,7 +2114,10 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
   .thumb { flex: 0 0 132px; min-height: 64px; scroll-snap-align: start; }
   .presenting { padding: 16px; padding-top: calc(16px + env(safe-area-inset-top)); }
   .presenting .slide { zoom: 1; }
-  .presenting-bar { bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .presenting-bar { bottom: calc(16px + env(safe-area-inset-bottom)); white-space: nowrap; gap: 4px; padding: 4px 4px 4px 4px; }
+  .presenting-bar .small { min-width: 40px; text-align: center; }
+  .presenting-bar .icon-btn { width: 44px; height: 44px; }
+  .presenting-bar .btn { min-height: 40px; margin-left: 4px; }
 
   /* Time skips and end cards fit the screen and scroll if long */
   .ts-card, .endcard { width: calc(100vw - 24px); max-width: 560px; max-height: calc(100dvh - 120px); overflow: auto; padding: 20px 18px; white-space: normal; }
