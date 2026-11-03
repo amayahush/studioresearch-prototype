@@ -1874,3 +1874,30 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .submit-summary .submit-chev.open { transform: rotate(180deg); }
 .submit-summary:hover .submit-line { color: var(--text); }
 .submit-summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+
+/* ---------- Map: usability feedback ---------- */
+/* Arrowheads show which way each connector flows: source into requirement, requirement into work. */
+.rec-arrowhead { fill: var(--r-line-strong); }
+:is(.astra, .astra-embed)[data-theme] .rec-arrowhead { fill: var(--a-wire); }
+/* People: whoever is in the current event stands out; the rest step back but keep their place. */
+.rec-person { transition: background-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease; }
+.rec-people.has-touch .rec-person:not(.touched) { opacity: 0.4; }
+/* Stale records: dashed edge and softer title while they lag what was decided. */
+.rec-card.stale:not(.touched), .rec-row.stale:not(.touched) { box-shadow: none; outline: 1px dashed var(--text-2); outline-offset: -1px; }
+.rec-card.stale:not(.touched) .rec-card-title, .rec-row.stale:not(.touched) .rec-row-label { color: var(--text-2); }
+.rec-card, .rec-row { transition: outline-color 0.3s ease; }
+/* Tape: bands for how long each record was out of date. */
+.rec-lag { position: absolute; height: 4px; border-radius: 2px; background: repeating-linear-gradient(90deg, var(--text-2) 0 4px, transparent 4px 7px); opacity: 0.55; z-index: 1; cursor: help; }
+.rec-lag::before { content: ''; position: absolute; inset: -4px 0; }
+.rec-lag.now { opacity: 0.9; }
+/* Transport */
+.rec-replay { gap: 6px; white-space: nowrap; flex: none; }
+.rec-scope { flex: none; padding: 2px 7px; border-radius: 5px; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--text-2); font-size: 11px; line-height: 16px; white-space: nowrap; }
+.rec-callout { display: flex; align-items: center; gap: 8px; color: var(--text); white-space: normal; }
+.rec-callout-text { min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; line-height: 18px; }
+.rec-callout.has-event { padding: 3px 10px 3px 4px; border-radius: 999px; background: var(--bg-2); }
+:is(.astra, .astra-embed)[data-theme] .rec-callout.has-event { background: var(--a-fill); }
+.rec-callout > .avatar, .rec-callout > .rec-bot { flex: none; }
+/* Hover preview */
+.rec-tip-sum { font-size: 13px; line-height: 18px; font-weight: 500; color: var(--text); margin-top: 6px; }
+.rec-tip-foot { display: flex; gap: 4px; margin-top: 6px; }

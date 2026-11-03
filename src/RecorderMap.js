@@ -20,6 +20,39 @@ const DAYS = [0, 7, 8, 9, 10, 11, 12, 13];
 const AT = { flag: D(OCT8, 13, 40), propose: D(OCT8, 13, 52), priya: D(OCT8, 13, 58), ask: D(OCT8, 14, 8), resend: D(OCT8, 14, 19), decide: D(OCT8, 14, 21), code: D(OCT8, 14, 24), label: D(OCT8, 14, 26) };
 const dayName = (d) => (d === 0 ? 'Sep 24' : `Oct ${d - 6}`);
 const clock = (m) => `${((Math.floor(m / 60) + 11) % 12) + 1}:${String(Math.floor(m) % 60).padStart(2, '0')}`;
+// Short summaries for the timeline hover preview, keyed by requirement, time and who acted.
+const sk = (req, t, who) => `${req}@${t}@${who}`;
+const SHORT = {
+  [sk('R4', D(0, 10, 18), 'kim')]: 'Kickoff: see labor by lunch',
+  [sk('R4', D(0, 16, 0), 'astra')]: 'AI drafted R4: every 15 min',
+  [sk('R4', D(8, 11, 20), 'astra')]: 'AI created Jira LAB-15',
+  [sk('R4', D(9, 14, 40), 'priya')]: 'Overview labeled “every 15 min”',
+  [sk('R4', D(9, 18, 5), 'codex')]: 'Refresh job built on 15 min',
+  [sk('R1', D(0, 16, 0), 'astra')]: 'AI drafted R1',
+  [sk('R1', D(9, 11, 0), 'priya')]: 'Department bars designed',
+  [sk('R1', D(10, 15, 30), 'marcus')]: 'Merged !205, hours endpoint',
+  [sk('R1', D(11, 9, 0), 'astra')]: 'LAB-12 done',
+  [sk('R2', D(0, 14, 5), 'kim')]: 'Kickoff: overtime past 85%',
+  [sk('R2', D(7, 9, 0), 'astra')]: 'Lead notes say 90%: sources disagree',
+  [sk('R2', D(10, 12, 10), 'sam')]: 'Sam says 80%: a third threshold',
+  [sk('R2', D(11, 10, 0), 'jordan')]: 'Started LAB-13, overtime flag',
+  [sk('R3', D(0, 22, 10), 'sam')]: 'Kickoff: shifts look separately',
+  [sk('R3', D(9, 13, 0), 'priya')]: 'Filters frame designed',
+  [sk('R3', D(12, 14, 0), 'marcus')]: 'Opened !212, shift filter',
+  [sk('R5', D(7, 9, 30), 'astra')]: 'AI drafted R5, not accepted',
+  [sk('R6', D(9, 7, 15), 'sam')]: 'Lead sync: crews first',
+  [sk('R6', D(9, 10, 40), 'astra')]: 'AI added R6 as assumed',
+  [sk('R7', D(0, 10, 31), 'kim')]: 'Kickoff: alert when running hot',
+  [sk('R8', D(10, 12, 5), 'sam')]: 'SME sync: about 3 months back',
+  [sk('R4', PUB, 'dana')]: 'PRD v1 published, R4 unchecked',
+  [sk('R4', AT.flag, 'codex')]: 'Build test: API syncs hourly',
+  [sk('R4', AT.propose, 'marcus')]: 'Marcus proposes hourly',
+  [sk('R4', AT.ask, 'dana')]: 'Dana asks for newer evidence',
+  [sk('R4', AT.resend, 'marcus')]: 'Changelog added, resent',
+  [sk('R4', AT.resend, 'kim')]: 'Kim agrees in Teams',
+  [sk('R4', AT.code, 'marcus')]: 'Refresh job moved to hourly',
+  [sk('R4', AT.label, 'priya')]: 'Overview shows real sync time',
+};
 const fmt = (T) => { T = Math.floor(T); const d = Math.floor(T / 1440), m = T % 1440; return { date: dayName(d), time: `${clock(m)} ${m < 720 ? 'AM' : 'PM'}` }; };
 const when = (T) => `${fmt(T).date} · ${fmt(T).time}`;
 
@@ -142,6 +175,11 @@ function buildRecord(state) {
   if (state.codeUpdated) E.push(ev('R4', AT.code, 'done', 'marcus', 'Updated the refresh job to hourly (5 * * * *).', [['marcus', '!219'], ['!219', 'code-job']], ['GitLab !219']));
   if (state.labelUpdated) E.push(ev('R4', AT.label, 'done', 'priya', 'Relabeled the Overview to show the real last sync time.', [['priya', 'Overview'], ['Overview', 'code-ui']], ['Figma · Overview']));
   E.sort((a, b) => a.t - b.t);
+  for (const e of E) {
+    e.short = SHORT[sk(e.req, e.t, e.who)];
+    if (e.t === AT.priya && e.who === 'priya') e.short = state.priya.stance === 'agreed' ? 'Priya agrees, will relabel' : 'Priya disagrees';
+    if (e.t === AT.decide && e.who === 'dana') e.short = approved ? 'Dana approves v1.1' : 'Dana denies: R4 stays';
+  }
   const last = E[E.length - 1].t;
   const live = published ? Math.max(last + 1, AT.flag + 1) : PUB - 1;
   const decideAt = approved || denied ? AT.decide : null;
@@ -169,7 +207,8 @@ function recordsAt(state, rec, T) {
   const reqs = Object.fromEntries(getReqs(state).map((r) => [r.id, r]));
   const r4 = rec.r4At(T), ch = r4 === 'verified';
   const born = (t) => T >= t;
-  const lagging = (id) => rec.lags[id] && T >= rec.lags[id][0] && T < rec.lags[id][1];
+  // Still out of date at the present counts too: the record hasn't caught up yet.
+  const lagging = (id) => rec.lags[id] && T >= rec.lags[id][0] && (T < rec.lags[id][1] || rec.lags[id][1] >= rec.live);
   const n = {
     prd: { type: 'prd', label: 'Line Labor Dashboard', kind: 'PRD', full: `PRD ${ch ? 'v1.1' : T >= PUB ? 'v1' : 'v1 draft'}`, status: 'Owner Dana Ortiz', born: 0 },
     goal: { type: 'goal', label: 'Mid-shift risk', kind: 'Success metric', full: 'Leaders spot overtime risk by mid-shift.', status: 'Owner Kim Alvarez', born: 0 },
@@ -360,9 +399,10 @@ export function RecorderMap({ selected, setSelected }) {
       ${k && html`<div className="tiny">${k === 'cur' ? 'On v1.1' : k === 'knows' ? 'Knew R4 was wrong' : 'Working from v1, not told yet'}</div>`}
       ${lastEv && html`<div className="muted tiny">Last · ${fmt(lastEv.t).date} ${fmt(lastEv.t).time}: ${lastEv.text}</div>`}<//>`;
   };
-  const evTip = (e) => html`<${Fragment}><div className="rec-tip-head"><${Who} id=${e.who} /><span><strong>${whoName(e.who)}</strong><span className="muted tiny"> · ${e.req} · ${when(e.t)}</span></span></div>
-    <div className="map-tip-text">${e.text}</div>
-    ${(e.reviewer || e.kind === 'ai' || e.chips.length > 0) && html`<div className="chips">${e.reviewer ? html`<${Tag} tone="blue">AI · reviewed by ${e.reviewer}<//>` : e.kind === 'ai' ? html`<${Tag} tone="blue">AI · not reviewed<//>` : null}${e.chips.map((c) => html`<${Tag} key=${c}>${c}<//>`)}</div>`}<//>`;
+  // Hover is a preview: who, what changed in a few words, when. The full account plays in the callout once you jump there.
+  const evTip = (e) => html`<${Fragment}><div className="rec-tip-head"><${Who} id=${e.who} /><span><strong>${whoName(e.who)}</strong><span className="muted tiny"> · ${fmt(e.t).date} ${fmt(e.t).time}</span></span></div>
+    <div className="rec-tip-sum">${e.short || gist(e.text)}</div>
+    <div className="rec-tip-foot muted tiny"><span className="mono">${e.req}</span>${e.kind === 'ai' && html`<span>· AI${e.reviewer ? ', reviewed' : ''}</span>`}<span className="grow" /><span>Click to jump</span></div><//>`;
 
   const props = { nodes, rec, T, touched, focus, center, hover, unhover, nodeTip, state, showNow, setShowNow, events: rec.events };
 
@@ -401,6 +441,13 @@ export function RecorderMap({ selected, setSelected }) {
         window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
       }}>
         <${Axis} ax=${ax} pastRef=${pastRef} />
+        ${(!track || track === 'R4') && scopeReqs.includes('R4') && Object.entries(rec.lags).map(([id, [from, to, why]], i) => {
+          const x1 = xOf(ax, from, 0), x2 = xOf(ax, Math.min(to, live), 0);
+          if (x2 - x1 < 2) return null;
+          const name = id === 'prd' ? 'PRD' : id === 'code-job' ? 'Refresh job' : 'Overview label';
+          return html`<span key=${id} className=${cx('rec-lag', T >= from && (T < to || to >= live) && 'now')} style=${{ left: x1, width: x2 - x1, top: 42 + i * 5 }}
+            onMouseEnter=${hover(() => html`<${Fragment}><div className="tiny-label">${name} out of date · ${Math.round(Math.min(to, live) - from)} min${to >= live ? ', still' : ''}</div><div className="map-tip-text">${why}</div><//>`)} onMouseLeave=${unhover} />`;
+        })}
         ${stack(events.map((e) => xOf(ax, e.t))).map(([x, dy], i) => { const e = events[i]; return html`<button key=${i} className=${cx('rec-tick', e.kind, cur.includes(e) && 'cur', e.t > T && 'future')} style=${{ left: x, transform: dy ? `translateY(${dy}px)` : undefined }}
           onClick=${() => seek(e.t)} onMouseEnter=${hover(() => evTip(e))} onMouseLeave=${unhover} aria-label=${`${when(e.t)}: ${e.text}`} />`; })}
         <span className="rec-head" ref=${headRef}>
@@ -409,10 +456,13 @@ export function RecorderMap({ selected, setSelected }) {
       </div>
       <div className="rec-trans">
         <button className="icon-btn" onClick=${() => step(-1)} aria-label="Previous event"><${SkipBack} size=${14} strokeWidth=${1.5} /></button>
-        <button className="icon-btn rec-play" onClick=${play} aria-label=${playing ? 'Pause' : 'Play'}>${playing ? html`<${Pause} size=${14} strokeWidth=${1.5} />` : html`<${Play} size=${14} strokeWidth=${1.5} />`}</button>
+        ${isLive && !playing && times.length
+          ? html`<button className="btn sm rec-replay" onClick=${play} aria-label=${`Replay from ${fmt(times[0]).date}`}><${Play} size=${13} strokeWidth=${1.5} aria-hidden="true" />Replay from ${fmt(times[0]).date}</button>`
+          : html`<button className="icon-btn rec-play" onClick=${play} aria-label=${playing ? 'Pause' : 'Play'}>${playing ? html`<${Pause} size=${14} strokeWidth=${1.5} />` : html`<${Play} size=${14} strokeWidth=${1.5} />`}</button>`}
         <button className="icon-btn" onClick=${() => step(1)} aria-label="Next event"><${SkipForward} size=${14} strokeWidth=${1.5} /></button>
         <span className="rec-clock mono" ref=${clockRef} />
-        <span className="rec-callout"><${Callout} rec=${rec} T=${T} cur=${cur} isLive=${isLive} track=${track} /></span>
+        <span className="rec-scope mono" title="What this timeline is showing">${track ? `${track} · LAB-${scope}` : scope === 'all' ? 'All requirements' : `LAB-${scope} · all`}</span>
+        <span className=${cx('rec-callout', !isLive && cur[0] && 'has-event')}>${!isLive && cur[0] && html`<${Who} id=${cur[0].who} />`}<span className="rec-callout-text"><${Callout} rec=${rec} T=${T} cur=${cur} isLive=${isLive} track=${track} /></span></span>
         <div className="seg sm rec-speed" role="group" aria-label="Playback speed">${SPEEDS.map(([v, l]) => html`<button key=${v} className=${cx('seg-btn', speed === v && 'active')} aria-pressed=${speed === v} onClick=${() => setSpeed(v)}>${l}</button>`)}</div>
         <label className="rec-follow"><input type="checkbox" checked=${follow} onChange=${(e) => setFollow(e.target.checked)} /><span className="rec-switch" aria-hidden="true" />Follow events</label>
         ${!isLive && html`<button className="btn sm" onClick=${() => seek(live)}>Back to live</button>`}
@@ -434,6 +484,11 @@ const stack = (xs) => {
     lastX[lane] = x;
     return [x, LANES[lane]];
   });
+};
+// A few words for the hover preview: the part before a quote or the first clause, trimmed.
+const gist = (text) => {
+  let g = text.split(/:\s*[“"]/)[0].split(/(?<=[a-z0-9)])\.\s/)[0].replace(/\.$/, '');
+  return g.length > 58 ? g.slice(0, 56).replace(/\s+\S*$/, '') + '…' : g;
 };
 const whoName = (id) => (id === 'astra' ? 'Astra' : id === 'codex' ? 'Codex' : PEOPLE[id].name);
 const Who = ({ id }) => (PEOPLE[id] ? html`<${Avatar} id=${id} size=${20} />` : html`<span className=${cx('rec-bot', id)}>${id === 'codex' ? '>_' : 'A'}</span>`);
@@ -524,7 +579,8 @@ function Columns(p) {
   const lit = (path) => path.ids.filter((i) => p.touched.has(i)).length >= 2;
   return html`<div className="rec-cols" ref=${stageRef}>
     <svg className="rec-svg" aria-hidden="true">
-      ${paths.map((path) => html`<path key=${path.key} className=${cx('rec-conn', p.touched.size > 0 && !lit(path) && 'quiet')} d=${path.d} />`)}
+      <defs><marker id="rec-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path className="rec-arrowhead" d="M0.5 0.8 L7.5 4 L0.5 7.2 Z" /></marker></defs>
+      ${paths.map((path) => html`<path key=${path.key} className=${cx('rec-conn', p.touched.size > 0 && !lit(path) && 'quiet')} d=${path.d} markerEnd=${path.people ? undefined : 'url(#rec-arrow)'} />`)}
       ${paths.filter(lit).map((path) => html`<path key=${path.key + ':' + [...p.touched].join()} className="rec-trace" d=${path.d} pathLength="1" />`)}
     </svg>
     <div className="rec-col">${L}</div>
@@ -545,10 +601,12 @@ const cls = (p, id) => cx(p.touched.has(id) && p.nodes[id].alive && 'touched');
 // and the cards around them slide to make room.
 const Reveal = ({ show, children }) => html`<div className=${cx('rec-reveal', !show && 'gone')} aria-hidden=${show ? undefined : 'true'}><div className="rec-reveal-in">${children}</div></div>`;
 
+const isStale = (n) => n.alive && /needs update|behind/i.test(n.status || '');
+
 function Row({ id, p }) {
   const n = p.nodes[id];
   const meta = n.type === 'req' ? html`<${StatusChip} status=${n.assume} sources=${n.sources} changedIn=${n.changedIn} />` : n.type === 'evidence' ? html`<span className="rec-meta">${n.alive ? (p.T - n.born < 30 && p.T < p.rec.live ? html`<span className="blue">new</span>` : n.status.split(',')[0]) : ''}</span>` : null;
-  return html`<${Reveal} show=${n.alive}><button className=${cx('rec-row', cls(p, id))} data-id=${id} tabIndex=${n.alive ? undefined : -1} onClick=${(e) => { e.stopPropagation(); p.center(id); }} onMouseEnter=${p.hover(() => p.nodeTip(id))} onMouseLeave=${p.unhover}>
+  return html`<${Reveal} show=${n.alive}><button className=${cx('rec-row', cls(p, id), isStale(n) && 'stale')} data-id=${id} tabIndex=${n.alive ? undefined : -1} onClick=${(e) => { e.stopPropagation(); p.center(id); }} onMouseEnter=${p.hover(() => p.nodeTip(id))} onMouseLeave=${p.unhover}>
     <${Ico} t=${n.icon || n.type} />
     <span className="rec-row-main"><span className="rec-row-label">${n.type === 'req' && html`<span className="mono muted">${id} </span>`}${n.label}</span>${!['req', 'evidence', 'epic'].includes(n.type) && html`<span className=${cx('rec-row-sub', /needs update|behind/i.test(n.status) && 'amber')}>${n.status}</span>`}</span>
     ${meta}
@@ -570,7 +628,7 @@ function SourcesCard({ ids, ...p }) {
 function Card({ id, title, icon, anchor, rows = [], from, show, ...p }) {
   const n = id && p.nodes[id];
   const lag = n && /needs update|behind/i.test(n.status);
-  return html`<${Reveal} show=${show ?? (!n || n.alive)}><div className=${cx('rec-card', id && cls(p, id), id && 'clickable')} data-anchor=${anchor} data-id=${id} data-from=${from}
+  return html`<${Reveal} show=${show ?? (!n || n.alive)}><div className=${cx('rec-card', id && cls(p, id), id && 'clickable', n && isStale(n) && 'stale')} data-anchor=${anchor} data-id=${id} data-from=${from}
       onClick=${id ? () => p.center(id) : undefined} onMouseEnter=${id ? p.hover(() => p.nodeTip(id)) : undefined} onMouseLeave=${id ? p.unhover : undefined}>
     <div className="rec-card-head"><${Ico} t=${n ? n.type : icon} /><span className="rec-card-title">${n ? html`<${Fragment}>${n.id && html`<span className="mono muted">${n.id} </span>`}${n.label}<//>` : title}</span></div>
     ${n && n.type !== 'epic' && html`<div className=${cx('rec-card-status', lag && 'amber')}>${n.alive ? n.status : 'Not created yet'}</div>`}
@@ -599,7 +657,7 @@ function CenterCard(p) {
     const s = rec.r4At(T);
     meta = s === 'verified' ? `Approved by Dana Ortiz · was every 15 minutes` : s === 'contradicted' ? (reviewing ? `Suggested by Marcus Lee · ${fmt(AT.propose).time}` : `The build contradicted this at ${fmt(AT.flag).time}`) : s === 'assumed' ? 'Assumed · from the kickoff call, never checked' : 'AI draft from the kickoff transcript';
   }
-  return html`<div className=${cx('rec-card rec-center', p.touched.has(focus) && 'touched')} data-id=${focus}>
+  return html`<div className=${cx('rec-card rec-center', p.touched.has(focus) && 'touched', isStale(n) && 'stale')} data-id=${focus}>
     <div className="rec-card-head">
       <${Ico} t=${n.type} />
       <span className="rec-card-title">${n.id && html`<span className="mono muted">${n.id} </span>`}${n.label}</span>
@@ -622,7 +680,8 @@ function CenterCard(p) {
 
 function PeopleCard({ ids, ...p }) {
   const word = { v1: 'On v1', knows: 'Knew R4 was wrong', cur: 'On v1.1' };
-  return html`<div className="rec-card rec-people" data-anchor="bottom" data-id="people">
+  const active = ids.some((id) => p.touched.has(id));
+  return html`<div className=${cx('rec-card rec-people', active && 'has-touch')} data-anchor="bottom" data-id="people">
     <div className="rec-card-head"><${Users} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span className="rec-card-title">People</span><span className="muted tiny">${ids.length}</span></div>
     <div className="rec-people-grid">
       ${ids.map((id) => { const k = p.rec.knewAt(id, p.T); return html`<button key=${id} className=${cx('rec-person', p.touched.has(id) && 'touched')} data-id=${id} onClick=${() => p.center(id)} onMouseEnter=${p.hover(() => p.nodeTip(id))} onMouseLeave=${p.unhover}>
