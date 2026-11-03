@@ -2096,14 +2096,14 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
   .rec-cols { min-width: 960px; min-height: 100%; height: auto; }
   .rec-tape { padding: 0 8px; }
   .rec-strip { touch-action: none; }
-  .astra[data-theme] .map-bar { flex: none; white-space: normal; padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
+  .astra[data-theme] .map-bar { flex: none; white-space: normal; padding: 14px 12px; gap: 8px; flex-wrap: wrap; }
   .map-note { font-size: 12px; line-height: 16px; }
 
   /* Screens: native touch scrolling over the canvas */
   .fcanvas-view { -webkit-overflow-scrolling: touch; cursor: default; }
 
   /* Present */
-  .present { padding: 12px 12px calc(24px + env(safe-area-inset-bottom)); gap: 12px; grid-auto-rows: max-content; }
+  .present { padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); gap: 12px; grid-auto-rows: max-content; }
   .present-bar { flex-wrap: wrap; white-space: normal; }
   .slide { padding: 20px 18px; min-height: 240px; }
   .slide-ev { grid-template-columns: minmax(0, 1fr); }
@@ -2146,7 +2146,7 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
   .app .m-sheet :is(.sp-foot, .rl-actions) .btn-square { width: 44px; height: 44px; }
 
   /* Map: epic picker and requirement chips split the row evenly */
-  .astra[data-theme] .map-bar { flex-wrap: nowrap; }
+  .astra[data-theme] .rec .map-bar { flex: none; height: auto; flex-wrap: nowrap; padding: 14px 12px; }
   .map-bar > .export-wrap, .map-bar > .seg { flex: 1 1 0; min-width: 0; }
   .map-bar > .export-wrap > .rl-filter { width: 100%; min-height: 40px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .map-bar > .seg { display: flex; }
@@ -2164,8 +2164,7 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
   /* Present: Customize slides bottom left, Present bottom right */
   .astra[data-theme] .present { display: flex; flex-direction: column; }
   .present > * { flex: none; }
-  .present-actions { margin-top: auto !important; position: sticky; bottom: 0; z-index: 5; display: flex; gap: 8px; margin: 0 -12px calc(-24px - env(safe-area-inset-bottom));
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--a-chrome, var(--bg)); box-shadow: inset 0 1px 0 var(--line); }
+  .present-actions { margin-top: auto !important; display: flex; gap: 8px; padding-top: 4px; }
   .present-actions > .btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
 }
 
