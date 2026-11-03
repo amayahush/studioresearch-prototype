@@ -762,7 +762,6 @@ button.rl-nav:hover { background: var(--bg-3); color: var(--text); }
 .ts-event .mono { width: 64px; flex-shrink: 0; font-size: 11px; }
 .ts-hint { font-size: 12px; line-height: 18px; }
 /* Scenario interstitials: styled like the test strip, not like Astra, so participants read them as the story. */
-.scenario-frame { background: #111212; box-shadow: inset 0 0 0 1px var(--line-2), 0 0 0 4px rgba(255, 255, 255, 0.03), 0 24px 60px rgba(0, 0, 0, 0.55); }
 .scenario-badge { display: flex; align-items: center; gap: 8px; font: 500 11px/16px 'Space Grotesk', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
 .scenario-badge::after { content: ''; flex: 1; height: 1px; background: var(--line-2); }
 .scenario-frame .ts-title, .scenario-frame h2 { font-family: 'Space Grotesk', sans-serif; }
@@ -1859,3 +1858,19 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .app[data-theme="light"] .fg-comment-pin { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18), inset 0 0 0 1px #E6E6E6; }
 .app[data-theme="light"] .figma kbd { color: var(--muted); }
 .app[data-theme="light"] .figma .plugin.astra-embed { box-shadow: inset 0 0 0 1px #E1E3E7, 0 18px 40px rgba(16, 24, 40, 0.16); }
+
+/* ---------- Scenario interstitials (time skip, end card) ----------
+   Styled like the test strip, never like an Astra card, with a dashed outer edge, so participants read
+   them as the story around the prototype. Doubled class beats the Astra and light-theme card rules. */
+.app .scenario-frame.scenario-frame { background: #111212; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 24px 60px rgba(0, 0, 0, 0.55); outline: 1px dashed rgba(255, 255, 255, 0.22); outline-offset: 5px; }
+.app[data-theme="light"] .scenario-frame.scenario-frame { background: #FFFFFF; box-shadow: inset 0 0 0 1px #D9DCE0, 0 24px 60px rgba(16, 24, 40, 0.18); outline-color: #B8BDC4; }
+.app[data-theme="light"] .tb-scenario-kind { box-shadow: inset 0 0 0 1px #D9DCE0; color: #5B626C; }
+
+/* Propose panel: "When you submit" collapses to one line; the Codex-drafted reason stays open for review. */
+.submit-summary { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 8px; margin-top: 14px; padding: 14px 0 4px; border-top: 1px solid var(--line); text-align: left; color: var(--text-2); }
+.submit-summary .section-label { margin: 0; padding: 0; border: 0; }
+.submit-summary .submit-line { grid-column: 1; }
+.submit-summary .submit-chev { grid-column: 2; grid-row: 1 / span 2; transition: transform .15s ease; }
+.submit-summary .submit-chev.open { transform: rotate(180deg); }
+.submit-summary:hover .submit-line { color: var(--text); }
+.submit-summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 4px; }

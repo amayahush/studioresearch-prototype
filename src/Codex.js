@@ -5,7 +5,7 @@ import { TimeSkip, EndCard } from './Interstitials.js';
 import {
   FileText, FileCode, Code as Code2, GitBranch, X, PanelLeft, GitPullRequestArrow, CheckCircle2, MessageSquare, Paperclip,
   AlertTriangle, Plus, Check, Clock, Layers, FolderClosed, House, Box, BookOpen, AtSign, Ellipsis, Bell, Search,
-  SquarePen, Mic, ArrowUp, Copy, Link2, Scan, MoreHorizontal, Bookmark,
+  SquarePen, Mic, ArrowUp, Copy, Link2, Scan, ChevronDown, MoreHorizontal, Bookmark,
 } from 'lucide-react';
 
 const PANEL_FOR_STAGE = {
@@ -443,7 +443,8 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
   const [reply, setReply] = useState('');
   const [people, setPeople] = useState(false);
   const [peopleQuery, setPeopleQuery] = useState('');
-  const [linkedPeople, setLinkedPeople] = useState(['priya', 'kim', 'jordan']);
+  const [linkedPeople, setLinkedPeople] = useState(['dana', 'priya', 'kim', 'jordan']);
+  const [submitOpen, setSubmitOpen] = useState(false);
   const [more, setMore] = useState(false);
   const peopleMatches = Object.entries(PEOPLE).filter(([, person]) => person.name.toLowerCase().includes(peopleQuery.toLowerCase()));
 
@@ -531,15 +532,21 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <${SectionLabel}>Proposed text<//>
         <textarea className="field" rows="3" value=${text} onInput=${(e) => setText(e.target.value)} />
         <${SectionLabel}>Reason · required<//>
-        <textarea className="field" rows="5" value=${reason} onInput=${(e) => setReason(e.target.value)} />
+        <textarea className="field" rows="4" value=${reason} onInput=${(e) => setReason(e.target.value)} />
         <div className="muted small">Drafted by Codex. Review before sending.</div>
         <${SectionLabel}>Evidence<//>
         <div className="chips"><${EvidenceChip} id="spec" /><${EvidenceChip} id="api" /></div>
         <div className="muted small">Hover a chip to preview its source lines.</div>
-        <${SectionLabel}>When you submit<//>
-        <div className="kv"><span className="muted">Slices notified</span><span>Developer · Design · Business</span></div>
-        <div className="kv"><span className="muted">Stance from</span><span>Priya · Kim</span></div>
-        <div className="kv"><span className="muted">PRD</span><span>Unchanged until approved</span></div>
+        <button className="submit-summary" aria-expanded=${submitOpen} onClick=${() => setSubmitOpen(!submitOpen)}>
+          <span className="section-label">When you submit</span>
+          <span className="submit-line muted small">${submitOpen ? 'Hide details' : 'Dana decides · asks Priya and Kim · PRD unchanged until approved'}</span>
+          <${ChevronDown} size=${14} strokeWidth=${1.5} className=${cx('submit-chev', submitOpen && 'open')} aria-hidden="true" />
+        </button>
+        ${submitOpen && html`
+          <div className="kv"><span className="muted">Decides</span><span>Dana Ortiz · Product manager</span></div>
+          <div className="kv"><span className="muted">Stance from</span><span>Priya · Kim</span></div>
+          <div className="kv"><span className="muted">Slices notified</span><span>Developer · Design · Business</span></div>
+          <div className="kv"><span className="muted">PRD</span><span>Unchanged until approved</span></div>`}
       </div>
       <div className="sp-foot">
         <button className="btn btn-ghost" onClick=${() => setPanel('check')}>Back</button>
