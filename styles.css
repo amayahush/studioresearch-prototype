@@ -2171,6 +2171,19 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
   .present > * { flex: none; }
   .present-actions { margin-top: auto !important; display: flex; gap: 8px; padding-top: 4px; }
   .present-actions > .btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
+
+  /* Map, while replaying or focused on a person or file */
+  .astra[data-theme] .rec .map-bar { flex-wrap: wrap; row-gap: 8px; }
+  .rec .map-bar > .rec-trail { order: 3; flex: 1 0 100%; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .astra[data-theme] .rec .rec-trans > .rec-play { border-radius: 8px; height: 40px; }
+  .rec-trans > .rec-clock { order: 4; }
+  .rec-trans > .rec-scope { order: 5; margin-left: auto; }
+  .rec-trans > .rec-callout { order: 6; flex: 1 0 100%; }
+  .rec-trans > .rec-callout.has-event { border-radius: 12px; padding: 6px 12px 6px 6px; }
+  .rec-trans > .rec-speed { order: 7; }
+  .rec-trans > .rec-follow { order: 8; }
+  .rec-trans > .btn { order: 9; margin-left: auto; }
+  .rec-strip .rec-t { font-size: 10px; }
 }
 
 /* Landscape tablets and small laptops (901–1100px): desktop layout with room to breathe. */

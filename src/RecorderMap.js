@@ -521,7 +521,7 @@ function Axis({ ax, pastRef }) {
   let off = 0;
   const out = [];
   for (const s of ax) {
-    if (s.k === 'days') { const cw = s.w / s.days.length; s.days.forEach((d, i) => out.push(html`<span key=${'d' + d} className="rec-t" style=${{ left: off + i * cw + cw / 2 }}>${d === 0 ? 'Sep 24' : d === 7 || cw > 60 ? dayName(d) : d - 6}</span>`)); }
+    if (s.k === 'days') { const cw = s.w / s.days.length; s.days.forEach((d, i) => out.push(html`<span key=${'d' + d} className="rec-t" style=${{ left: off + i * cw + cw / 2 }}>${cw < 40 && (d === 0 || d === 7) ? (d === 0 ? '' : '10/1') : d === 0 ? 'Sep 24' : d === 7 || cw > 60 ? dayName(d) : d - 6}</span>`)); }
     else if (s.k === 'brk') out.push(html`<span key="brk" className="rec-brk" style=${{ left: off + 3, width: s.w - 6 }} title="Sep 24 to Oct 7 are one column per day. Oct 8 is minute by minute." />`);
     else { out.push(html`<span key="o8" className="rec-t start" style=${{ left: off }}>Oct 8</span>`); for (let m = ZFROM + 15; m <= ZTO; m += 15) out.push(html`<span key=${m} className="rec-t" style=${{ left: off + ((m - ZFROM) / (ZTO - ZFROM)) * s.w - (m === ZTO ? 10 : 0) }}>${clock(m)}</span>`); }
     off += s.w;
