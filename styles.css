@@ -1924,3 +1924,19 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 
 /* Start screen: the Figma chip reads white on its blue in light mode. */
 .app[data-theme="light"] .tag-figma { color: #FFFFFF; }
+
+/* ---------- Map highlight strokes ----------
+   Drawn as a layer on top of each card or row, so a card's header, dividers and footer can't paint over it,
+   and a row's highlight is a small rounded box inside its card instead of a square edge in a rounded card. */
+.rec-card, .rec-row { position: relative; }
+.app .rec-card.touched, .app :is(.astra, .astra-embed)[data-theme] .rec-card.touched,
+.app .rec-card.clickable:hover, .app :is(.astra, .astra-embed)[data-theme] .rec-card.clickable:hover { box-shadow: inset 0 0 0 1px var(--r-line); }
+.app :is(.astra, .astra-embed)[data-theme] .rec-card.touched, .app :is(.astra, .astra-embed)[data-theme] .rec-card.clickable:hover { box-shadow: inset 0 0 0 1px var(--a-cardline), 0 1px 2px rgba(0, 0, 0, 0.06); }
+.rec-card.touched::after, .rec-card.clickable:hover::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--text-2); pointer-events: none; z-index: 3; }
+.app .rec-row.touched, .app :is(.astra, .astra-embed)[data-theme] .rec-row.touched, .app button.rec-row:hover { box-shadow: none; background: transparent; }
+.rec-row.touched::after, button.rec-row:hover::after { content: ''; position: absolute; inset: 3px 4px; border-radius: 7px; background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--text-2); pointer-events: none; z-index: 0; }
+:is(.astra, .astra-embed)[data-theme] .rec-row.touched::after, :is(.astra, .astra-embed)[data-theme] button.rec-row:hover::after { background: var(--bg-1); }
+.rec-row > * { position: relative; z-index: 1; }
+/* Stale rows: the dashed edge follows the same rounded inset box. */
+.app .rec-row.stale:not(.touched) { outline: 0; }
+.rec-row.stale:not(.touched)::after { content: ''; position: absolute; inset: 3px 4px; border-radius: 7px; outline: 1px dashed var(--text-2); outline-offset: -1px; pointer-events: none; }
