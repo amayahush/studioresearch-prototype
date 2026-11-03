@@ -2137,7 +2137,6 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
   .end-actions > .grow { display: none; }
   .end-actions > .btn-primary { grid-column: 1 / -1; order: -1; }
   .end-actions > .btn { justify-content: center; text-align: center; width: 100%; min-height: 44px; }
-  .app .endcard .end-actions > .btn-ghost { box-shadow: inset 0 0 0 1px var(--line-2); }
 
   /* Sheet footers: every button the same 44px height, centered on one line */
   .app .m-sheet :is(.sp-foot, .rl-actions) { align-items: center; }
