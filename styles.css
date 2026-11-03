@@ -1793,7 +1793,6 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .app[data-theme="light"] .rail-btn[data-tip]:hover::after, .app[data-theme="light"] .rail-btn[data-tip]:focus-visible::after { color: #FFFFFF; }
 /* Start screen and story overlays */
 .app[data-theme="light"] .persp-card { background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--line), 0 1px 2px rgba(16, 24, 40, 0.05); }
-.app[data-theme="light"] .codex-tool-logo { filter: none; }
 .app[data-theme="light"] :is(.timeskip, .endcard-backdrop) { background: rgba(16, 24, 40, 0.32); }
 .app[data-theme="light"] :is(.ts-card, .endcard, .guide-pop) { background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--line-2), 0 24px 60px rgba(16, 24, 40, 0.18); }
 
@@ -1908,3 +1907,17 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .app[data-theme="light"] :is(.astra, .astra-embed)[data-theme] .btn-primary:hover:not(:disabled) { background: var(--a-accent-hover); }
 .app[data-theme="light"] .figma .fg-comment-pop .btn-primary { background: var(--figma-blue); border-color: var(--figma-blue); color: #FFFFFF; }
 .app[data-theme="light"] .figma .fg-comment-pop .btn-primary:hover:not(:disabled) { background: #007BE5; border-color: #007BE5; }
+
+/* Scenario cards carry their own buttons, the same in Codex, Figma and Astra, in both themes,
+   so no host tool's button style leaks in (Figma's gray primary, Astra's blue). */
+.app .scenario-frame.scenario-frame .btn { border: 0; border-radius: 7px; background: transparent; color: #E6E7E9; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); }
+.app .scenario-frame.scenario-frame .btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.app .scenario-frame.scenario-frame .btn-ghost { box-shadow: none; color: #A9ADB3; }
+.app .scenario-frame.scenario-frame .btn-primary { background: #ECEEF2; color: #0F1114; box-shadow: none; }
+.app .scenario-frame.scenario-frame .btn-primary:hover:not(:disabled) { background: #FFFFFF; }
+.app[data-theme="light"] .scenario-frame.scenario-frame .btn { color: #16181D; box-shadow: inset 0 0 0 1px #D9DCE0; }
+.app[data-theme="light"] .scenario-frame.scenario-frame .btn:hover:not(:disabled) { background: #F2F3F5; }
+.app[data-theme="light"] .scenario-frame.scenario-frame .btn-ghost { box-shadow: none; color: #5B626C; }
+.app[data-theme="light"] .scenario-frame.scenario-frame .btn-primary { background: #16181D; color: #FFFFFF; box-shadow: none; }
+.app[data-theme="light"] .scenario-frame.scenario-frame .btn-primary:hover:not(:disabled) { background: #2E333B; }
+.app .scenario-frame.scenario-frame .btn:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; }
