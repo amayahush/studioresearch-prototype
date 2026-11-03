@@ -1481,9 +1481,12 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 
 /* sidebar */
 :is(.astra, .astra-embed)[data-theme] .rl-side { background: var(--a-chrome); border-right: 0; box-shadow: inset -1px 0 0 var(--line); padding-bottom: 8px; }
-/* The guide button floats over the main column, clear of the sidebar's Settings and user row. */
-.stage:has(.astra[data-theme]) .guide { left: 244px; bottom: 40px; }
-.stage:has(.astra[data-theme] .rl-side.collapsed) .guide { left: 68px; }
+/* The guide button sits at the right end of the sidebar's user row, so it never covers content. */
+.stage:has(.astra[data-theme]) .guide { left: 190px; bottom: 38px; }
+.stage:has(.astra[data-theme] .rl-side.collapsed) .guide { left: 12px; }
+.stage:has(.astra[data-theme]) .guide-btn { width: 32px; height: 32px; box-shadow: inset 0 0 0 1px var(--line-2); }
+.stage:has(.astra[data-theme]) .guide-btn svg { width: 16px; height: 16px; }
+.stage:has(.astra[data-theme]) .guide-dot { width: 8px; height: 8px; top: 0; right: 0; }
 :is(.astra, .astra-embed)[data-theme] .rl-org-row { height: 48px; margin-bottom: 4px; border-bottom: 0; }
 :is(.astra, .astra-embed)[data-theme] .rl-search { height: 30px; border-radius: 6px; box-shadow: none; background: var(--a-seg); color: var(--muted); font-size: 12px; }
 :is(.astra, .astra-embed)[data-theme] .rl-nav { height: 30px; border-radius: 6px; color: var(--text-2); }
@@ -1726,3 +1729,33 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .codex .cx-astra-pill.attn { background: #2A2C2C; color: #E6E8EC; }
 .codex .cx-astra-pill.attn > svg { color: #9BA2AD; }
 .codex .cx-astra-pill.attn::after { content: ''; width: 6px; height: 6px; margin-left: 2px; border-radius: 50%; background: #E8AA4E; }
+
+/* ---------- No amber outlines in any scenario. Amber stays only as tag/chip text and small dots. ---------- */
+/* PM (Doc): the selected pending requirement and the change card use the neutral edges. */
+.astra[data-theme] .req.selected.pending { box-shadow: inset 0 0 0 1px var(--line-2); }
+.astra[data-theme] .rl-status.pending, .astra-embed[data-theme] .rl-status.pending { box-shadow: inset 0 0 0 1px var(--a-cardline); }
+.astra[data-theme] .chip-amber, .astra-embed[data-theme] .chip-amber { box-shadow: none; background: var(--amber-soft); color: var(--amber); }
+/* PM (Screens): the pending pin keeps its amber tint without an outline. */
+.astra[data-theme] .pin.pending { box-shadow: none; }
+/* Designer (Figma plugin): the stance card is a normal card. */
+.figma .plugin.astra-embed .plg-stance:not(.done) { box-shadow: inset 0 0 0 1px var(--a-cardline); }
+/* The flagged "Updated every 15 min" label on the dashboard frame loses its amber box, in Figma and in Screens. */
+.dash-label.flag { border-color: transparent; background: transparent; color: inherit; }
+/* Plugin buttons: no light border from Figma's own button styles (the white ring on the blue button). */
+.figma .plugin.astra-embed .btn { border: 0; }
+/* The guide button and its popover follow Astra's light mode. */
+.stage:has(.astra[data-theme="light"]) .guide { --bg: #FFFFFF; --bg-1: #FFFFFF; --bg-2: #F2F3F5; --bg-3: #ECEDEF; --line: #E6E8EB; --line-2: #D9DCE0; --text: #16181D; --text-2: #5B626C; --muted: #636A74; color: #16181D; }
+.stage:has(.astra[data-theme="light"]) .guide-btn { box-shadow: inset 0 0 0 1px var(--line-2), 0 4px 12px rgba(16, 24, 40, 0.12); }
+
+/* ---------- Guided mode follows Astra's light mode: white cards, a lighter scrim ---------- */
+.stage:has(.astra[data-theme="light"]) :is(.tour, .tour-wait) {
+  --bg: #FFFFFF; --bg-1: #FFFFFF; --bg-2: #F4F5F7; --bg-3: #ECEDEF; --line: #E6E8EB; --line-2: #D9DCE0;
+  --text: #16181D; --text-2: #5B626C; --muted: #636A74; --blue: #2563EB; --r-blue-bg: #E8EDFD;
+  color: var(--text);
+}
+.stage:has(.astra[data-theme="light"]) .tour-card { box-shadow: inset 0 0 0 1px var(--line-2), 0 18px 44px rgba(16, 24, 40, 0.18); }
+.stage:has(.astra[data-theme="light"]) .tour-wait { box-shadow: inset 0 0 0 1px var(--line-2), 0 10px 28px rgba(16, 24, 40, 0.14); }
+.stage:has(.astra[data-theme="light"]) .tour-spot { box-shadow: 0 0 0 9999px rgba(16, 24, 40, 0.38); }
+.stage:has(.astra[data-theme="light"]) .tour-arrow.primary { background: var(--text); color: #FFFFFF; }
+.stage:has(.astra[data-theme="light"]) .tour-arrow.primary:hover:not(:disabled) { background: #2E333B; }
+.stage:has(.astra[data-theme="light"]) .tour-dot.done { background: #A9B8E8; }

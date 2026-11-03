@@ -268,11 +268,11 @@ export function RecorderMap({ selected, setSelected }) {
       const lw = el.offsetWidth, cx0 = Math.max(lw / 2, Math.min(w - lw / 2, x));
       el.style.transform = `translateX(${cx0 - x - lw / 2}px)`;
     }
-    if (clockRef.current) clockRef.current.textContent = t >= live ? `Now · ${when(live)}` : when(t);
+    if (clockRef.current) clockRef.current.textContent = t >= live ? `Live · ${when(live)}` : when(t);
   };
   const seekRaf = useRef(0);
   useLayoutEffect(() => { if (!playing && !seekRaf.current) tRef.current = T; paint(tRef.current); });
-  // Jumps (clicking an event, the arrows, Back to now) glide the playhead there, then update the map.
+  // Jumps (clicking an event, the arrows, Back to live) glide the playhead there, then update the map.
   const seek = (to) => {
     setPlaying(false);
     cancelAnimationFrame(seekRaf.current);
@@ -415,7 +415,7 @@ export function RecorderMap({ selected, setSelected }) {
         <span className="rec-callout"><${Callout} rec=${rec} T=${T} cur=${cur} isLive=${isLive} track=${track} /></span>
         <div className="seg sm rec-speed" role="group" aria-label="Playback speed">${SPEEDS.map(([v, l]) => html`<button key=${v} className=${cx('seg-btn', speed === v && 'active')} aria-pressed=${speed === v} onClick=${() => setSpeed(v)}>${l}</button>`)}</div>
         <label className="rec-follow"><input type="checkbox" checked=${follow} onChange=${(e) => setFollow(e.target.checked)} /><span className="rec-switch" aria-hidden="true" />Follow events</label>
-        ${!isLive && html`<button className="btn sm" onClick=${() => seek(live)}>Back to now</button>`}
+        ${!isLive && html`<button className="btn sm" onClick=${() => seek(live)}>Back to live</button>`}
       </div>
     </div>
     ${tip && html`<div className="map-tip rec-tip" role="tooltip" style=${tip.pos}>${tip.content}</div>`}
