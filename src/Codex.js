@@ -181,7 +181,7 @@ export function Codex() {
       </main>
 
       ${panel &&
-      html`<aside className="side-panel rl astra-embed" data-theme="dark" aria-label="Astra">
+      html`<aside className="side-panel rl astra-embed" data-theme=${state.theme === 'light' ? 'light' : 'dark'} aria-label="Astra">
         <${CodexPanel} panel=${panel} setPanel=${setPanel} setToast=${setToast} openFile=${() => setFile('spec')} onSentClose=${afterSent} onResend=${resend} onFinish=${finish} />
       </aside>`}
     </div>

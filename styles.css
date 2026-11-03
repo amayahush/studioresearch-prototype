@@ -1649,14 +1649,14 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 :is(.astra, .astra-embed)[data-theme] .select option { background: var(--a-card); }
 :is(.astra, .astra-embed)[data-theme] .rec-tick.open { background: var(--a-amber-line); }
 
-/* ---------- Top tester bar follows Astra's light mode while Astra is on screen ---------- */
-.app:has(.astra[data-theme="light"]) .tester-bar {
+/* ---------- Top tester bar follows the app theme on every screen ---------- */
+.app[data-theme="light"] .tester-bar {
   --text: #16181D; --text-2: #5B626C; --bg-2: #ECEDEF; --bg-3: #E1E3E6; --line: #E6E8EB; --line-2: #D9DCE0; --blue: #2563EB; --r-blue-bg: #E8EDFD;
   background: #FFFFFF; border-bottom-color: var(--line); color: var(--text);
 }
-.app:has(.astra[data-theme="light"]) .tb-logo { background: #EEE9FB; color: #16181D; }
-.app:has(.astra[data-theme="light"]) .tb-guided.on .tb-switch > span { background: #FFFFFF; }
-.app:has(.astra[data-theme="light"]) .tester-bar .icon-btn:hover { background: var(--bg-2); }
+.app[data-theme="light"] .tb-logo { background: #EEE9FB; color: #16181D; }
+.app[data-theme="light"] .tb-guided.on .tb-switch > span { background: #FFFFFF; }
+.app[data-theme="light"] .tester-bar .icon-btn:hover { background: var(--bg-2); }
 
 /* ---------- Astra inside Codex and Figma (.astra-embed): same system, dark like its host ---------- */
 .side-panel.rl.astra-embed { background: var(--a-panel); border-left: 0; box-shadow: inset 1px 0 0 var(--cx-line); }
@@ -1744,18 +1744,106 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 /* Plugin buttons: no light border from Figma's own button styles (the white ring on the blue button). */
 .figma .plugin.astra-embed .btn { border: 0; }
 /* The guide button and its popover follow Astra's light mode. */
-.stage:has(.astra[data-theme="light"]) .guide { --bg: #FFFFFF; --bg-1: #FFFFFF; --bg-2: #F2F3F5; --bg-3: #ECEDEF; --line: #E6E8EB; --line-2: #D9DCE0; --text: #16181D; --text-2: #5B626C; --muted: #636A74; color: #16181D; }
-.stage:has(.astra[data-theme="light"]) .guide-btn { box-shadow: inset 0 0 0 1px var(--line-2), 0 4px 12px rgba(16, 24, 40, 0.12); }
+.app[data-theme="light"] .stage .guide { --bg: #FFFFFF; --bg-1: #FFFFFF; --bg-2: #F2F3F5; --bg-3: #ECEDEF; --line: #E6E8EB; --line-2: #D9DCE0; --text: #16181D; --text-2: #5B626C; --muted: #636A74; color: #16181D; }
+.app[data-theme="light"] .stage .guide-btn { box-shadow: inset 0 0 0 1px var(--line-2), 0 4px 12px rgba(16, 24, 40, 0.12); }
 
 /* ---------- Guided mode follows Astra's light mode: white cards, a lighter scrim ---------- */
-.stage:has(.astra[data-theme="light"]) :is(.tour, .tour-wait) {
+.app[data-theme="light"] .stage :is(.tour, .tour-wait) {
   --bg: #FFFFFF; --bg-1: #FFFFFF; --bg-2: #F4F5F7; --bg-3: #ECEDEF; --line: #E6E8EB; --line-2: #D9DCE0;
   --text: #16181D; --text-2: #5B626C; --muted: #636A74; --blue: #2563EB; --r-blue-bg: #E8EDFD;
   color: var(--text);
 }
-.stage:has(.astra[data-theme="light"]) .tour-card { box-shadow: inset 0 0 0 1px var(--line-2), 0 18px 44px rgba(16, 24, 40, 0.18); }
-.stage:has(.astra[data-theme="light"]) .tour-wait { box-shadow: inset 0 0 0 1px var(--line-2), 0 10px 28px rgba(16, 24, 40, 0.14); }
-.stage:has(.astra[data-theme="light"]) .tour-spot { box-shadow: 0 0 0 9999px rgba(16, 24, 40, 0.38); }
-.stage:has(.astra[data-theme="light"]) .tour-arrow.primary { background: var(--text); color: #FFFFFF; }
-.stage:has(.astra[data-theme="light"]) .tour-arrow.primary:hover:not(:disabled) { background: #2E333B; }
-.stage:has(.astra[data-theme="light"]) .tour-dot.done { background: #A9B8E8; }
+.app[data-theme="light"] .stage .tour-card { box-shadow: inset 0 0 0 1px var(--line-2), 0 18px 44px rgba(16, 24, 40, 0.18); }
+.app[data-theme="light"] .stage .tour-wait { box-shadow: inset 0 0 0 1px var(--line-2), 0 10px 28px rgba(16, 24, 40, 0.14); }
+.app[data-theme="light"] .stage .tour-spot { box-shadow: 0 0 0 9999px rgba(16, 24, 40, 0.38); }
+.app[data-theme="light"] .stage .tour-arrow.primary { background: var(--text); color: #FFFFFF; }
+.app[data-theme="light"] .stage .tour-arrow.primary:hover:not(:disabled) { background: #2E333B; }
+.app[data-theme="light"] .stage .tour-dot.done { background: #A9B8E8; }
+
+/* ==========================================================================
+   Light mode for every screen (.app[data-theme="light"]).
+   Dark mode is untouched: every rule below is scoped to the light theme.
+   ========================================================================== */
+.app[data-theme="light"] {
+  --bg: #FFFFFF; --bg-1: #F7F7F8; --bg-2: #F2F3F5; --bg-3: #E9EAED; --line: #E6E8EB; --line-2: #D9DCE0;
+  --text: #16181D; --text-2: #5B626C; --muted: #636A74; --accent: #16181D; --accent-soft: #E9EAED;
+  --amber: #9A5800; --amber-soft: #FDF0DC; --green: #1B7550; --green-soft: #E2F3EA; --red: #BF3B27; --red-soft: #FBE9E6; --blue: #3451C7;
+  --r-app: #FFFFFF; --r-sidebar: #F7F7F8; --r-panel: #FAFAFB; --r-card: #FFFFFF; --r-row: #E9EAED; --r-canvas: #F4F5F7; --r-dot: #E1E3E6;
+  --r-line: #E1E3E7; --r-line-strong: #D9DCE0; --r-text: #16181D; --r-muted: #5B626C; --r-label: #636A74;
+  --r-blue: #3451C7; --r-blue-bg: #E8EDFD; --r-amber: #9A5800; --r-amber-bg: #FDF0DC; --r-green: #1B7550; --r-green-bg: #E2F3EA; --r-red: #BF3B27;
+  /* Codex desktop app, light appearance */
+  --cx-chrome: #F9F9F9; --cx-threads: #F3F3F3; --cx-thread-on: #E6E6E6; --cx-conv: #FFFFFF; --cx-card: #F4F4F4;
+  --cx-input: #F4F4F4; --cx-line: #E5E5E5; --cx-text: #1A1A1A; --cx-muted: #6B6B6B; --cx-faint: #8F8F8F;
+  color-scheme: light; background: var(--bg); color: var(--text);
+}
+/* Solid dark buttons and chips flip their label to white. */
+.app[data-theme="light"] :is(.btn-primary, .toast, .pill-primary, .pin.active, .menu-check.on, .rec-htime) { color: #FFFFFF; }
+.app[data-theme="light"] .btn-primary:hover:not(:disabled), .app[data-theme="light"] .pill-primary:hover:not(:disabled) { background: #2E333B; }
+.app[data-theme="light"] .rail-btn[data-tip]:hover::after, .app[data-theme="light"] .rail-btn[data-tip]:focus-visible::after { color: #FFFFFF; }
+/* Start screen and story overlays */
+.app[data-theme="light"] .persp-card { background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--line), 0 1px 2px rgba(16, 24, 40, 0.05); }
+.app[data-theme="light"] .codex-tool-logo { filter: none; }
+.app[data-theme="light"] :is(.timeskip, .endcard-backdrop) { background: rgba(16, 24, 40, 0.32); }
+.app[data-theme="light"] :is(.ts-card, .endcard, .guide-pop) { background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--line-2), 0 24px 60px rgba(16, 24, 40, 0.18); }
+
+/* ---------- Codex, light ---------- */
+.app[data-theme="light"] .cx-rail-btn.on { background: #E6E6E6; }
+.app[data-theme="light"] .cx-thread:hover { background: #ECECEC; }
+.app[data-theme="light"] .cx-file-link { text-decoration-color: #C8C8C8; }
+.app[data-theme="light"] .cx-prompt { background: #E9EEFB; color: #1A1A1A; }
+.app[data-theme="light"] .cx-done svg, .app[data-theme="light"] .code-card-meta .green { color: #1B7550; }
+.app[data-theme="light"] .code-row.green, .app[data-theme="light"] .diff-add { color: #1B7550; }
+.app[data-theme="light"] .tk-str { color: #3D7A2B; } .app[data-theme="light"] .tk-num { color: #A3580E; }
+.app[data-theme="light"] .code-row.hl, .app[data-theme="light"] .file-line.selected, .app[data-theme="light"] .code-preview-row.hl, .app[data-theme="light"] .code-line.hl { background: rgba(232, 170, 78, 0.18); }
+.app[data-theme="light"] .file-line:hover { background: rgba(0, 0, 0, 0.03); }
+.app[data-theme="light"] .cx-input { background: linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--cx-conv) 24px); }
+.app[data-theme="light"] .cx-send { background: #1A1A1A; }
+.app[data-theme="light"] .sel-toolbar { box-shadow: inset 0 0 0 1px var(--cx-line), 0 8px 24px rgba(16, 24, 40, 0.14); }
+.app[data-theme="light"] .sel-toolbar kbd { color: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+/* The Astra note and pill in Codex */
+.app[data-theme="light"] .codex .cx-notice { background: #FFFFFF; box-shadow: inset 0 0 0 1px #E1E3E7; }
+.app[data-theme="light"] .codex .cx-notice > svg, .app[data-theme="light"] .codex .cx-notice-text span { color: #5B626C; }
+.app[data-theme="light"] .codex .cx-notice-open { background: #ECEDEF; color: #16181D; }
+.app[data-theme="light"] .codex .cx-notice-open:hover { background: #E1E3E6; }
+.app[data-theme="light"] .codex .cx-notice.handled { background: transparent; box-shadow: inset 0 0 0 1px #ECEDEF; }
+.app[data-theme="light"] .codex .cx-astra-pill { background: #ECEDEF; color: #5B626C; }
+.app[data-theme="light"] .codex .cx-astra-pill.attn { background: #ECEDEF; color: #16181D; }
+.app[data-theme="light"] .codex .cx-astra-pill.attn > svg { color: #5B626C; }
+.app[data-theme="light"] .codex .cx-astra-pill.attn::after { background: #E0A040; }
+@keyframes notice-glow-light { 0% { box-shadow: inset 0 0 0 1px #E1E3E7, 0 0 0 0 rgba(37, 99, 235, 0.18); } 100% { box-shadow: inset 0 0 0 1px #E1E3E7, 0 0 0 8px rgba(37, 99, 235, 0); } }
+.app[data-theme="light"] .cx-notice.new { animation: notice-in 0.42s ease-out both, notice-glow-light 1.6s ease-out 0.42s; }
+
+/* ---------- Figma, light ---------- */
+.app[data-theme="light"] .figma {
+  --bg: #FFFFFF; --bg-1: #FFFFFF; --bg-2: #F5F5F5; --bg-3: #EBEBEB; --line: #E6E6E6; --line-2: #D9D9D9;
+  --text: #1E1E1E; --text-2: #5E5E5E; --muted: #7A7A7A; --amber: #9A5800; --amber-soft: #FDF0DC; --green: #1B7550; --green-soft: #E2F3EA; --red: #BF3B27; --blue: #3451C7;
+  background: #E9E9EB; color: #1E1E1E;
+}
+.app[data-theme="light"] :is(.fg-left, .fg-right) { background: #FFFFFF; border-color: #E6E6E6; }
+.app[data-theme="light"] :is(.fg-file, .fg-tabs, .fg-section, .fg-right-head) { border-color: #E6E6E6; }
+.app[data-theme="light"] .fg-row { color: #1E1E1E; }
+.app[data-theme="light"] .fg-row.active { background: #F0F0F0; }
+.app[data-theme="light"] .fg-row.layer:hover { background: #F5F5F5; }
+.app[data-theme="light"] .fg-row.selected { background: #DAEBF7; }
+.app[data-theme="light"] .fg-frame-meta { color: #7A7A7A; }
+.app[data-theme="light"] .dash-frame { background: #FFFFFF; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+.app[data-theme="light"] .fg-toolbar { background: #FFFFFF; border-color: #E6E6E6; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); }
+.app[data-theme="light"] .tool { color: #1E1E1E; }
+.app[data-theme="light"] .tool:hover { background: #F0F0F0; }
+.app[data-theme="light"] .tool.active { color: #FFFFFF; }
+.app[data-theme="light"] .tool.astra { background: #F0F0F0; }
+.app[data-theme="light"] .tool.astra.on { box-shadow: inset 0 0 0 1px #CFCFCF; }
+.app[data-theme="light"] .tool-sep { background: #E6E6E6; }
+.app[data-theme="light"] .fg-props { color: #5E5E5E; }
+.app[data-theme="light"] .fg-prop-label { color: #1E1E1E; }
+.app[data-theme="light"] .fg-prop-grid span { background: #F5F5F5; }
+.app[data-theme="light"] .fg-prop-alert { border-color: #E8C98A; background: #FFF6E5; color: #8A5300; }
+.app[data-theme="light"] .fg-prop-alert:hover { background: #FDEFD4; }
+.app[data-theme="light"] .fg-prop-alert small { color: #9A6A1E; }
+.app[data-theme="light"] .swatch { box-shadow: inset 0 0 0 1px #E6E6E6; }
+.app[data-theme="light"] .fg-zoom { background: #FFFFFF; border-color: #E6E6E6; color: #5E5E5E; }
+.app[data-theme="light"] .fg-zoom:hover { color: #1E1E1E; border-color: #CFCFCF; }
+.app[data-theme="light"] .fg-comment-pop { background: #FFFFFF; border-color: #E6E6E6; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14); }
+.app[data-theme="light"] .fg-comment-pin { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18), inset 0 0 0 1px #E6E6E6; }
+.app[data-theme="light"] .figma kbd { color: var(--muted); }
+.app[data-theme="light"] .figma .plugin.astra-embed { box-shadow: inset 0 0 0 1px #E1E3E7, 0 18px 40px rgba(16, 24, 40, 0.16); }
