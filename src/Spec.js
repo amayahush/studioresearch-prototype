@@ -1,4 +1,4 @@
-import { html, useState, cx } from './lib.js';
+import { html, useState, cx, TOUCH } from './lib.js';
 import { SPEC_TASKS, TEXT, useStore, taskCode } from './store.js';
 import { Diff, popPosition } from './ui.js';
 import { Check, Pause, RotateCcw, ChevronDown, Layers, Code as Code2, FileCode } from 'lucide-react';
@@ -100,7 +100,7 @@ export function SpecChip({ pips, tone, req, tasks, summary }) {
   const ids = SPEC_TASKS.filter((t) => t.req === req).map((t) => t.id);
   const done = ids.filter((id) => tasks[id][0] === 'done').length;
   return html`<span className=${cx('v3-chip', tone)} aria-label=${`Agent spec for ${req}: ${done} of ${ids.length} tasks committed. ${summary}`}
-    onMouseEnter=${(e) => setPos(popPosition(e.currentTarget, 240))} onMouseLeave=${() => setPos(null)}>
+    onMouseEnter=${(e) => !TOUCH && setPos(popPosition(e.currentTarget, 240))} onMouseLeave=${() => setPos(null)}>
     Spec ${pips.map((c, i) => html`<${Pip} key=${i} c=${c} />`)}
     ${pos && html`<div className="ev-pop v3-chip-pop" role="tooltip" style=${pos}>
       <div className="ev-pop-head"><strong>Agent work on ${req}</strong><span className="muted">${done} of ${ids.length} committed</span></div>

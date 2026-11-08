@@ -1,4 +1,4 @@
-import { html, useState, useEffect, useRef, cx, Fragment } from './lib.js';
+import { html, useState, useEffect, useRef, cx, Fragment, useMedia, PHONE, TABLET, touchCopy } from './lib.js';
 import { useStore, TEXT, EVIDENCE, TIMES, R4_INTENT, PEOPLE, prdVersion } from './store.js';
 import { SpecCard } from './Spec.js';
 import { Avatar, Tag, SectionLabel, Diff, EvidenceChip, Toast, StatusChip, ResizeHandle, useColumnWidth } from './ui.js';
@@ -34,7 +34,9 @@ const SPEC_LINES = [
 export function Codex() {
   const { state, dispatch } = useStore();
   const [panel, setPanel] = useState(null);
-  const [threadsOpen, setThreadsOpen] = useState(true);
+  const phone = useMedia(PHONE);
+  // Phones and tablets start on the thread itself; on phones the thread list slides in as a drawer.
+  const [threadsOpen, setThreadsOpen] = useState(() => !window.matchMedia(TABLET).matches);
   const [threadsW, setThreadsW] = useColumnWidth('threads', 228);
   const [panelW, setPanelW] = useColumnWidth('codex-panel', 360);
   const [file, setFile] = useState(null); // null = agent transcript, 'spec' = timekeeping-api.md
@@ -43,9 +45,12 @@ export function Codex() {
   const [skip, setSkip] = useState(null); // time skip shown over the shell
   const [endCard, setEndCard] = useState(false);
 
+  // Phones: opening the spec file from the Astra sheet lowers the sheet (kept mounted, so nothing
+  // typed is lost) so the lines can be selected; the Astra pill or adding evidence brings it back.
+  const [sheetDown, setSheetDown] = useState(false);
   // Astra has nothing to say until the spec has run into a conflict.
   const noteReady = streamDone && !(state.stage === 'flagged' && state.specPhase !== 'held');
-  const openNote = () => noteReady && setPanel(PANEL_FOR_STAGE[state.stage]);
+  const openNote = () => { if (!noteReady) return; setSheetDown(false); setPanel(PANEL_FOR_STAGE[state.stage]); };
   const [running, setRunning] = useState(false); // a reopened task is rerunning
 
   useEffect(() => {
@@ -151,7 +156,8 @@ export function Codex() {
         <${Avatar} id="marcus" size=${24} />
       </nav>
 
-      ${threadsOpen && html`<nav className="cx-threads" style=${{ flexBasis: threadsW, width: threadsW }} aria-label="Threads">
+      ${phone && threadsOpen && html`<div className="m-scrim" onClick=${() => setThreadsOpen(false)} aria-hidden="true" />`}
+      ${threadsOpen && html`<nav className=${cx('cx-threads', phone && 'm-drawer open')} style=${phone ? undefined : { flexBasis: threadsW, width: threadsW }} aria-label="Threads">
         <div className="cx-threads-head">
           <span>Codex</span>
           <button className="cx-icon" aria-label="Notifications" onClick=${notSimulated}><${Bell} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
@@ -160,7 +166,7 @@ export function Codex() {
         <button className="cx-thread" onClick=${notSimulated}><${SquarePen} size=${14} strokeWidth=${1.5} aria-hidden="true" />New chat</button>
         <div className="cx-threads-label">Projects</div>
         <button className="cx-thread" onClick=${notSimulated}><${FolderClosed} size=${14} strokeWidth=${1.5} className="cx-folder" aria-hidden="true" />labor-dashboard</button>
-        <button className="cx-thread sub active" aria-current="page" onClick=${() => setFile(null)}><span>Implement LAB-15 refresh job</span></button>
+        <button className="cx-thread sub active" aria-current="page" onClick=${() => { setFile(null); if (phone) setThreadsOpen(false); }}><span>Implement LAB-15 refresh job</span></button>
         <button className="cx-thread sub" onClick=${notSimulated}><span>Fix shift filter query</span></button>
         <div className="cx-threads-label">Recents</div>
         <button className="cx-thread" onClick=${notSimulated}><span>Review !205 department totals</span></button>
@@ -168,7 +174,7 @@ export function Codex() {
         <button className="cx-thread" onClick=${notSimulated}><span>Write tests for LAB-13</span><span className="cx-unread" aria-label="Unread" /></button>
       </nav>`}
 
-      ${threadsOpen && html`<${ResizeHandle} side="start" width=${threadsW} setWidth=${setThreadsW} def=${228} min=${170} max=${400} collapseAt=${110} onCollapse=${() => setThreadsOpen(false)} label="Resize threads sidebar" />`}
+      ${!phone && threadsOpen && html`<${ResizeHandle} side="start" width=${threadsW} setWidth=${setThreadsW} def=${228} min=${170} max=${400} collapseAt=${110} onCollapse=${() => setThreadsOpen(false)} label="Resize threads sidebar" />`}
       <main className="cx-main">
         ${file === 'spec' && html`<div className="cx-filebar">
           <${FileText} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span>timekeeping-api.md</span>
@@ -195,10 +201,10 @@ export function Codex() {
         </div>
       </main>
 
-      ${panel && html`<${ResizeHandle} side="end" width=${panelW} setWidth=${setPanelW} def=${360} min=${300} max=${640} label="Resize Astra panel" />`}
+      ${!phone && panel && html`<${ResizeHandle} side="end" width=${panelW} setWidth=${setPanelW} def=${360} min=${300} max=${640} label="Resize Astra panel" />`}
       ${panel &&
-      html`<aside className="side-panel rl astra-embed" style=${{ flexBasis: panelW, width: panelW }} data-theme=${state.theme === 'light' ? 'light' : 'dark'} aria-label="Astra">
-        <${CodexPanel} panel=${panel} setPanel=${setPanel} setToast=${setToast} openFile=${() => setFile('spec')} onSentClose=${afterSent} onResend=${resend} onFinish=${finish} onAccept=${() => rerunStep('ACCEPT_SPEC')} />
+      html`${phone && !sheetDown && html`<div className="m-scrim sheet" onClick=${() => setPanel(null)} aria-hidden="true" />`}<aside style=${phone ? undefined : { flexBasis: panelW, width: panelW }} className=${cx('side-panel rl astra-embed', phone && 'm-sheet', phone && sheetDown && 'm-down')} aria-hidden=${phone && sheetDown ? 'true' : undefined} role=${phone ? 'dialog' : undefined} aria-modal=${phone ? 'true' : undefined} data-theme=${state.theme === 'light' ? 'light' : 'dark'} aria-label="Astra">
+        <${CodexPanel} panel=${panel} setPanel=${setPanel} setToast=${setToast} openFile=${() => { setFile('spec'); if (phone) setSheetDown(true); }} onSentClose=${afterSent} onResend=${resend} onFinish=${finish} onAccept=${() => rerunStep('ACCEPT_SPEC')} />
       </aside>`}
     </div>
     ${skip && html`<${TimeSkip} ...${skip} onDone=${() => { skip.onDone(); setSkip(null); }} />`}
@@ -362,7 +368,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone, runni
 
   return html`<div className="transcript" onClick=${skipAll}>
     ${blocks.slice(0, shown).map((b, i) => html`<div key=${i} className=${cx('stream-block', !streamDone && 'enter')}>${b}</div>`)}
-    ${streaming && html`<div className="cx-working"><span className="spinner" /> Working… <span className="cx-hint">click or press Space to skip</span></div>`}
+    ${streaming && html`<div className="cx-working"><span className="spinner" /> Working… <span className="cx-hint">${touchCopy('click or press Space to skip')}</span></div>`}
 
     ${started && html`<${Fragment}>
       <div className="cx-prompt v3-gap"><div>Spec looks right. Run it.</div></div>
@@ -444,6 +450,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone, runni
 // timekeeping-api.md with drag-to-select lines and an "Add to R4 evidence" action (frame 08a).
 function SpecFile({ onToast, openNote }) {
   const { state, dispatch } = useStore();
+  const phone = useMedia(PHONE);
   const [sel, setSel] = useState(null); // [start, end]
   const [dragging, setDragging] = useState(false);
   const canAdd = state.stage === 'moreEvidence';
@@ -457,6 +464,7 @@ function SpecFile({ onToast, openNote }) {
     if (b >= 56 && a <= 61) { // any part of the changelog is enough
       dispatch({ type: 'ADD_EVIDENCE', id: 'changelog' });
       onToast('Changelog L58–60 added to R4 evidence.');
+      if (phone) setTimeout(openNote, 900); // bring the Astra sheet back up to resend
     } else if (b >= 41 && a <= 44) {
       onToast('§3.2 is already on this proposal.');
     } else {
@@ -496,14 +504,14 @@ function SpecFile({ onToast, openNote }) {
           ${n === lastSel && !dragging &&
           html`<div className="sel-toolbar">
             ${canAdd
-              ? html`<button className="btn btn-primary sm" onClick=${addEvidence}><${Paperclip} size=${12} /> Add to R4 evidence <kbd>⌘⇧E</kbd></button>`
+              ? html`<button className="btn btn-primary sm" onClick=${addEvidence}><${Paperclip} size=${12} /> Add to R4 evidence ${!phone && html`<kbd>⌘⇧E</kbd>`}</button>`
               : html`<span className="muted small">${added ? 'Already on R4 evidence' : 'No open Astra request'}</span>`}
             <button className="btn btn-ghost sm" onClick=${() => onToast('Codex chat is not simulated in this prototype.')}><${MessageSquare} size=${12} /> Ask Codex</button>
           </div>`}
         <//>`)}
       </div>
     </div>
-    ${canAdd && !added && html`<div className="hint">Drag across line numbers to select lines, then add them to R4's evidence.</div>`}
+    ${canAdd && !added && html`<div className="hint">${phone ? 'Tap a changelog line to select lines 58–60, then add them to R4\'s evidence.' : 'Drag across line numbers to select lines, then add them to R4\'s evidence.'}</div>`}
     <div className="section-label"><span>Codex</span></div>
     <${Step}>Astra · proposal sent to Dana · T3 and T4 held<//>
     ${state.danaAsk && html`<${Divider}>${TIMES.moreEvidence}<//>

@@ -278,7 +278,7 @@ export const TOUR_STEPS = {
     {
       id: 'slices',
       stage: ['unpublished', 'flagged'],
-      target: '.slices',
+      target: '.slices, .m-slice-wrap',
       scenario: 'Dana is reviewing the PRD.',
       title: 'Each role sees their slice',
       decision: 'The PRD filters into slices by role, so each person sees what they act on. The full document is one click away.',

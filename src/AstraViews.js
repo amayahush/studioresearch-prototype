@@ -1,4 +1,4 @@
-import { html, useState, useEffect, useLayoutEffect, useRef, cx, Fragment } from './lib.js';
+import { html, useState, useEffect, useLayoutEffect, useRef, cx, Fragment, touchCopy, useMedia, PHONE } from './lib.js';
 import { useStore, TEXT, TIMES, EVIDENCE, isPending, r4Text, prdVersion } from './store.js';
 import { Avatar, Tag, SectionLabel } from './ui.js';
 import { DEPARTMENTS, dashboardLabel } from './Figma.js';
@@ -494,7 +494,7 @@ export function ScreensView({ selected, setSelected }) {
 
   return html`<div className="rl-split">
     <div className="screens-wrap">
-      <div className="map-bar"><span className="map-note">Linked Figma frames carry requirement pins; click a pin to see its requirement. Other frames in the file have none. Drag the canvas to look around.</span></div>
+      <div className="map-bar"><span className="map-note">${touchCopy('Linked Figma frames carry requirement pins; click a pin to see its requirement. Other frames in the file have none. Drag the canvas to look around.')}</span></div>
       <div className="fcanvas-view" ref=${viewRef} onMouseDown=${onPan}>
         <div className="fcanvas" style=${{ width: CANVAS.w, height: CANVAS.h }}>
           <div className="fc-section" style=${{ left: 1270, top: 420, width: 310, height: 260 }}><span>Archive</span></div>
@@ -590,6 +590,7 @@ function slidesFor(state, audience) {
 }
 
 export function PresentView({ toast }) {
+  const phone = useMedia(PHONE);
   const { state } = useStore();
   const [audience, setAudience] = useState('Leadership');
   const [idx, setIdx] = useState(1);
@@ -619,6 +620,11 @@ export function PresentView({ toast }) {
     <//>`}
   </div>`;
 
+  // Phones: the actions sit in a bar pinned to the bottom (Customize left, Present right).
+  const actions = html`<div className="present-actions">
+    <button className="btn" onClick=${() => toast('Customizing slides is not simulated in this prototype.')}>Customize slides</button>
+    <button className="btn btn-primary" onClick=${() => setPresenting(true)}>Present</button>
+  </div>`;
   return html`<div className="present">
     <div className="present-bar">
       <label className="muted" htmlFor="audience">Audience</label>
@@ -626,8 +632,7 @@ export function PresentView({ toast }) {
         <option>Leadership</option><option>Engineering</option>
       </select>
       <span className="grow" />
-      <button className="btn" onClick=${() => toast('Customizing slides is not simulated in this prototype.')}>Customize slides</button>
-      <button className="btn btn-primary" onClick=${() => setPresenting(true)}>Present</button>
+      ${!phone && actions}
     </div>
     <${Slide} />
     <div className="thumbs">
@@ -636,13 +641,14 @@ export function PresentView({ toast }) {
       </button>`)}
     </div>
     <div className="muted small center">Generated from the same PRD records. Pending changes show as decisions, never as facts.</div>
+    ${phone && actions}
     ${presenting && html`<div className="presenting" onClick=${() => setIdx((i) => Math.min(slides.length - 1, i + 1))}>
       <${Slide} />
       <div className="presenting-bar" onClick=${(e) => e.stopPropagation()}>
         <button className="icon-btn" aria-label="Previous slide" onClick=${() => setIdx(Math.max(0, idx - 1))}><${ChevronLeft} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
         <span className="small">${idx + 1} / ${slides.length}</span>
         <button className="icon-btn" aria-label="Next slide" onClick=${() => setIdx(Math.min(slides.length - 1, idx + 1))}><${ChevronRight} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
-        <button className="btn sm" onClick=${() => setPresenting(false)}>Exit (Esc)</button>
+        <button className="btn sm" onClick=${() => setPresenting(false)}>${phone ? 'Exit' : 'Exit (Esc)'}</button>
       </div>
     </div>`}
   </div>`;

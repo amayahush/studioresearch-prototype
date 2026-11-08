@@ -261,6 +261,19 @@ export function RecorderMap({ selected, setSelected }) {
   const { state } = useStore();
   const rec = useMemo(() => buildRecord(state), [state]);
   const [focus, setFocus] = useState(() => (selected && /^R\d$/.test(selected) ? selected : 'R4'));
+  // Phones: the three columns are wider than the screen, so the stage scrolls sideways.
+  // Keep the focused record in view whenever the focus changes.
+  const stageBox = useRef(null);
+  useEffect(() => {
+    const st = stageBox.current;
+    if (!st || st.scrollWidth <= st.clientWidth) return;
+    const t = setTimeout(() => {
+      const c = st.querySelector('.rec-center'); if (!c) return;
+      const cr = c.getBoundingClientRect(), sr = st.getBoundingClientRect();
+      st.scrollTo({ left: st.scrollLeft + cr.left - sr.left + cr.width / 2 - st.clientWidth / 2, behavior: 'smooth' });
+    }, 60);
+    return () => clearTimeout(t);
+  }, [focus]);
   const [track, setTrack] = useState(() => (selected && /^R\d$/.test(selected) ? selected : 'R4'));
   const [scope, setScope] = useState(() => epicOf(selected && /^R\d$/.test(selected) ? selected : 'R4'));
   const [T, setT] = useState(rec.live);
@@ -425,20 +438,20 @@ export function RecorderMap({ selected, setSelected }) {
       <span className="grow" />
     </div>
 
-    <div className="rec-stage">
+    <div className="rec-stage" ref=${stageBox}>
       <${Columns} key=${focus} ...${props} />
     </div>
 
     <div className="rec-tape">
-      <div className="rec-strip" ref=${tapeRef} onMouseDown=${(e) => {
+      <div className="rec-strip" ref=${tapeRef} onPointerDown=${(e) => {
         if (e.target.closest('.rec-tick')) return;
         setPlaying(false);
         const r = tapeRef.current.getBoundingClientRect();
         cancelAnimationFrame(seekRaf.current); seekRaf.current = 0;
         const move = (ev) => setT(tOf(ax, ev.clientX - r.left, live));
         move(e);
-        const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
-        window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+        const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); };
+        window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
       }}>
         <${Axis} ax=${ax} pastRef=${pastRef} />
         ${(!track || track === 'R4') && scopeReqs.includes('R4') && Object.entries(rec.lags).map(([id, [from, to, why]], i) => {
@@ -457,7 +470,7 @@ export function RecorderMap({ selected, setSelected }) {
       <div className="rec-trans">
         <button className="icon-btn" onClick=${() => step(-1)} aria-label="Previous event"><${SkipBack} size=${14} strokeWidth=${1.5} /></button>
         ${isLive && !playing && times.length
-          ? html`<button className="btn sm rec-replay" onClick=${play} aria-label=${`Replay from ${fmt(times[0]).date}`}><${Play} size=${13} strokeWidth=${1.5} aria-hidden="true" />Replay from ${fmt(times[0]).date}</button>`
+          ? html`<button className="btn sm rec-replay" onClick=${play} aria-label=${`Replay from ${fmt(times[0]).date}`}><${Play} size=${13} strokeWidth=${1.5} aria-hidden="true" />Replay<span className="rec-replay-date"> from ${fmt(times[0]).date}</span></button>`
           : html`<button className="icon-btn rec-play" onClick=${play} aria-label=${playing ? 'Pause' : 'Play'}>${playing ? html`<${Pause} size=${14} strokeWidth=${1.5} />` : html`<${Play} size=${14} strokeWidth=${1.5} />`}</button>`}
         <button className="icon-btn" onClick=${() => step(1)} aria-label="Next event"><${SkipForward} size=${14} strokeWidth=${1.5} /></button>
         <span className="rec-clock mono" ref=${clockRef} />
@@ -508,7 +521,7 @@ function Axis({ ax, pastRef }) {
   let off = 0;
   const out = [];
   for (const s of ax) {
-    if (s.k === 'days') { const cw = s.w / s.days.length; s.days.forEach((d, i) => out.push(html`<span key=${'d' + d} className="rec-t" style=${{ left: off + i * cw + cw / 2 }}>${d === 0 ? 'Sep 24' : d === 7 || cw > 60 ? dayName(d) : d - 6}</span>`)); }
+    if (s.k === 'days') { const cw = s.w / s.days.length; s.days.forEach((d, i) => out.push(html`<span key=${'d' + d} className="rec-t" style=${{ left: off + i * cw + cw / 2 }}>${cw < 40 && (d === 0 || d === 7) ? (d === 0 ? '' : '10/1') : d === 0 ? 'Sep 24' : d === 7 || cw > 60 ? dayName(d) : d - 6}</span>`)); }
     else if (s.k === 'brk') out.push(html`<span key="brk" className="rec-brk" style=${{ left: off + 3, width: s.w - 6 }} title="Sep 24 to Oct 7 are one column per day. Oct 8 is minute by minute." />`);
     else { out.push(html`<span key="o8" className="rec-t start" style=${{ left: off }}>Oct 8</span>`); for (let m = ZFROM + 15; m <= ZTO; m += 15) out.push(html`<span key=${m} className="rec-t" style=${{ left: off + ((m - ZFROM) / (ZTO - ZFROM)) * s.w - (m === ZTO ? 10 : 0) }}>${clock(m)}</span>`); }
     off += s.w;

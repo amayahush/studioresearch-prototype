@@ -61,6 +61,10 @@ const openFlag = { click: '[data-tour="spec-decide"] .v3-btn.blue' };
 const acceptSpec = { click: '.v3-btn', text: 'Accept and rerun', skipIf: '[data-tour="task-review"]' };
 const openPlugin = { click: '.fg-toolbar .tool.astra', skipIf: '.plugin' };
 const openR4 = { click: '[data-req="R4"]', skipIf: '.record' };
+// Phones keep the assumption check in a sheet behind a dock button; open it first (no-op on desktop).
+// Phones start with R4's sheet closed; open it for steps inside it (desktop already shows it).
+const openPending = { click: '[data-req="R4"]', skipIf: '.rl-panel .approve-field' };
+const openCheck = { click: '.m-dock', optional: true };
 
 export const ROUTES = {
   marcus: {
@@ -75,7 +79,7 @@ export const ROUTES = {
     why: { stage: 'held', actions: [openFlag] },
     propose: { stage: 'held', actions: [openFlag, { click: '.side-panel button', text: 'Propose change' }] },
     pending: { stage: 'proposed', actions: [altP] },
-    'time-skip': { stage: 'proposed', actions: [altP, { click: '.side-panel button', text: 'Close' }] },
+    'time-skip': { stage: 'proposed', actions: [altP, { click: '.side-panel button', text: 'Close', exact: true }] },
     ask: { stage: 'moreEvidence' },
     evidence: { stage: 'moreEvidence', actions: [altP, { click: '.ev-card.dashed' }] },
     changed: { stage: 'approved', actions: [altP] },
@@ -93,13 +97,13 @@ export const ROUTES = {
     end: { stage: 'approved', actions: [{ click: '.fg-comment-pin', skipIf: '.fg-comment-pop' }, { click: '.fg-comment-pop button', text: 'Relabel' }] },
   },
   dana: {
-    check: { stage: 'unpublished' },
-    slices: { stage: 'unpublished' },
-    'time-skip': { stage: 'unpublished', actions: [{ click: '[data-tour="assume-check"] button', text: 'Publish anyway' }] },
+    check: { stage: 'unpublished', actions: [openCheck] },
+    slices: { stage: 'unpublished', actions: [{ click: '.m-sheet-close', optional: true }] },
+    'time-skip': { stage: 'unpublished', actions: [openCheck, { click: '[data-tour="assume-check"] button', text: 'Publish anyway' }] },
     r4: { stage: 'proposed' },
-    reason: { stage: 'proposed' },
-    'agent-work': { stage: 'proposed' },
-    deny: { stage: 'proposed' },
+    reason: { stage: 'proposed', actions: [openPending] },
+    'agent-work': { stage: 'proposed', actions: [openPending] },
+    deny: { stage: 'proposed', actions: [openPending] },
     record: { stage: 'approved', actions: [openR4] },
     end: { stage: 'approved', actions: [openR4, { click: 'button.btn-primary', text: 'Approve', exact: true }] },
   },
