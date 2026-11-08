@@ -29,6 +29,8 @@ const agreed = { stance: 'agreed', note: TEXT.priyaNote };
 export const STAGE_STATE = {
   marcus: {
     flagged: { stage: 'flagged' },
+    plan: { stage: 'flagged', specPhase: 'plan' },
+    held: { stage: 'flagged', specPhase: 'held' },
     proposed: { stage: 'proposed', log: [L.proposed] },
     moreEvidence: { stage: 'moreEvidence', priya: agreed, danaAsk: TEXT.danaAsk, log: [L.proposed, L.priya, L.ask] },
     approved: {
@@ -55,25 +57,31 @@ export const STAGE_STATE = {
 
 const altP = { key: 'alt+p' };
 // Codex's opening output ignores clicks until it finishes streaming, so skip the stream first.
-const skipStream = { click: '.cx-working', optional: true };
-const openFlag = { click: '[data-tour="notice-flag"] .cx-notice-open' };
+const openFlag = { click: '[data-tour="spec-decide"] .v3-btn.blue' };
+const acceptSpec = { click: '.v3-btn', text: 'Accept and rerun', skipIf: '[data-tour="task-review"]' };
 const openPlugin = { click: '.fg-toolbar .tool.astra', skipIf: '.plugin' };
 const openR4 = { click: '[data-req="R4"]', skipIf: '.record' };
 
 export const ROUTES = {
   marcus: {
-    prompt: { stage: 'flagged' },
-    flag: { stage: 'flagged' },
-    compare: { stage: 'flagged', actions: [skipStream, openFlag] },
-    assumed: { stage: 'flagged', actions: [skipStream, openFlag] },
-    why: { stage: 'flagged', actions: [skipStream, openFlag] },
-    propose: { stage: 'flagged', actions: [skipStream, openFlag, { click: '.side-panel button', text: 'Propose change' }] },
+    prompt: { stage: 'plan' },
+    spec: { stage: 'plan' },
+    breakdown: { stage: 'plan' },
+    triage: { stage: 'held' },
+    'task-code': { stage: 'held', actions: [{ click: '[data-tour="spec-run"] .v3-task-row', skipIf: '[data-tour="spec-run"] .v3-code' }] },
+    flag: { stage: 'held' },
+    compare: { stage: 'held', actions: [openFlag] },
+    assumed: { stage: 'held', actions: [openFlag] },
+    why: { stage: 'held', actions: [openFlag] },
+    propose: { stage: 'held', actions: [openFlag, { click: '.side-panel button', text: 'Propose change' }] },
     pending: { stage: 'proposed', actions: [altP] },
-    'time-skip': { stage: 'proposed', actions: [altP, { click: '.side-panel button', text: 'Back to code' }] },
+    'time-skip': { stage: 'proposed', actions: [altP, { click: '.side-panel button', text: 'Close' }] },
     ask: { stage: 'moreEvidence' },
     evidence: { stage: 'moreEvidence', actions: [altP, { click: '.ev-card.dashed' }] },
     changed: { stage: 'approved', actions: [altP] },
-    end: { stage: 'approved', actions: [altP, { click: '.side-panel button', text: 'Update the code to match' }] },
+    'spec-updated': { stage: 'approved' },
+    'task-review': { stage: 'approved', actions: [acceptSpec] },
+    end: { stage: 'approved', actions: [acceptSpec, { click: '.v3-btn', text: 'Commit T3' }, { click: '.v3-btn', text: 'Commit T4' }] },
   },
   priya: {
     tag: { stage: 'proposed' },
@@ -90,6 +98,7 @@ export const ROUTES = {
     'time-skip': { stage: 'unpublished', actions: [{ click: '[data-tour="assume-check"] button', text: 'Publish anyway' }] },
     r4: { stage: 'proposed' },
     reason: { stage: 'proposed' },
+    'agent-work': { stage: 'proposed' },
     deny: { stage: 'proposed' },
     record: { stage: 'approved', actions: [openR4] },
     end: { stage: 'approved', actions: [openR4, { click: 'button.btn-primary', text: 'Approve', exact: true }] },

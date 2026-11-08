@@ -61,7 +61,7 @@ function graphNodes(state) {
     '!218': { type: 'untraced', label: '!218 · no requirement', kind: 'Untraced work', full: '!218 · Cache warm-up script', status: 'Open · Marcus Lee · not linked to any requirement' },
     Overview: { type: 'figma', label: 'Overview frame', kind: 'Figma frame', full: 'Dashboard / Overview', status: state.labelUpdated ? 'Priya Shah · label shows last sync time' : 'Priya Shah · used by R1, R2 and R4' },
     Filters: { type: 'figma', label: 'Filters frame', kind: 'Figma frame', full: 'Dashboard / Filters', status: 'Priya Shah' },
-    'ev-spec': { type: 'evidence', label: 'Spec §3.2', kind: 'Evidence on R4', full: EVIDENCE.spec.label, status: EVIDENCE.spec.meta },
+    'ev-spec': { type: 'evidence', label: 'API doc §3.2', kind: 'Evidence on R4', full: EVIDENCE.spec.label, status: EVIDENCE.spec.meta },
     'ev-api': { type: 'evidence', label: 'API response', kind: 'Evidence on R4', full: 'Sandbox API response · GET /v2/labor/hours', status: EVIDENCE.api.meta },
     'ev-log': { type: 'evidence', label: 'Changelog L58–60', kind: 'Evidence on R4', full: EVIDENCE.changelog.label, status: EVIDENCE.changelog.meta },
     marcus: { type: 'people', person: 'marcus', label: 'Marcus Lee', kind: 'Person', full: 'Marcus Lee', status: 'Senior engineer' },
@@ -411,7 +411,7 @@ function TracePanel({ sel, onClear }) {
         <div className="chips">${stance('Priya', state.priya.stance)}${stance('Kim', state.kim.stance)}</div>
         <${SectionLabel}>Evidence<//>
         <div className="ev-list">
-          <div><${FileText} size=${14} strokeWidth=${1.5} className="muted" aria-hidden="true" /> Spec §3.2 <span className="muted tiny">Mar 2023</span></div>
+          <div><${FileText} size=${14} strokeWidth=${1.5} className="muted" aria-hidden="true" /> API doc §3.2 <span className="muted tiny">Mar 2023</span></div>
           <div><${FileText} size=${14} strokeWidth=${1.5} className="muted" aria-hidden="true" /> Sandbox API response <span className="muted tiny">Oct 8 · PT1H</span></div>
           ${state.evidence.includes('changelog') && html`<div><${FileText} size=${14} strokeWidth=${1.5} className="muted" aria-hidden="true" /> Changelog L58–60 <span className="muted tiny">Sep 2026 · data owner</span></div>`}
         </div>

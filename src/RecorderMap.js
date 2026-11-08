@@ -156,7 +156,7 @@ function buildRecord(state) {
   ];
   if (published) E.push(ev('R4', PUB, 'person', 'dana', 'Published PRD v1 with R4 still assumed. The assumption check flagged it first.', [['dana', 'R4'], ['R4', 'E1'], ['E1', 'prd']], ['Assumption check']));
   if (published) E.push(ev('R4', AT.flag, 'open', 'codex', 'Build test: the timekeeping API returns sync_interval PT1H. R4 is contradicted.', [['code-job', '!219'], ['!219', 'R4'], ['ev-api', 'R4']], ['API response · 1:40 PM'], 'Marcus Lee'));
-  if (proposed) E.push(ev('R4', AT.propose, 'open', 'marcus', `Proposed: “${state.proposal.text}”`, [['marcus', '!219'], ['!219', 'R4'], ['ev-spec', 'R4'], ['R4', 'dana'], ['R4', 'Overview'], ['Overview', 'priya']], ['Spec §3.2', 'API response']));
+  if (proposed) E.push(ev('R4', AT.propose, 'open', 'marcus', `Proposed: “${state.proposal.text}”`, [['marcus', '!219'], ['!219', 'R4'], ['ev-spec', 'R4'], ['R4', 'dana'], ['R4', 'Overview'], ['Overview', 'priya']], ['API doc §3.2', 'API response']));
   if (state.priya.stance) E.push(ev('R4', AT.priya, 'person', 'priya', state.priya.stance === 'agreed' ? `Agreed in the Figma plugin${state.priya.note ? `: “${state.priya.note}”` : '.'}` : `Disagreed in the Figma plugin${state.priya.note ? `: “${state.priya.note}”` : '.'}`, [['priya', 'Overview'], ['Overview', 'R4']]));
   if (state.danaAsk) E.push(ev('R4', AT.ask, 'open', 'dana', `Asked for more evidence: “${state.danaAsk}”`, [['dana', 'R4'], ['R4', '!219'], ['!219', 'marcus']]));
   if (resent) E.push(ev('R4', AT.resend, 'open', 'marcus', `Added changelog lines 58–60 and resent${state.marcusReply ? `: “${state.marcusReply}”` : '.'}`, [['marcus', '!219'], ['!219', 'R4'], ['ev-log', 'R4']], ['Changelog L58–60']));
@@ -226,7 +226,7 @@ function recordsAt(state, rec, T) {
     'code-filter': { type: 'code', label: 'ShiftFilter.tsx', kind: 'Code', full: 'src/ui/ShiftFilter.tsx', status: 'Open', born: D(12, 14, 0) },
     Overview: { type: 'figma', label: 'Overview', kind: 'Figma frame', full: 'Dashboard / Overview', status: lagging('Overview') ? `Label needs update${mins(T, rec.lags.Overview[0])}` : state.labelUpdated && T >= AT.label ? 'Label shows last sync time' : 'Label: “Updated every 15 min”', born: D(9, 11, 0) },
     Filters: { type: 'figma', label: 'Filters', kind: 'Figma frame', full: 'Dashboard / Filters', status: 'Priya Shah', born: D(9, 13, 0) },
-    'ev-spec': { type: 'evidence', label: 'Spec §3.2', kind: 'Evidence', full: EVIDENCE.spec.label, status: EVIDENCE.spec.meta, born: state.stage === 'flagged' || state.stage === 'unpublished' ? Infinity : AT.propose },
+    'ev-spec': { type: 'evidence', label: 'API doc §3.2', kind: 'Evidence', full: EVIDENCE.spec.label, status: EVIDENCE.spec.meta, born: state.stage === 'flagged' || state.stage === 'unpublished' ? Infinity : AT.propose },
     'ev-api': { type: 'evidence', label: 'API response', kind: 'Evidence', full: 'Sandbox GET /v2/labor/hours', status: EVIDENCE.api.meta, born: rec.published ? AT.flag : Infinity, icon: 'api' },
     'ev-log': { type: 'evidence', label: 'Changelog L58–60', kind: 'Evidence', full: EVIDENCE.changelog.label, status: EVIDENCE.changelog.meta, born: state.evidence.includes('changelog') ? AT.resend : Infinity },
     'cl-shift': { type: 'cluster', label: 'Shift Handoff · R2', kind: 'Other PRD · same API', full: 'Show hours worked this shift', status: ch ? 'Owner notified of v1.1' : 'Reads the timekeeping API', born: 0 },

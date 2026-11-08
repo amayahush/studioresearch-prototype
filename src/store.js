@@ -7,7 +7,7 @@ export const TEXT = {
   reason:
     "The timekeeping API batch-loads badge punches once an hour, at the top of the hour. Polling every 15 minutes returns the same data 3 out of 4 times, so the dashboard would look live when it isn't.",
   danaAsk:
-    "The spec section you linked (§3.2) is from 2023. Can you confirm it's still hourly today? If a faster feed exists I'd rather keep 15 minutes.",
+    "The doc section you linked (§3.2) is from 2023. Can you confirm it's still hourly today? If a faster feed exists I'd rather keep 15 minutes.",
   marcusReply: 'Data owner confirmed hourly in Sept. Changelog attached.',
   priyaNote: 'I\'ll relabel "Updated every 15 min" to show the actual last sync time.',
   kimNote: 'Hourly still gets us there by lunch.',
@@ -17,7 +17,7 @@ export const TEXT = {
 export const EVIDENCE = {
   spec: {
     label: 'timekeeping-api.md §3.2',
-    short: 'Spec §3.2 · 2023',
+    short: 'API doc §3.2 · 2023',
     meta: 'Edited Mar 2023',
     file: 'timekeeping-api.md · §3.2',
     range: 'lines 41–44',
@@ -102,7 +102,15 @@ export const initialState = {
   codexStreamed: false,
   // R5 is an AI draft: 'draft' → 'accepted' | 'discarded'
   r5: 'draft',
-  updates: { jira: true, figma: true, teams: true, metric: true },
+  // The agent spec: 'plan' (Marcus reviews) -> 'run' (tasks execute) -> 'held' (T3 failed verify).
+  // 'ready' is Explore's starting point: R1's tasks are in, R4's haven't run.
+  specPhase: 'plan',
+  // After approval: 0 spec update waiting, 1 reviewing T3, 2 reviewing T4.
+  rerun: 0,
+  docSlice: 'main',
+  // Hand edits to task code. Free play: nothing in the story depends on them.
+  codeEdits: {},
+  updates: { jira: true, figma: true, teams: true, metric: true, spec: true },
   log: [],
   // Guided mode (design rationale tour). Kept across resets so it stays on during a demo.
   guided: false,
@@ -129,7 +137,7 @@ function storyReducer(state, action) {
     case 'SET_ROLE':
       return { ...state, role: action.role };
     case 'EXPLORE_ASTRA':
-      return { ...initialState, role: 'explore', guided: state.guided };
+      return { ...initialState, role: 'explore', specPhase: 'ready', guided: state.guided };
     case 'START_ROLE': {
       // Each role path starts fresh at its own point in the story (brief §8).
       const fresh = { ...initialState, role: action.role, startedAs: action.role, guided: state.guided };
@@ -151,6 +159,18 @@ function storyReducer(state, action) {
           { who: 'priya', text: 'Agreed with the R4 change', time: TIMES.priya },
         ],
       };
+    case 'APPROVE_SPEC':
+      return { ...state, specPhase: 'run' };
+    case 'SPEC_HELD':
+      return { ...state, specPhase: 'held' };
+    case 'ACCEPT_SPEC':
+      return { ...state, rerun: 1 };
+    case 'COMMIT_T3':
+      return { ...state, rerun: 2 };
+    case 'EDIT_CODE':
+      return { ...state, codeEdits: { ...state.codeEdits, [action.key]: action.code } };
+    case 'SET_SLICE':
+      return { ...state, docSlice: action.slice };
     case 'SET_VIEW':
       return { ...state, astraView: action.view };
     case 'PROPOSE':
@@ -239,6 +259,92 @@ export const r4Status = (s) => {
 };
 export const r4Text = (s) => (s.stage === 'approved' ? s.proposal.text : TEXT.r4Old);
 export const prdVersion = (s) => (s.stage === 'approved' ? 'v1.1' : s.stage === 'unpublished' ? 'v1 draft' : 'v1');
+
+// The agent spec for LAB-15. Each task names the requirement that created it.
+export const SPEC_TASKS = [
+  { id: 'T1', req: 'R1', title: 'Fetch labor hours and store totals', mark: 'labor hours per department', why: 'R1 needs each department\'s hours in one place before anything can show them.', done: 'All 14 departments have a total for the shift', touches: 'laborHours.ts', needs: 'Nothing. This goes first' },
+  { id: 'T2', req: 'R1', title: 'Retry failed pulls once, then log them', mark: 'per department', why: 'One bad pull shouldn\'t leave a department blank.', done: 'A failed pull retries once, then shows in the log', doneFixed: 'A failed pull waits for Retry-After, retries once, then shows in the log', touches: 'laborHours.ts', needs: 'T1, so there\'s a pull to retry' },
+  { id: 'T3', req: 'R4', title: 'Schedule the refresh job', mark: 'every 15 minutes', why: 'R4 needs something that pulls data on a timer. Nothing does yet.', done: 'The schedule fits the API\'s sync interval', touches: 'refreshLaborHours.ts', needs: 'T1, so there\'s a pull to schedule' },
+  { id: 'T4', req: 'R4', title: 'Show refresh timing on the Overview', mark: 'Refresh data', why: 'Leaders need to see how fresh the numbers are.', done: 'The Overview says when data last refreshed', touches: 'Overview.tsx', needs: 'T3, so there\'s a refresh to report' },
+];
+
+// The code each task wrote. T3 and T4 have a second version once R4 changes.
+const TASK_CODE = {
+  T1: { file: 'src/api/laborHours.ts', code: `export async function fetchLaborHours(plant: string, shift: number) {
+  const res = await timekeeping.get('/v2/labor/hours', { plant, shift })
+  await store.upsertDepartmentTotals(res.departments)
+  return res
+}` },
+  T2: { file: 'src/api/laborHours.ts', code: `export async function pullWithRetry(plant: string, shift: number) {
+  try {
+    return await fetchLaborHours(plant, shift)
+  } catch (err) {
+    if (err.status === 429) await wait(err.retryAfter)
+    try {
+      return await fetchLaborHours(plant, shift)
+    } catch (retryErr) {
+      log.error('labor pull failed', { plant, shift, retryErr })
+    }
+  }
+}` },
+  T3: { file: 'src/jobs/refreshLaborHours.ts', code: `export const schedule = '*/15 * * * *'  // PRD R4 as written
+
+export async function refreshLaborHours() {
+  await pullWithRetry(plant, shift)
+}`, codeNew: `export const schedule = '5 * * * *'  // R4 v1.1
+
+export async function refreshLaborHours() {
+  await pullWithRetry(plant, shift)
+}` },
+  T4: { file: 'src/ui/Overview.tsx', codeNew: `export function RefreshLabel({ lastSync, nextSync }) {
+  return <span>Last synced {lastSync} · next {nextSync}</span>
+}` },
+};
+
+// Code only exists once a task has run. Returns null before that, so the row keeps its explanation.
+export function taskCode(id, status) {
+  const t = TASK_CODE[id];
+  const finished = status === 'done';
+  const drafted = id === 'T3' && (status === 'held' || status === 'reopen');
+  if (!finished && !drafted) return null;
+  const latest = finished && t.codeNew;
+  const code = latest ? t.codeNew : t.code;
+  if (!code) return null;
+  return { key: latest ? `${id}:new` : id, file: t.file, code };
+}
+
+// Where each task stands, from the story alone. Every screen reads this, so they can't disagree.
+export function specTasks(state) {
+  const { stage, specPhase, codeUpdated, rerun } = state;
+  const done = ['done', 'Committed'];
+  if (stage === 'flagged' && specPhase === 'ready') return { T1: done, T2: done, T3: ['todo', 'Not run'], T4: ['todo', 'Not run'] };
+  if (stage === 'flagged' && specPhase !== 'held') return { T1: ['todo', ''], T2: ['todo', ''], T3: ['todo', ''], T4: ['todo', ''] };
+  let T3 = ['held', 'Failed verify'];
+  let T4 = ['held', 'Waiting on T3'];
+  if (stage === 'denied') { T3 = ['reopen', 'Run as written']; T4 = ['reopen', 'Run as written']; }
+  if (stage === 'approved') {
+    if (codeUpdated) { T3 = done; T4 = done; }
+    else if (rerun === 2) { T3 = done; T4 = ['review', 'Review']; }
+    else if (rerun === 1) { T3 = ['review', 'Review']; T4 = ['todo', 'Next']; }
+    else { T3 = ['reopen', 'Reopened']; T4 = ['reopen', 'Reopened']; }
+  }
+  return { T1: done, T2: done, T3, T4 };
+}
+
+export const specVisible = (s) => s.stage !== 'unpublished' && !(s.stage === 'flagged' && !['held', 'ready'].includes(s.specPhase));
+export const specPips = (tasks, req) => SPEC_TASKS.filter((t) => t.req === req).map((t) => ({ done: 'g', todo: 'n' }[tasks[t.id][0]] || 'a'));
+
+// One plain sentence on what the agent's work means for this requirement. Written for someone who never opens the spec.
+export function specSummary(state, req) {
+  if (req === 'R1') return 'Both tasks are committed. Nothing is waiting on this requirement.';
+  const { stage, specPhase, codeUpdated } = state;
+  if (stage === 'flagged') return specPhase === 'ready' ? 'Not run yet, so nothing has tested R4 against the API.' : 'Held. T3 failed its check against the API.';
+  if (stage === 'moreEvidence') return 'Held while Marcus finds more evidence.';
+  if (isPending(state)) return 'Held until you decide. T3 can\'t meet R4 as written.';
+  if (stage === 'denied') return 'R4 stays as written, so both tasks can run as written.';
+  if (stage === 'approved') return codeUpdated ? 'Committed. The build matches v1.1.' : 'Reopened. The build is behind v1.1 until Marcus reruns them.';
+  return '';
+}
 
 export const StoreContext = createContext(null);
 export const useStore = () => useContext(StoreContext);
