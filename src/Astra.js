@@ -1,6 +1,7 @@
 import { html, useState, useEffect, cx, Fragment } from './lib.js';
-import { useStore, TEXT, TIMES, R4_INTENT, isPending, r4Text, r4Status, prdVersion } from './store.js';
-import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection, StatusChip } from './ui.js';
+import { useStore, TEXT, TIMES, R4_INTENT, isPending, r4Text, r4Status, prdVersion, specTasks, specVisible, specPips, specSummary, SPEC_TASKS } from './store.js';
+import { SpecChip, DevTasks, TaskGroups } from './Spec.js';
+import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection, StatusChip, ResizeHandle, useColumnWidth } from './ui.js';
 import { TimeSkip, EndCard } from './Interstitials.js';
 import { MapView, ScreensView, PresentView } from './AstraViews.js';
 import { RecorderMap } from './RecorderMap.js';
@@ -87,6 +88,7 @@ export function Astra() {
   const [toast, setToast] = useState('');
   const [exportOpen, setExportOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(loadNavOpen);
+  const [navW, setNavW] = useColumnWidth('nav', 232);
   const pending = isPending(state);
   const inbox = ['proposed', 'resent'].includes(state.stage) ? 1 : 0;
   const view = state.astraView;
@@ -129,10 +131,22 @@ export function Astra() {
       setSkip({
         from: TIMES.approved, to: '2:26 PM', title: 'v1.1 is out',
         events: [
-          { time: '2:24 PM', who: 'marcus', text: 'Marcus updated the refresh job to match v1.1' },
+          { time: TIMES.approved, who: 'dana', text: 'Your approval reached Marcus\'s agent spec. T3 and T4 reopened' },
+          { time: '2:24 PM', who: 'marcus', text: 'Marcus accepted the spec update and committed T3 and T4' },
           { time: '2:26 PM', who: 'priya', text: `Priya relabeled the Overview: "${dashboardLabel({ ...state, stage: 'approved', labelUpdated: true })}"` },
         ],
         onDone: () => { dispatch({ type: 'UPDATE_CODE' }); dispatch({ type: 'UPDATE_LABEL' }); setSelected('R4'); },
+      });
+    },
+    asked: () => {
+      if (!ownPath) return;
+      setSkip({
+        from: TIMES.moreEvidence, to: TIMES.resent, title: 'Marcus is finding more evidence',
+        events: [
+          { time: TIMES.resent, who: 'marcus', text: 'Marcus added the data owner\'s changelog and resent' },
+          { time: TIMES.resent, who: 'kim', text: 'Kim agreed: leaders still see risk before mid-shift' },
+        ],
+        onDone: () => { dispatch({ type: 'ADD_EVIDENCE', id: 'changelog' }); dispatch({ type: 'RESEND', reply: TEXT.marcusReply }); setSelected('R4'); },
       });
     },
     done: () => (ownPath ? setEndCard(true) : setSelected(null)),
@@ -151,7 +165,7 @@ export function Astra() {
 
   return html`<div className="astra" data-theme=${state.theme === 'light' ? 'light' : 'dark'}>
     <div className="astra-row">
-    <nav className=${cx('rl-side', !navOpen && 'collapsed')} aria-label="Workspace">
+    <nav className=${cx('rl-side', !navOpen && 'collapsed')} style=${navOpen ? { flexBasis: navW, width: navW } : undefined} aria-label="Workspace">
       ${navOpen
         ? html`<${Fragment}>
             <div className="rl-org-row">
@@ -190,6 +204,7 @@ export function Astra() {
           </div>`}
     </nav>
 
+    ${navOpen && html`<${ResizeHandle} side="start" width=${navW} setWidth=${setNavW} def=${232} min=${170} max=${380} collapseAt=${110} onCollapse=${() => setNavOpen(false)} label="Resize workspace sidebar" />`}
     <section className="rl-main">
       <header className="rl-top">
         <nav className="rl-crumbs" aria-label="Breadcrumb">
@@ -198,6 +213,7 @@ export function Astra() {
           <span className="rl-top-title">Line Labor Dashboard</span>
           <span className="rl-ver mono">${prdVersion(state)}${state.stage === 'approved' ? ' · Oct 8' : state.stage === 'unpublished' ? '' : ' · Oct 1'}</span>
           ${pending ? html`<${Tag} tone="amber">1 pending<//>` : state.stage === 'approved' ? html`<${Tag} tone="green">Published<//>` : null}
+          ${state.stage === 'approved' && html`<${Tag} tone=${state.codeUpdated ? 'green' : 'amber'}>${state.codeUpdated ? 'In sync' : 'Build behind v1.1'}<//>`}
           <span className="tag tag-outline" title="Requirements nobody has confirmed yet">${unverified(getReqs(state))} unverified</span>
         </nav>
         <span className="grow" />
@@ -257,13 +273,15 @@ function StatusBar({ onRecorder, onToast }) {
 const FILTERS = [['all', 'All requirements'], ['approved', 'Approved'], ['pending', 'Pending'], ['draft', 'Draft']];
 
 function DocView({ selected, setSelected, story }) {
-  const { state } = useStore();
-  const [slice, setSlice] = useState('main');
+  const { state, dispatch } = useStore();
   const [filter, setFilter] = useState('all');
   const [filterOpen, setFilterOpen] = useState(false);
   const [closedEpics, setClosedEpics] = useState({});
   // Open/closed choices by section key, kept across selections that share a section.
   const [openMap, setOpenMap] = useState({});
+  const slice = state.docSlice;
+  const [panelW, setPanelW] = useColumnWidth('details', 320);
+  const setSlice = (id) => dispatch({ type: 'SET_SLICE', slice: id });
   const reqs = getReqs(state);
   const pending = isPending(state);
   const count = (st) => (st === 'all' ? reqs.length : reqs.filter((r) => r.status === st).length);
@@ -341,7 +359,8 @@ function DocView({ selected, setSelected, story }) {
         </div>
       </div>
 
-      ${(selected || state.stage === 'unpublished') && html`<aside className="rl-panel" aria-label="Details">
+      ${(selected || state.stage === 'unpublished') && html`<${ResizeHandle} side="end" width=${panelW} setWidth=${setPanelW} def=${320} min=${280} max=${620} label="Resize details panel" />`}
+      ${(selected || state.stage === 'unpublished') && html`<aside className="rl-panel" style=${{ flexBasis: panelW, width: panelW }} aria-label="Details">
         <${DetailPanel}
           selected=${selected}
           setSelected=${setSelected}
@@ -356,21 +375,26 @@ function DocView({ selected, setSelected, story }) {
 }
 
 function ReqRow({ req, selected, onSelect }) {
+  const { state } = useStore();
+  const showSpec = specVisible(state) && (req.id === 'R1' || req.id === 'R4');
+  const tasks = specTasks(state);
+  const pips = showSpec ? specPips(tasks, req.id) : [];
   const pending = req.status === 'pending';
   const draft = req.status === 'draft';
-  return html`<button className=${cx('req', selected && 'selected', pending && 'pending', req.changed && 'verified', draft && 'draft')} data-req=${req.id} onClick=${onSelect} aria-pressed=${selected}>
+  return html`<${Fragment}><button className=${cx('req', selected && 'selected', pending && 'pending', req.changed && 'verified', draft && 'draft')} data-req=${req.id} onClick=${onSelect} aria-pressed=${selected}>
     <span className="req-id mono">${req.id}</span>
     <span className="req-main">
       <span className="req-text">${req.text}</span>
       <span className="req-links">
         ${req.links.map((l) => html`<span key=${l} className="doc-chip">${l}</span>`)}
         <${StatusChip} status=${req.assume} sources=${req.sources} changedIn=${req.changed && 'v1.1'} />
+        ${showSpec && html`<${SpecChip} tone=${pips.includes('a') ? 'amber' : null} pips=${pips} req=${req.id} tasks=${tasks} summary=${specSummary(state, req.id)} />`}
         ${req.changed && html`<${Tag} tone="green">Changed in v1.1<//>`}
         ${draft && html`<${Tag} tone="blue">Draft · AI from lead notes<//>`}
         ${pending && html`<span className="req-review">Review</span>`}
       </span>
     </span>
-  </button>`;
+  </button>${showSpec && state.docSlice === 'dev' && html`<${DevTasks} id=${req.id} tasks=${tasks} />`}<//>`;
 }
 
 /* ---------- Inspector ---------- */
@@ -399,6 +423,17 @@ function Inspector({ tag, extraTag, title, from, onClose, top, sections, bottom,
 }
 
 const sec = (key, label, open, preview, tone, body) => ({ key, label, open, preview, tone, body });
+
+// What the agent is doing for a requirement, in plain words. A PM reads this, never the spec.
+function AgentWorkBody({ req, all }) {
+  const { state, dispatch } = useStore();
+  const ids = SPEC_TASKS.filter((t) => all || t.req === req).map((t) => t.id);
+  return html`<div data-tour="agent-work">
+    <p className="small v3-agent-sum">${specSummary(state, req)}</p>
+    <${TaskGroups} ids=${ids} tasks=${specTasks(state)} />
+    <button className="link small v3-slice-link" onClick=${() => dispatch({ type: 'SET_SLICE', slice: 'dev' })}>See it in the Developer slice</button>
+  </div>`;
+}
 
 const SOURCES = html`<div className="chips"><span className="chip static">Kickoff call · Sep 24</span><span className="chip static">Lead notes</span><span className="chip static">Labor spreadsheet</span></div>`;
 
@@ -476,6 +511,7 @@ function DetailPanel({ selected, setSelected, reqs, openMap, setOpen, story }) {
     title=${`${r.id} · ${r.name}`}
     sections=${[
       sec('requirement', 'Requirement', true, '', null, html`<p>${r.text}</p>`),
+      ...(r.id === 'R1' && specVisible(state) ? [sec('agent', 'Agent work', true, '2 of 2 committed', null, html`<${AgentWorkBody} req="R1" />`)] : []),
       statusSection(r),
       ...(r.intent ? [whySection(r.intent)] : []),
       sec('linked', 'Linked work', false, work, null, r.links.length
@@ -599,6 +635,7 @@ function R4Panel({ onClose, openMap, setOpen, story }) {
       tag=${html`<${StatusChip} status=${req.assume} />`}
       sections=${[
         sec('requirement', 'Requirement', true, '', null, html`<p className="small">${TEXT.r4Old}</p>`),
+        ...(specVisible(state) ? [sec('agent', 'Agent work', true, s === 'denied' ? 'Run as written' : state.specPhase === 'ready' ? 'R4 not run' : 'T3, T4 held', 'amber', html`<${AgentWorkBody} req="R4" all />`)] : []),
         statusSection(req),
         whySection(R4_INTENT),
         sec('linked', 'Linked work', false, 'Jira · Figma', null, html`
@@ -617,6 +654,10 @@ function R4Panel({ onClose, openMap, setOpen, story }) {
   const [ownersPv, ownersTone] = ownersPreview([priya.stance, state.kim.stance]);
   const checked = Object.values(updates).filter(Boolean).length;
 
+  // First thing in the panel: what this decision is holding up.
+  const agentOpen = 'agent' in openMap ? openMap.agent : true;
+  const agentTop = html`<${CollapsibleSection} label="Agent work" preview=${waiting ? 'T3, T4 held' : 'Waiting on you'} tone="amber" open=${agentOpen} onToggle=${() => setOpen('agent', !agentOpen)}><${AgentWorkBody} req="R4" all /><//>`;
+
   const sections = [
     statusSection({ ...req, assume: 'contradicted' }),
     { ...whySection(R4_INTENT), open: false },
@@ -631,11 +672,11 @@ function R4Panel({ onClose, openMap, setOpen, story }) {
     sec('affects', 'Also affects', false, 'Success metric · likely holds', null, html`
       <p className="small">"Leaders spot overtime risk by mid-shift." Hourly data still gives 3 to 4 readings before mid-shift, so the metric likely holds. Check with Kim if unsure.</p>`),
   ];
-  if (resent && mode !== 'request') {
-    sections.push(sec('updates', 'One approval also updates', true, `${checked} of 4 tools`, null, html`
-      ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Astra', 'Add a note to Success metrics']].map(
+  if (!waiting && mode !== 'request') {
+    sections.push(sec('updates', 'One approval also updates', true, `${checked} of 5 tools`, null, html`
+      ${[['jira', 'Jira', 'Update Jira LAB-15 description'], ['figma', 'Figma', 'Comment on Figma · Overview for Priya'], ['teams', 'Teams', 'Post the change in Teams #line-labor'], ['metric', 'Astra', 'Add a note to Success metrics'], ['spec', 'Codex', 'Send Marcus the spec update']].map(
         ([k, tool, label]) => html`<label key=${k} className="update-row">
-          <input type="checkbox" checked=${updates[k]} onChange=${() => setUpdates({ ...updates, [k]: !updates[k] })} />
+          <input type="checkbox" checked=${updates[k]} disabled=${k === 'spec'} title=${k === 'spec' ? 'The agent can\'t keep running against an old requirement' : undefined} onChange=${() => setUpdates({ ...updates, [k]: !updates[k] })} />
           <span className="small grow">${label}</span><span className="muted tiny">${tool}</span>
         </label>`
       )}`));
@@ -652,7 +693,7 @@ function R4Panel({ onClose, openMap, setOpen, story }) {
   if (mode === 'request') {
     return html`<${Inspector}
       ...${head}
-      top=${html`${changeCard}<div className="decision-card">
+      top=${html`${agentTop}${changeCard}<div className="decision-card">
         <div className="tiny-label">Your decision <span className="grow" /><button className="link tiny" onClick=${() => setMode(null)}>Change</button></div>
         <div className="link-strong"><${History} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Request more evidence</div>
       </div>`}
@@ -664,13 +705,13 @@ function R4Panel({ onClose, openMap, setOpen, story }) {
       foot=${html`
         <span className="grow" />
         <button className="btn btn-ghost" onClick=${() => setMode(null)}>Cancel</button>
-        <button className="btn btn-primary" disabled=${!ask.trim()} onClick=${() => { dispatch({ type: 'REQUEST_EVIDENCE', ask: ask.trim() }); setMode(null); }}>Send to Marcus</button>`}
+        <button className="btn btn-primary" disabled=${!ask.trim()} onClick=${() => { dispatch({ type: 'REQUEST_EVIDENCE', ask: ask.trim() }); setMode(null); story.asked(); }}>Send to Marcus</button>`}
     />`;
   }
 
   return html`<${Inspector}
     ...${head}
-    top=${html`${waiting && html`<div className="waiting-card"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="strong-500">Waiting on Marcus</div><div className="muted small">You asked for more evidence at ${TIMES.moreEvidence}: “${state.danaAsk}”</div></div></div>`}${changeCard}`}
+    top=${html`${agentTop}${waiting && html`<div className="waiting-card"><${Clock} size=${16} strokeWidth=${1.5} aria-hidden="true" /><div><div className="strong-500">Waiting on Marcus</div><div className="muted small">You asked for more evidence at ${TIMES.moreEvidence}: “${state.danaAsk}”</div></div></div>`}${changeCard}`}
     bottom=${mode === 'confirmDeny' ? html`<div className="confirm-card" role="alertdialog" aria-label="Deny this change?">
       <div className="strong-500">Deny this change?</div>
       <div className="muted small">Closes the proposal. R4 stays as written and Marcus is notified.</div>
@@ -751,8 +792,10 @@ function DecisionRecord({ onClose, onDone }) {
       text: state.kim.stance ? `Both agreed. Kim: “${TEXT.kimNote}”` : state.priya.stance === 'disagreed' ? 'Priya disagreed. Kim did not reply.' : 'Priya agreed. Kim did not reply.',
     },
     { at: TIMES.approved, actor: 'Dana Ortiz', text: 'Approved in v1.1', quote: state.approvalReason || TEXT.approvalReason, final: true },
+    { at: TIMES.approved, actor: 'Astra', text: 'Sent the change to Marcus\'s agent spec. T3 and T4 reopened' },
+    ...(state.codeUpdated ? [{ at: '2:24 PM', actor: 'Marcus Lee', text: 'Accepted the spec update. T3 and T4 committed' }] : []),
   ];
-  const kept = ['Spec §3.2', 'API response 1:40 PM', ...(state.evidence.includes('changelog') ? ['Changelog L58–60'] : []), 'Kickoff 18:40', `${stances.length} stance${stances.length === 1 ? '' : 's'}`];
+  const kept = ['API doc §3.2', 'API response 1:40 PM', ...(state.evidence.includes('changelog') ? ['Changelog L58–60'] : []), 'Kickoff 18:40', `${stances.length} stance${stances.length === 1 ? '' : 's'}`];
   return html`<div className="sp">
     <div className="insp-head">
       <span className="insp-id mono">R4</span>
@@ -761,6 +804,10 @@ function DecisionRecord({ onClose, onDone }) {
       <button className="icon-btn" onClick=${onClose} aria-label="Close details"><${X} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
     </div>
     <div className="sp-body">
+      <div className=${cx('v3-build', state.codeUpdated ? 'ok' : 'behind')} data-tour="build-status">
+        <span>Requirement</span><b>Verified in v1.1</b>
+        <span>Build</span><b>${state.codeUpdated ? 'In sync with v1.1' : 'Behind v1.1 · T3, T4 reopened'}</b>
+      </div>
       <ol className="record">
         ${events.map((e, i) => html`<li key=${i} className=${cx('record-ev', e.danger && 'danger', e.final && 'final')}>
           <span className="record-node" aria-hidden="true" />
@@ -771,6 +818,8 @@ function DecisionRecord({ onClose, onDone }) {
       </ol>
       <div className="section-label">Evidence kept with this decision</div>
       <div className="chips">${kept.map((k) => html`<span key=${k} className="chip static">${k}</span>`)}</div>
+      <div className="section-label">Agent work</div>
+      <${AgentWorkBody} req="R4" all />
       ${toast && html`<div className="small muted">${toast}</div>`}
     </div>
     <div className="sp-foot">

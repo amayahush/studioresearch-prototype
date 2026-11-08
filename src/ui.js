@@ -1,4 +1,4 @@
-import { html, useState, cx } from './lib.js';
+import { html, useState, useEffect, useRef, cx } from './lib.js';
 import { PEOPLE, EVIDENCE } from './store.js';
 import { ChevronRight } from 'lucide-react';
 
@@ -41,10 +41,10 @@ export function Diff({ from, to, labels = ['Now', 'Proposed'], legacy }) {
 const POP_W = 290, POP_H = 170, GAP = 6, EDGE = 12;
 
 // Fixed to the window, not the panel, so it never adds a scrollbar; flips above when there's no room below.
-function popPosition(el) {
+export function popPosition(el, popH = POP_H) {
   const r = el.getBoundingClientRect();
   const left = Math.max(EDGE, Math.min(r.left, window.innerWidth - POP_W - EDGE));
-  return window.innerHeight - r.bottom < POP_H + GAP + EDGE
+  return window.innerHeight - r.bottom < popH + GAP + EDGE
     ? { left, bottom: window.innerHeight - r.top + GAP }
     : { left, top: r.bottom + GAP };
 }
@@ -81,4 +81,52 @@ export function CollapsibleSection({ label, preview, tone, open, onToggle, child
 export function Toast({ text }) {
   if (!text) return null;
   return html`<div className="toast">${text}</div>`;
+}
+
+// Columns people can drag wider or narrower. The width is a per-viewer convenience, so it can come back empty.
+export function useColumnWidth(key, def) {
+  const storeKey = `astra-column-${key}`;
+  const [width, setWidth] = useState(() => {
+    try { return Number(localStorage.getItem(storeKey)) || def; } catch { return def; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(storeKey, String(width)); } catch {}
+  }, [width]);
+  return [width, setWidth];
+}
+
+// A thin drag line between two columns. side="start": the column is to its left. side="end": to its right.
+// Double-click resets. Arrow keys work too. Dragging past collapseAt folds the column, when it can fold.
+export function ResizeHandle({ side, width, setWidth, def, min, max, label, collapseAt, onCollapse }) {
+  const drag = useRef(null);
+  const [active, setActive] = useState(false);
+  const clamp = (w) => Math.round(Math.max(min, Math.min(max, w)));
+  const onDown = (e) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { x: e.clientX, w: width };
+    setActive(true);
+    document.body.classList.add('v3-resizing');
+  };
+  const onMove = (e) => {
+    if (!drag.current) return;
+    const dx = e.clientX - drag.current.x;
+    const next = drag.current.w + (side === 'start' ? dx : -dx);
+    if (collapseAt && next < collapseAt) { setWidth(drag.current.w); end(); onCollapse(); return; }
+    setWidth(clamp(next));
+  };
+  const end = () => {
+    drag.current = null;
+    setActive(false);
+    document.body.classList.remove('v3-resizing');
+  };
+  const onKey = (e) => {
+    const step = e.key === 'ArrowLeft' ? -16 : e.key === 'ArrowRight' ? 16 : 0;
+    if (!step) return;
+    e.preventDefault();
+    setWidth(clamp(width + (side === 'start' ? step : -step)));
+  };
+  return html`<div className=${cx('v3-resize', active && 'active')} role="separator" aria-orientation="vertical" aria-label=${label}
+    aria-valuenow=${width} aria-valuemin=${min} aria-valuemax=${max} tabIndex=${0} title="Drag to resize. Double-click to reset."
+    onPointerDown=${onDown} onPointerMove=${onMove} onPointerUp=${end} onPointerCancel=${end} onDoubleClick=${() => setWidth(def)} onKeyDown=${onKey} />`;
 }

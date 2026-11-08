@@ -1,11 +1,12 @@
 import { html, useState, useEffect, useRef, cx, Fragment } from './lib.js';
 import { useStore, TEXT, EVIDENCE, TIMES, R4_INTENT, PEOPLE, prdVersion } from './store.js';
-import { Avatar, Tag, SectionLabel, Diff, EvidenceChip, Toast, StatusChip } from './ui.js';
+import { SpecCard } from './Spec.js';
+import { Avatar, Tag, SectionLabel, Diff, EvidenceChip, Toast, StatusChip, ResizeHandle, useColumnWidth } from './ui.js';
 import { TimeSkip, EndCard } from './Interstitials.js';
 import {
   FileText, FileCode, Code as Code2, GitBranch, X, PanelLeft, GitPullRequestArrow, CheckCircle2, MessageSquare, Paperclip,
   AlertTriangle, Plus, Check, Clock, Layers, FolderClosed, House, Box, BookOpen, AtSign, Ellipsis, Bell, Search,
-  SquarePen, Mic, ArrowUp, Copy, Link2, Scan, ChevronDown, MoreHorizontal, Bookmark,
+  SquarePen, Mic, ArrowUp, Copy, Link2, Scan, ChevronDown, MoreHorizontal, Bookmark, Pause,
 } from 'lucide-react';
 
 const PANEL_FOR_STAGE = {
@@ -34,13 +35,18 @@ export function Codex() {
   const { state, dispatch } = useStore();
   const [panel, setPanel] = useState(null);
   const [threadsOpen, setThreadsOpen] = useState(true);
+  const [threadsW, setThreadsW] = useColumnWidth('threads', 228);
+  const [panelW, setPanelW] = useColumnWidth('codex-panel', 360);
   const [file, setFile] = useState(null); // null = agent transcript, 'spec' = timekeeping-api.md
   const [toast, setToast] = useState('');
   const [streamDone, setStreamDone] = useState(state.codexStreamed || state.stage !== 'flagged');
   const [skip, setSkip] = useState(null); // time skip shown over the shell
   const [endCard, setEndCard] = useState(false);
 
-  const openNote = () => streamDone && setPanel(PANEL_FOR_STAGE[state.stage]);
+  // Astra has nothing to say until the spec has run into a conflict.
+  const noteReady = streamDone && !(state.stage === 'flagged' && state.specPhase !== 'held');
+  const openNote = () => noteReady && setPanel(PANEL_FOR_STAGE[state.stage]);
+  const [running, setRunning] = useState(false); // a reopened task is rerunning
 
   useEffect(() => {
     const onKey = (e) => {
@@ -48,7 +54,7 @@ export function Codex() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [state.stage, streamDone]);
+  }, [state.stage, state.specPhase, streamDone]);
 
   // Marcus's path plays the other roles off screen (brief §8): 04 → skip → 08a.
   const afterSent = () => {
@@ -89,6 +95,14 @@ export function Codex() {
     setTimeout(() => setEndCard(true), updated ? 1200 : 0);
   };
 
+  // Accepting Dana's change reruns only the reopened tasks, one at a time.
+  const rerunStep = (type) => {
+    setPanel(null);
+    dispatch({ type });
+    setRunning(true);
+    setTimeout(() => setRunning(false), 900);
+  };
+
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(''), 2600);
@@ -97,36 +111,36 @@ export function Codex() {
 
   const pendingBranch = ['proposed', 'moreEvidence', 'resent'].includes(state.stage);
   const status = {
-    flagged: 'R4 · assumption tested',
+    flagged: { plan: 'linked to PRD v1', run: 'watching the run', held: 'R4 needs a decision' }[state.specPhase],
     proposed: 'proposal sent',
     moreEvidence: 'Dana replied',
     resent: 'resent to Dana',
-    approved: state.codeUpdated ? 'in sync with v1.1' : 'R4 changed',
+    approved: state.codeUpdated ? 'in sync with v1.1' : 'spec updated to v1.1',
     denied: 'R4 unchanged',
   }[state.stage];
   const endSteps = [
-    { time: TIMES.flagged, who: 'Codex', text: 'flagged that R4 may not match the API' },
+    { time: TIMES.flagged, who: 'Codex', text: 'ran the spec. T3 failed verify against the API' },
     { time: TIMES.proposed, who: 'You', text: 'proposed hourly refresh, with evidence' },
     { time: TIMES.priya, who: 'Priya', text: state.priya.stance === 'disagreed' ? 'disagreed' : 'agreed and will relabel the Overview' },
     { time: TIMES.moreEvidence, who: 'Dana', text: 'asked for more evidence' },
     { time: TIMES.resent, who: 'You', text: 'added changelog lines 58–60 and resent' },
-    { time: TIMES.approved, who: 'Dana', text: 'approved R4 · PRD v1.1 updated Jira, Figma and Teams' },
+    { time: TIMES.approved, who: 'Dana', text: 'approved R4 · PRD v1.1 updated your spec, Jira, Figma and Teams' },
     state.codeUpdated
-      ? { time: '2:24 PM', who: 'You', text: 'updated the refresh job to match v1.1' }
-      : { time: 'Next', who: 'You', text: 'still need to update the refresh job to match v1.1', pending: true },
+      ? { time: '2:24 PM', who: 'You', text: 'accepted the spec update and committed T3 and T4' }
+      : { time: 'Next', who: 'You', text: 'still need to accept the spec update and rerun T3, T4', pending: true },
   ];
 
-  const needsYou = streamDone && (state.stage === 'flagged' || state.stage === 'moreEvidence' || (state.stage === 'approved' && !state.codeUpdated));
+  const needsYou = noteReady && (state.stage === 'flagged' || state.stage === 'moreEvidence' || (state.stage === 'approved' && !state.codeUpdated));
   const notSimulated = () => setToast('Not simulated in this prototype.');
 
-  return html`<div className="codex">
+  return html`<div className="codex" style=${{ '--cx-threads-w': `${threadsW}px` }}>
     <header className="cx-titlebar">
       <span className="cx-lights" aria-hidden="true"><span /><span /><span /></span>
       <button className="cx-icon" aria-label=${threadsOpen ? 'Hide sidebar' : 'Show sidebar'} aria-expanded=${threadsOpen} title=${threadsOpen ? 'Hide sidebar' : 'Show sidebar'} onClick=${() => setThreadsOpen(!threadsOpen)}><${PanelLeft} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
       <span className=${cx('cx-title-gap', threadsOpen && 'open')} />
       <span className="cx-thread-title"><${FolderClosed} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span>Implement LAB-15 refresh job</span></span>
-      <span className="cx-branch"><${GitBranch} size=${13} strokeWidth=${1.5} aria-hidden="true" />lab-15-refresh${pendingBranch ? ' · pending-R4' : ''}</span>
-      <button className=${cx('cx-astra-pill', needsYou && 'attn')} onClick=${openNote} disabled=${!streamDone}><${Layers} size=${13} strokeWidth=${1.5} aria-hidden="true" />Astra · ${streamDone ? status : 'checking PRD'}</button>
+      <span className="cx-branch"><${GitBranch} size=${13} strokeWidth=${1.5} aria-hidden="true" />lab-15-refresh${pendingBranch ? ' · T3, T4 held' : ''}</span>
+      <button className=${cx('cx-astra-pill', needsYou && 'attn')} onClick=${openNote} disabled=${!noteReady}><${Layers} size=${13} strokeWidth=${1.5} aria-hidden="true" />Astra · ${streamDone ? status : 'checking PRD'}</button>
     </header>
 
     <div className="cx-body">
@@ -137,7 +151,7 @@ export function Codex() {
         <${Avatar} id="marcus" size=${24} />
       </nav>
 
-      ${threadsOpen && html`<nav className="cx-threads" aria-label="Threads">
+      ${threadsOpen && html`<nav className="cx-threads" style=${{ flexBasis: threadsW, width: threadsW }} aria-label="Threads">
         <div className="cx-threads-head">
           <span>Codex</span>
           <button className="cx-icon" aria-label="Notifications" onClick=${notSimulated}><${Bell} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
@@ -154,6 +168,7 @@ export function Codex() {
         <button className="cx-thread" onClick=${notSimulated}><span>Write tests for LAB-13</span><span className="cx-unread" aria-label="Unread" /></button>
       </nav>`}
 
+      ${threadsOpen && html`<${ResizeHandle} side="start" width=${threadsW} setWidth=${setThreadsW} def=${228} min=${170} max=${400} collapseAt=${110} onCollapse=${() => setThreadsOpen(false)} label="Resize threads sidebar" />`}
       <main className="cx-main">
         ${file === 'spec' && html`<div className="cx-filebar">
           <${FileText} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span>timekeeping-api.md</span>
@@ -163,7 +178,7 @@ export function Codex() {
         <div className="cx-scroll">
           ${file === 'spec'
             ? html`<${SpecFile} onToast=${setToast} openNote=${openNote} />`
-            : html`<${Transcript} panel=${panel} openNote=${openNote} openFile=${() => setFile('spec')} streamDone=${streamDone} onStreamDone=${() => { setStreamDone(true); dispatch({ type: 'CODEX_STREAMED' }); }} />`}
+            : html`<${Transcript} panel=${panel} openNote=${openNote} openFile=${() => setFile('spec')} streamDone=${streamDone} onStreamDone=${() => { setStreamDone(true); dispatch({ type: 'CODEX_STREAMED' }); }} running=${running} onAccept=${() => rerunStep('ACCEPT_SPEC')} onCommitT3=${() => rerunStep('COMMIT_T3')} onCommitT4=${() => finish(true)} onLater=${() => finish(false)} />`}
           <div className="cx-input">
             <div className="cx-input-box">
               <input aria-label="Message Codex" placeholder="Work with Codex" onKeyDown=${(e) => e.key === 'Enter' && setToast('Codex chat is not simulated in this prototype.')} />
@@ -180,15 +195,16 @@ export function Codex() {
         </div>
       </main>
 
+      ${panel && html`<${ResizeHandle} side="end" width=${panelW} setWidth=${setPanelW} def=${360} min=${300} max=${640} label="Resize Astra panel" />`}
       ${panel &&
-      html`<aside className="side-panel rl astra-embed" data-theme=${state.theme === 'light' ? 'light' : 'dark'} aria-label="Astra">
-        <${CodexPanel} panel=${panel} setPanel=${setPanel} setToast=${setToast} openFile=${() => setFile('spec')} onSentClose=${afterSent} onResend=${resend} onFinish=${finish} />
+      html`<aside className="side-panel rl astra-embed" style=${{ flexBasis: panelW, width: panelW }} data-theme=${state.theme === 'light' ? 'light' : 'dark'} aria-label="Astra">
+        <${CodexPanel} panel=${panel} setPanel=${setPanel} setToast=${setToast} openFile=${() => setFile('spec')} onSentClose=${afterSent} onResend=${resend} onFinish=${finish} onAccept=${() => rerunStep('ACCEPT_SPEC')} />
       </aside>`}
     </div>
     ${skip && html`<${TimeSkip} ...${skip} onDone=${() => { skip.onDone(); setSkip(null); }} />`}
     ${endCard && html`<${EndCard}
       role="Engineer"
-      title=${state.codeUpdated ? 'Your code and the PRD agree again.' : 'R4 changed. Your code is next.'}
+      title=${state.codeUpdated ? 'Your spec, code and PRD agree again.' : 'R4 changed. Your spec is waiting.'}
       steps=${endSteps}
       onClose=${() => setEndCard(false)}
       onStart=${() => dispatch({ type: 'SET_ROLE', role: null })}
@@ -235,19 +251,40 @@ function Divider({ children }) {
   return html`<div className="cx-divider"><span>${children}</span></div>`;
 }
 
-// Pause before each opening block appears; the sandbox call waits longer, like a network request.
-const STREAM_DELAYS = [300, 450, 350, 350, 900, 550, 650, 450, 550, 500, 450];
+// Pause before each opening block appears.
+const STREAM_DELAYS = [300, 500, 500, 400];
+// The run, step by step. T1 passes, T2 needs a spec fix, T3 fails against the API.
+const RUN_DELAYS = [800, 1000, 1400, 1000, 700, 400];
 
-function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
-  const { state } = useStore();
+function runTasks(step) {
+  const done = ['done', 'Committed'];
+  return {
+    T1: step < 1 ? ['run', 'Running'] : done,
+    T2: step < 1 ? ['todo', ''] : step === 1 ? ['run', 'Running'] : step === 2 ? ['run', 'Fixing spec'] : done,
+    T3: step < 3 ? ['todo', ''] : step === 3 ? ['run', 'Running'] : ['held', 'Failed verify'],
+    T4: step < 4 ? ['todo', ''] : ['held', 'Waiting on T3'],
+  };
+}
+
+function Transcript({ panel, openNote, openFile, streamDone, onStreamDone, running, onAccept, onCommitT3, onCommitT4, onLater }) {
+  const { state, dispatch } = useStore();
   const s = state.stage;
   const [shown, setShown] = useState(streamDone ? STREAM_DELAYS.length : 0);
+  const [runStep, setRunStep] = useState(0);
+  const [guard, setGuard] = useState(false);
   const endRef = useRef(null);
   const streaming = shown < STREAM_DELAYS.length;
-  const highlightJson = panel === 'check' || panel === 'propose' || s !== 'flagged';
-  const past = (stage) => ['flagged', 'proposed', 'moreEvidence', 'resent', 'approved', 'denied'].indexOf(s) >= ['flagged', 'proposed', 'moreEvidence', 'resent', 'approved', 'denied'].indexOf(stage);
+  const planning = s === 'flagged' && state.specPhase === 'plan';
+  const runningSpec = s === 'flagged' && state.specPhase === 'run';
+  const heldNow = s === 'flagged' && state.specPhase === 'held';
+  const past = s !== 'flagged';
+  const past2 = (stage) => ['flagged', 'proposed', 'moreEvidence', 'resent', 'approved', 'denied'].indexOf(s) >= ['flagged', 'proposed', 'moreEvidence', 'resent', 'approved', 'denied'].indexOf(stage);
   const afterEvidence = ['resent', 'approved'].includes(s) || (s === 'denied' && state.marcusReply);
-  const skipStream = () => streaming && setShown(STREAM_DELAYS.length);
+  const log = heldNow || past ? RUN_DELAYS.length : runStep; // from the story, so history survives leaving the thread
+  const skipAll = () => {
+    if (streaming) setShown(STREAM_DELAYS.length);
+    else if (runningSpec) setRunStep(RUN_DELAYS.length);
+  };
 
   useEffect(() => {
     if (!streaming) { if (!streamDone) onStreamDone(); return; }
@@ -257,53 +294,113 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
   }, [shown]);
 
   useEffect(() => {
-    if (!streaming) return;
+    if (!runningSpec) return;
+    if (runStep >= RUN_DELAYS.length) { dispatch({ type: 'SPEC_HELD' }); return; }
+    const t = setTimeout(() => setRunStep(runStep + 1), RUN_DELAYS[runStep]);
+    return () => clearTimeout(t);
+  }, [runningSpec, runStep]);
+
+  useEffect(() => {
+    if (!streaming && !runningSpec) return;
     const onKey = (e) => {
-      if (e.key === ' ' && !/INPUT|TEXTAREA/.test(e.target.tagName)) { e.preventDefault(); skipStream(); }
+      if (e.key === ' ' && !/INPUT|TEXTAREA|BUTTON/.test(e.target.tagName)) { e.preventDefault(); skipAll(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [streaming]);
+  }, [streaming, runningSpec]);
 
   useEffect(() => {
     if (endRef.current) endRef.current.scrollIntoView({ block: 'end', behavior: 'smooth' });
-  }, [shown, s, state.codeUpdated]);
+  }, [shown, runStep, s, state.specPhase, state.rerun, running, state.codeUpdated, guard]);
+
+  const liveRun = runTasks(runStep);
+  const DONE = ['done', 'Committed'];
+  const PLAN = { T1: ['todo', ''], T2: ['todo', ''], T3: ['todo', ''], T4: ['todo', ''] };
+  const HELD = { T1: DONE, T2: DONE, T3: ['held', 'Failed verify'], T4: ['held', 'Waiting on T3'] };
+  const REOPENED = { T1: DONE, T2: DONE, T3: ['reopen', 'Reopened'], T4: ['reopen', 'Reopened'] };
+  const ALL_DONE = { T1: DONE, T2: DONE, T3: DONE, T4: DONE };
+
+  const approved = s === 'approved';
+  const accepted = approved && (state.rerun > 0 || state.codeUpdated);
+  const started = !planning;
+  const t3Done = approved && (state.rerun >= 2 || state.codeUpdated);
+
+  // Every card is a snapshot of its moment in the chat. New work adds below; nothing rewrites what's above.
+  const planCard = html`<${SpecCard}
+    key="plan"
+    tasks=${PLAN}
+    r4Tag="R4"
+    r4Tone="assumed"
+    defaultOpen="T3"
+    tour=${planning ? 'spec-card' : undefined}
+    explainTour=${planning ? 'spec-explain' : undefined}
+    foot=${planning ? html`<span className="grow" /><button className="v3-btn primary" onClick=${() => dispatch({ type: 'APPROVE_SPEC' })}>Approve and run</button>` : null}
+  />`;
+
+  const review = (id, file, lines, verify, active, label, onCommit) => html`<div className="v3-review" data-tour=${active ? 'task-review' : undefined}>
+    <${Code} title=${`${id} · ${file}`} meta=${html`<span className="green">+1</span> <span className="red">−1</span>`} lines=${lines} />
+    <${Step}>Verify passed · ${verify}<//>
+    ${active
+      ? html`<div className="v3-foot bare"><span className="grow" /><button className="v3-btn primary" onClick=${onCommit}>${label}</button></div>`
+      : html`<${Step}>${id} committed<//>`}
+  </div>`;
+  const reviewT3 = (active) => review('T3', 'src/jobs/refreshLaborHours.ts', [
+    ["- export const schedule = '*/15 * * * *'", 'red'],
+    [html`+ export const schedule = '5 * * * *'  <span className="muted">// R4 v1.1</span>`, 'green'],
+  ], "the schedule fits the API's hourly sync", active, 'Commit T3', onCommitT3);
+  const reviewT4 = (active) => review('T4', 'src/ui/Overview.tsx', [
+    ['- Updated every 15 min', 'red'],
+    ['+ Last synced {lastSync} · next {nextSync}', 'green'],
+  ], 'the Overview shows the real last-sync time', active, 'Commit T4', onCommitT4);
 
   const blocks = [
     html`<div className="cx-prompt"><div>Implement LAB-15: refresh labor hours from the timekeeping API every 15 minutes. Follow PRD R4.</div></div>`,
-    html`<${Step}>Reading PRD context · Line Labor Dashboard v1 · R4, Data and constraints<//>`,
-    html`<${Step}>Read <button className="cx-file-link" onClick=${(e) => { e.stopPropagation(); openFile(); }}>docs/integrations/timekeeping-api.md</button><//>`,
-    html`<${Step}>Read src/jobs/index.ts<//>`,
-    html`<${Step}>Called sandbox GET /v2/labor/hours?plant=EVR&shift=2<//>`,
-    html`<${Code} title="JSON · sandbox response" lines=${[
-      ['{'],
-      ['  "plant": "EVR", "shift": 2,'],
-      ['  "departments": 14,'],
-      ['  "last_sync": "2026-10-08T13:00:00",'],
-      ['  "sync_interval": "PT1H",', highlightJson && 'hl'],
-      ['  "next_sync": "2026-10-08T14:00:00"'],
-      ['}'],
-    ]} />`,
-    html`<${Notice} tour="notice-flag" handled=${s !== 'flagged'} onView=${openNote}>R4 was never checked against this API. Your build just tested it.<//>`,
-    html`<${Step}>Writing src/jobs/refreshLaborHours.ts<//>`,
-    html`<${Code} title="src/jobs/refreshLaborHours.ts" meta=${html`<span className="green">+5</span>`} lines=${[
-      [html`+ export const schedule = <span className="tk-str">'*/15 * * * *'</span>  <span className="muted">// PRD R4 as written</span>`, 'green'],
-      ['+ export async function refreshLaborHours() {', 'green'],
-      ["+   const res = await timekeeping.get('/v2/labor/hours', { plant, shift })", 'green'],
-      ['+   await store.upsertDepartmentTotals(res.departments)', 'green'],
-      ['+ }', 'green'],
-    ]} />`,
-    html`<${Step}>Writing tests (3)<//>`,
-    html`<div className="cx-done"><${Check} size=${14} strokeWidth=${2} aria-hidden="true" />Draft ready · 2 files changed · not committed</div>`,
+    html`<${Step}>Reading PRD context · Line Labor Dashboard v1 · R1, R4<//>`,
+    html`<div className="v3-say">Here's the plan. Nothing runs until you approve it.</div>`,
+    planCard,
   ];
 
-  return html`<div className="transcript" onClick=${skipStream}>
+  return html`<div className="transcript" onClick=${skipAll}>
     ${blocks.slice(0, shown).map((b, i) => html`<div key=${i} className=${cx('stream-block', !streamDone && 'enter')}>${b}</div>`)}
     ${streaming && html`<div className="cx-working"><span className="spinner" /> Working… <span className="cx-hint">click or press Space to skip</span></div>`}
 
-    ${!streaming && past('proposed') && html`<${Step}>Astra · proposal sent to Dana · branch tagged pending-R4<//>`}
+    ${started && html`<${Fragment}>
+      <div className="cx-prompt v3-gap"><div>Spec looks right. Run it.</div></div>
+      <${SpecCard}
+        key="run"
+        tour=${heldNow ? 'spec-run' : undefined}
+        tasks=${runningSpec ? liveRun : HELD}
+        r4Tag="R4"
+        r4Tone=${runningSpec && runStep < 4 ? 'assumed' : 'held'}
+        t2Fixed=${past || log >= 2}
+      />
+      ${log >= 1 && html`<div className="cx-step v3-gap">T1 · verify passed</div>`}
+      ${log >= 2 && html`<div className="v3-fix" data-tour="spec-fix"><${Code2} size=${14} strokeWidth=${1.5} aria-hidden="true" /><span><strong>T2 failed verify:</strong> the API returned 429. Spec updated: wait for Retry-After before retrying. <span className="muted">R1 didn't change, so no one else is pulled in.</span></span></div>`}
+      ${log >= 3 && html`<${Step}>T2 · verify passed<//>`}
+      ${log >= 4 && html`<${Fragment}>
+        <${Step}>Read <button className="cx-file-link" onClick=${(e) => { e.stopPropagation(); openFile(); }}>docs/integrations/timekeeping-api.md</button><//>
+        <${Step}>Called sandbox GET /v2/labor/hours?plant=EVR&shift=2<//>
+      <//>`}
+      ${log >= 5 && html`<div className="v3-say">T3 can't meet R4: the API only syncs hourly. I stopped there. T1 and T2 aren't affected.</div>`}
+    <//>`}
 
-    ${past('moreEvidence') && (s === 'moreEvidence' || state.danaAsk) &&
+    ${(heldNow || past) && html`<section className=${cx('v3-decide', past && 'resolved')} data-tour=${heldNow ? 'spec-decide' : undefined}>
+      <div className="v3-decide-head"><${Layers} size=${15} strokeWidth=${1.5} aria-hidden="true" /><strong>Astra</strong><span>This changes what R4 promised leaders.</span></div>
+      <div className="v3-cmp"><div><span>PRD says</span><b>Every 15 minutes</b></div><div><span>API does</span><b>Every 60 minutes</b></div></div>
+      ${heldNow && guard && html`<p className="v3-guard">The spec would run hourly while the PRD still promises leaders every 15 minutes. Nobody who agreed to R4 would know.</p>`}
+      ${heldNow && html`<div className="v3-foot">
+        <span className="grow" />
+        ${guard
+          ? html`<button className="v3-btn" onClick=${() => setGuard(false)}>Back</button>`
+          : html`<button className="v3-btn" onClick=${() => setGuard(true)}>Only fix the spec</button>`}
+        <button className="v3-btn blue" onClick=${openNote}>Review R4</button>
+      </div>`}
+    </section>`}
+    ${runningSpec && html`<div className="cx-working"><span className="spinner" /> Running the spec… <span className="cx-hint">click or press Space to skip</span></div>`}
+
+    ${past && html`<${Step}>Astra · proposal sent to Dana · T3 and T4 held<//>`}
+
+    ${past2('moreEvidence') && (s === 'moreEvidence' || state.danaAsk) &&
     html`<${Fragment}>
       <${Divider}>${TIMES.moreEvidence}<//>
       <${Notice} tour="notice-ask" isNew handled=${s !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>
@@ -311,30 +408,34 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone }) {
 
     ${afterEvidence && html`<${Step}>Astra · changelog L58–60 added as evidence · resent to Dana<//>`}
 
-    ${s === 'approved' &&
-    html`<${Fragment}>
+    ${approved && html`<${Fragment}>
       <${Divider}>${TIMES.approved}<//>
-      <${Notice} isNew handled=${state.codeUpdated} onView=${openNote}>R4 changed in PRD v1.1. Your draft doesn't match<//>
+      <${Notice} isNew handled=${accepted} onView=${openNote}>Dana approved R4 in PRD v1.1. Your spec is updated to match.<//>
+      <${SpecCard}
+        key="reopened"
+        tasks=${REOPENED}
+        r4Tag="R4 v1.1"
+        r4Tone="ok"
+        r4New=${state.proposal.text}
+        t2Fixed=${true}
+        tour=${accepted ? undefined : 'spec-reopened'}
+        foot=${accepted ? null : html`<span className="grow" /><button className="v3-btn" onClick=${onLater}>Not now</button><button className="v3-btn primary" onClick=${onAccept}>Accept and rerun T3, T4</button>`}
+      />
     <//>`}
 
-    ${s === 'denied' &&
-    html`<${Fragment}>
+    ${s === 'denied' && html`<${Fragment}>
       <${Divider}>${TIMES.denied}<//>
-      <${Notice} isNew onView=${openNote}>Dana kept R4 as written. Your draft follows the PRD<//>
+      <${Notice} isNew onView=${openNote}>Dana kept R4 as written. T3 and T4 can run as written.<//>
     <//>`}
 
-    ${state.codeUpdated &&
-    html`<${Fragment}>
-      <${Step}>Updating 2 files to match PRD v1.1<//>
-      <${Code} title="2 files · PRD v1.1" meta=${html`<span className="green">+2</span> <span className="red">−2</span>`} lines=${[
-        ['src/jobs/refreshLaborHours.ts', 'muted'],
-        ["- export const schedule = '*/15 * * * *'", 'red'],
-        [html`+ export const schedule = '5 * * * *'  <span className="muted">// R4 v1.1</span>`, 'green'],
-        ['src/ui/Overview.tsx', 'muted'],
-        ['- Updated every 15 min', 'red'],
-        ['+ Last synced {lastSync} · next {nextSync}', 'green'],
-      ]} />
-      <div className="cx-done"><${Check} size=${14} strokeWidth=${2} aria-hidden="true" />Draft matches PRD v1.1 · 2 files changed · not committed</div>
+    ${accepted && html`<div className="cx-prompt v3-gap"><div>Accept and rerun T3, T4.</div></div>`}
+    ${approved && running && state.rerun === 1 && html`<div className="cx-working"><span className="spinner" /> Running T3…</div>`}
+    ${approved && ((state.rerun === 1 && !running) || t3Done) && reviewT3(!t3Done)}
+    ${approved && running && state.rerun === 2 && html`<div className="cx-working"><span className="spinner" /> Running T4…</div>`}
+    ${approved && ((state.rerun === 2 && !running) || state.codeUpdated) && reviewT4(!state.codeUpdated)}
+    ${state.codeUpdated && html`<${Fragment}>
+      <${SpecCard} key="final" tasks=${ALL_DONE} r4Tag="R4 v1.1" r4Tone="ok" r4Text=${state.proposal.text} t2Fixed=${true} />
+      <div className="cx-done"><${Check} size=${14} strokeWidth=${2} aria-hidden="true" />In sync with PRD v1.1 · T3 and T4 committed</div>
     <//>`}
     <div ref=${endRef} />
   </div>`;
@@ -404,7 +505,7 @@ function SpecFile({ onToast, openNote }) {
     </div>
     ${canAdd && !added && html`<div className="hint">Drag across line numbers to select lines, then add them to R4's evidence.</div>`}
     <div className="section-label"><span>Codex</span></div>
-    <${Step}>Astra · proposal sent to Dana · branch tagged pending-R4<//>
+    <${Step}>Astra · proposal sent to Dana · T3 and T4 held<//>
     ${state.danaAsk && html`<${Divider}>${TIMES.moreEvidence}<//>
       <${Notice} isNew handled=${state.stage !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>`}
   </div>`;
@@ -435,7 +536,7 @@ function PanelHead({ title, right, onClose }) {
   </div>`;
 }
 
-function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend, onFinish }) {
+function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend, onFinish, onAccept }) {
   const { state, dispatch } = useStore();
   const close = () => setPanel(null);
   const [text, setText] = useState(state.proposal.text);
@@ -578,7 +679,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <${SectionLabel}>Stance requested<//>
         <${StanceRow} id="priya" what="owns Figma Overview" stance=${state.priya.stance} />
         <${StanceRow} id="kim" what="owns the success metric" stance=${state.kim.stance} />
-        <div className="info-row"><${GitBranch} size=${14} strokeWidth=${1.5} aria-hidden="true" /> Branch tagged pending-R4. Keep working.</div>
+        <div className="info-row"><${Pause} size=${14} strokeWidth=${0} fill="currentColor" aria-hidden="true" /> T3 and T4 are held until Dana decides. T1 and T2 are committed.</div>
       </div>
       <div className="sp-foot"><span className="grow" /><button className="btn" onClick=${onSentClose}>Close</button></div>
     </div>`;
@@ -625,21 +726,10 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
       <${PanelHead} title="R4 changed · PRD v1.1" right=${html`<${Tag} tone="green">Approved<//>`} onClose=${close} />
       <div className="sp-body">
         <div className="person-row"><${Avatar} id="dana" size=${26} /><div className="grow"><div className="strong-500">Dana approved your proposal</div><div className="small muted">Product manager · ${TIMES.approved}</div></div></div>
-        <${SectionLabel}>Preview · what "Update the code" changes<//>
-        <div className="diff-file">
-          <div className="diff-file-head mono"><${FileCode} size=${14} strokeWidth=${1.5} aria-hidden="true" /> src/jobs/refreshLaborHours.ts</div>
-          <div className="mono diff-del">- schedule = '*/15 * * * *'</div>
-          <div className="mono diff-add">+ schedule = '5 * * * *' // R4 v1.1</div>
-        </div>
-        <div className="diff-file">
-          <div className="diff-file-head mono"><${FileCode} size=${14} strokeWidth=${1.5} aria-hidden="true" /> src/ui/Overview.tsx</div>
-          <div className="mono diff-del">- Updated every 15 min</div>
-          <div className="mono diff-add">+ Last synced {lastSync} · next {nextSync}</div>
-        </div>
-        <div className="muted small">Matches Priya's new label. Nothing is committed until you review the diff.</div>
         <${SectionLabel}>R4 now says<//>
         <${Diff} from=${TEXT.r4Old} to=${state.proposal.text} labels=${['Was', 'Now']} />
         <${SectionLabel}>Also updated on approval<//>
+        <div className="check-row"><${Check} size=${14} strokeWidth=${2} className="green" aria-hidden="true" /> Your agent spec · T3 and T4 reopened</div>
         ${[
           [u.jira, 'Jira LAB-15 description'],
           [u.figma, 'Comment on Figma · Overview (Priya)'],
@@ -649,10 +739,12 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
       </div>
       <div className="sp-foot">
         ${state.codeUpdated
-          ? html`<span className="green small grow"><${Check} size=${14} strokeWidth=${2} aria-hidden="true" /> Code matches v1.1</span><button className="btn" onClick=${close}>Close</button>`
-          : html`<button className="btn btn-ghost" onClick=${() => onFinish(false)}>Not now</button>
+          ? html`<span className="green small grow"><${Check} size=${14} strokeWidth=${2} aria-hidden="true" /> In sync with v1.1</span><button className="btn" onClick=${close}>Close</button>`
+          : state.rerun > 0
+            ? html`<span className="grow" /><button className="btn" onClick=${close}>Close</button>`
+            : html`<button className="btn btn-ghost" onClick=${() => onFinish(false)}>Not now</button>
               <span className="grow" />
-              <button className="btn btn-primary" onClick=${() => onFinish(true)}>Update the code to match</button>`}
+              <button className="btn btn-primary" onClick=${onAccept}>Accept and rerun T3, T4</button>`}
       </div>
     </div>`;
   }
@@ -664,7 +756,7 @@ function CodexPanel({ panel, setPanel, setToast, openFile, onSentClose, onResend
         <div className="person-row"><${Avatar} id="dana" size=${26} /><div className="grow"><div className="strong-500">Dana kept R4 as written</div><div className="small muted">Product manager · ${TIMES.denied}</div></div></div>
         <${SectionLabel}>R4 says<//>
         <div className="small">${TEXT.r4Old}</div>
-        <div className="muted small">Your draft polls every 15 minutes, as written. The branch is no longer tagged pending-R4.</div>
+        <div className="muted small">T3 and T4 can run as written. Polling every 15 minutes will return repeat data 3 out of 4 times.</div>
       </div>
       <div className="sp-foot"><span className="grow" /><button className="btn" onClick=${close}>Close</button></div>
     </div>`;
