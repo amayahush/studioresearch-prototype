@@ -127,10 +127,17 @@ const MAIN_PEOPLE = ['dana', 'marcus', 'priya', 'kim', 'sam', 'jordan'];
 // requirements behind it; deciding what to do about a pattern is the team's call, so none of them recommends anything.
 // A pattern only shows once it spans 2+ requirements (`from`), and `until` retires it when the story resolves it.
 const PATTERNS = {
-  E1: [
+  E1: { since: 'Since v1', list: [
     { id: 'tested', reqs: ['R2', 'R4'], from: AT.flag, label: 'Requirements from early calls break once they’re tested', sub: '2 conflicts since v1, both in the last week' },
     { id: 'single', reqs: ['R4', 'R6'], from: D(9, 10, 40), until: AT.decide, label: 'Half the epic still traces to a single call', sub: 'No new sources since Oct 3' },
-  ],
+  ] },
+  E2: { since: 'Since kickoff', list: [
+    { id: 'unconfirmed', reqs: ['R3', 'R5'], from: D(12, 14, 0), label: 'Nothing in this epic has been confirmed yet', sub: 'Still open since kickoff, and R3 is already being built' },
+  ] },
+  E3: { since: 'Since kickoff', list: [
+    { id: 'offhand', reqs: ['R7', 'R8'], from: D(10, 12, 30), label: 'Each requirement comes from one passing comment', sub: 'No follow-up since they were raised' },
+    { id: 'unlinked', reqs: ['R7', 'R8'], from: D(10, 12, 30), label: 'Nothing has been designed or built for this epic', sub: 'No linked work in two weeks' },
+  ] },
 };
 
 // The story as a record: events, lags and who knew what, built from the shared state.
@@ -320,7 +327,11 @@ export function RecorderMap({ selected, setSelected }) {
   const [patOpen, setPatOpen] = useState(true);
   useEffect(() => { setPattern(null); }, [focus]);
   const pats = nodes[focus] && nodes[focus].type === 'epic'
-    ? (PATTERNS[focus] || []).filter((p) => T >= p.from && !(p.until && rec.approved && T >= p.until))
+    ? (PATTERNS[focus] ? PATTERNS[focus].list : [])
+      .filter((p) => T >= p.from && !(p.until && rec.approved && T >= p.until))
+      // A pattern needs 2+ requirements that exist right now (a discarded AI draft drops out).
+      .map((p) => ({ ...p, reqs: p.reqs.filter((r) => nodes[r] && nodes[r].alive) }))
+      .filter((p) => p.reqs.length >= 2)
     : [];
   const pat = pats.find((p) => p.id === pattern);
   const touched = pat ? new Set([...eventTouched, focus, ...pat.reqs]) : eventTouched;
@@ -437,7 +448,7 @@ export function RecorderMap({ selected, setSelected }) {
     <div className="rec-tip-sum">${e.short || gist(e.text)}</div>
     <div className="rec-tip-foot muted tiny"><span className="mono">${e.req}</span>${e.kind === 'ai' && html`<span>· AI${e.reviewer ? ', reviewed' : ''}</span>`}<span className="grow" /><span>Click to jump</span></div><//>`;
 
-  const patterns = pats.length > 0 && html`<${Patterns} list=${pats} picked=${pat && pat.id} pick=${(id) => setPattern(pattern === id ? null : id)} open=${patOpen} setOpen=${setPatOpen} />`;
+  const patterns = pats.length > 0 && html`<${Patterns} list=${pats} since=${PATTERNS[focus].since} picked=${pat && pat.id} pick=${(id) => setPattern(pattern === id ? null : id)} open=${patOpen} setOpen=${setPatOpen} />`;
   const props = { nodes, rec, T, touched, focus, center, hover, unhover, nodeTip, state, showNow, setShowNow, events: rec.events, patterns };
 
   return html`<div className="rec">
@@ -528,7 +539,7 @@ const whoName = (id) => (id === 'astra' ? 'Astra' : id === 'codex' ? 'Codex' : P
 // The Astra star, same glyph as the tester bar logo.
 const AstraMark = ({ size = 12, fill = '#fff' }) => html`<svg width=${size} height=${size} viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.5 10 6 13.5 8 10 10 8 13.5 6 10 2.5 8 6 6 8 2.5Z" fill=${fill} /></svg>`;
 
-function Patterns({ list, picked, pick, open, setOpen }) {
+function Patterns({ list, since, picked, pick, open, setOpen }) {
   const n = list.length, title = `${n} pattern${n === 1 ? '' : 's'}`;
   if (!open) return html`<button className="pat-pill" onClick=${() => setOpen(true)} aria-label=${`Show ${title} in this epic`}>
     <span className="pat-badge"><${AstraMark} /></span>${title}<${ChevronDown} size=${12} strokeWidth=${1.5} className="muted" aria-hidden="true" />
@@ -537,7 +548,7 @@ function Patterns({ list, picked, pick, open, setOpen }) {
     <div className="pat-head">
       <span className="pat-badge"><${AstraMark} /></span>
       <span className="pat-title">${title}</span>
-      <span className="muted tiny">Since v1</span>
+      <span className="muted tiny">${since}</span>
       <button className="icon-btn sm" onClick=${() => setOpen(false)} aria-label="Collapse patterns"><${ChevronUp} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
     </div>
     ${list.map((p) => html`<button key=${p.id} className=${cx('pat-row', picked === p.id && 'touched')} aria-pressed=${picked === p.id} onClick=${() => pick(p.id)}>
