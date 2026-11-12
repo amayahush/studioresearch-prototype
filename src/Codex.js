@@ -224,10 +224,26 @@ function Step({ children }) {
   return html`<div className="cx-step">${children}</div>`;
 }
 
+// Astra's star mark and name, in Astra purple, so Astra lines read apart from Codex's own.
+function AstraStar({ size = 14 }) {
+  return html`<svg className="cx-astra-star" width=${size} height=${size} viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M8 2.5 10 6 13.5 8 10 10 8 13.5 6 10 2.5 8 6 6 8 2.5Z" />
+    ${size >= 14 && html`<circle cx="1.5" cy="3" r="1" /><circle cx="14.5" cy="13" r="1" />`}
+  </svg>`;
+}
+
+function AstraName({ size }) {
+  return html`<strong className="cx-astra-name"><${AstraStar} size=${size} />Astra</strong>`;
+}
+
+// A status line from Astra inside the Codex thread.
+function AstraStep({ children }) {
+  return html`<div className="cx-step"><${AstraName} size=${12} /> · ${children}</div>`;
+}
+
 function Notice({ isNew, handled, children, onView, tour }) {
   return html`<div className=${cx('cx-notice', isNew && !handled && 'new', handled && 'handled')} data-tour=${tour}>
-    <${Layers} size=${14} strokeWidth=${1.5} aria-hidden="true" />
-    <span className="cx-notice-text"><strong>Astra</strong> <span>${children}</span></span>
+    <span className="cx-notice-text"><${AstraName} size=${14} /> <span>${children}</span></span>
     ${handled ? html`<span className="cx-notice-done">Handled</span>` : html`<button className="cx-notice-open" onClick=${onView}>Open</button>`}
   </div>`;
 }
@@ -391,7 +407,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone, runni
     <//>`}
 
     ${(heldNow || past) && html`<section className=${cx('v3-decide', past && 'resolved')} data-tour=${heldNow ? 'spec-decide' : undefined}>
-      <div className="v3-decide-head"><${Layers} size=${15} strokeWidth=${1.5} aria-hidden="true" /><strong>Astra</strong><span>This changes what R4 promised leaders.</span></div>
+      <div className="v3-decide-head"><${AstraName} size=${15} /><span>This changes what R4 promised leaders.</span></div>
       <div className="v3-cmp"><div><span>PRD says</span><b>Every 15 minutes</b></div><div><span>API does</span><b>Every 60 minutes</b></div></div>
       ${heldNow && guard && html`<p className="v3-guard">The spec would run hourly while the PRD still promises leaders every 15 minutes. Nobody who agreed to R4 would know.</p>`}
       ${heldNow && html`<div className="v3-foot">
@@ -404,7 +420,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone, runni
     </section>`}
     ${runningSpec && html`<div className="cx-working"><span className="spinner" /> Running the spec… <span className="cx-hint">click or press Space to skip</span></div>`}
 
-    ${past && html`<${Step}>Astra · proposal sent to Dana · T3 and T4 held<//>`}
+    ${past && html`<${AstraStep}>proposal sent to Dana · T3 and T4 held<//>`}
 
     ${past2('moreEvidence') && (s === 'moreEvidence' || state.danaAsk) &&
     html`<${Fragment}>
@@ -412,7 +428,7 @@ function Transcript({ panel, openNote, openFile, streamDone, onStreamDone, runni
       <${Notice} tour="notice-ask" isNew handled=${s !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>
     <//>`}
 
-    ${afterEvidence && html`<${Step}>Astra · changelog L58–60 added as evidence · resent to Dana<//>`}
+    ${afterEvidence && html`<${AstraStep}>changelog L58–60 added as evidence · resent to Dana<//>`}
 
     ${approved && html`<${Fragment}>
       <${Divider}>${TIMES.approved}<//>
@@ -513,7 +529,7 @@ function SpecFile({ onToast, openNote }) {
     </div>
     ${canAdd && !added && html`<div className="hint">${phone ? 'Tap a changelog line to select lines 58–60, then add them to R4\'s evidence.' : 'Drag across line numbers to select lines, then add them to R4\'s evidence.'}</div>`}
     <div className="section-label"><span>Codex</span></div>
-    <${Step}>Astra · proposal sent to Dana · T3 and T4 held<//>
+    <${AstraStep}>proposal sent to Dana · T3 and T4 held<//>
     ${state.danaAsk && html`<${Divider}>${TIMES.moreEvidence}<//>
       <${Notice} isNew handled=${state.stage !== 'moreEvidence'} onView=${openNote}>Dana asked for more evidence on R4<//>`}
   </div>`;
