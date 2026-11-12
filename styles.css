@@ -1364,13 +1364,16 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .rec-people { width: 340px; margin-top: 40px; }
 /* Epic patterns callout: sits above Sources in the left column, raised like a callout. Neutral on purpose:
    amber means pending and green means approved, so a pattern never borrows a status color. */
-.pat-slot { position: relative; z-index: 2; margin-bottom: 20px; }
-.pat-callout { width: 100%; border-radius: 14px; background: var(--a-card, var(--r-panel)); box-shadow: inset 0 0 0 1px var(--line-2), var(--a-shadow, 0 12px 32px rgba(0, 0, 0, 0.4)); overflow: hidden; animation: rec-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.pat-slot { position: relative; z-index: 2; margin-bottom: 20px; flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.pat-slot ~ .rec-reveal { flex-shrink: 0; }
+.pat-callout { width: 100%; min-height: 0; display: flex; flex-direction: column; border-radius: 14px; background: var(--a-card, var(--r-panel)); box-shadow: inset 0 0 0 1px var(--line-2), var(--a-shadow, 0 12px 32px rgba(0, 0, 0, 0.4)); overflow: hidden; animation: rec-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .pat-head { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px 0 12px; border-bottom: 1px solid var(--a-cardline, var(--r-line)); }
 .pat-badge { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #7C3AED; flex: none; }
 .pat-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pat-row { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 10px 12px; border-top: 1px solid var(--a-cardline, var(--r-line)); text-align: left; transition: background-color 0.25s ease, box-shadow 0.25s ease; }
-.pat-head + .pat-row { border-top: 0; }
+.pat-list { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.pat-list > .pat-row:first-child { border-top: 0; }
+.pat-epic { font-size: 11px; line-height: 16px; color: var(--muted); }
 .pat-row:hover { background: var(--bg-2); }
 .pat-row.touched { background: var(--bg-3); box-shadow: inset 2px 0 0 var(--text-2); }
 .pat-row > svg { color: var(--text-2); flex: none; margin-top: 2px; }

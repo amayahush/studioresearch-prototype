@@ -322,19 +322,21 @@ export function RecorderMap({ selected, setSelected }) {
   const cur = isLive || !passed.length ? [] : passed.filter((e) => e.t === passed[passed.length - 1].t);
   const eventTouched = new Set(cur.flatMap((e) => e.path.flat()));
 
-  // Epic patterns: a callout above Sources on the epic view. Picking one lights its requirements the same way a replayed event does.
+  // Patterns: a callout above Sources. An epic shows its own; All epics shows every epic's, each tagged with its epic.
+  // Picking one lights its requirements the same way a replayed event does.
   const [pattern, setPattern] = useState(null);
   const [patOpen, setPatOpen] = useState(true);
   useEffect(() => { setPattern(null); }, [focus]);
-  const pats = nodes[focus] && nodes[focus].type === 'epic'
-    ? (PATTERNS[focus] ? PATTERNS[focus].list : [])
-      .filter((p) => T >= p.from && !(p.until && rec.approved && T >= p.until))
-      // A pattern needs 2+ requirements that exist right now (a discarded AI draft drops out).
-      .map((p) => ({ ...p, reqs: p.reqs.filter((r) => nodes[r] && nodes[r].alive) }))
-      .filter((p) => p.reqs.length >= 2)
-    : [];
+  const epicPats = (id) => (PATTERNS[id] ? PATTERNS[id].list : [])
+    .filter((p) => T >= p.from && !(p.until && rec.approved && T >= p.until))
+    // A pattern needs 2+ requirements that exist right now (a discarded AI draft drops out).
+    .map((p) => ({ ...p, epic: id, reqs: p.reqs.filter((r) => nodes[r] && nodes[r].alive) }))
+    .filter((p) => p.reqs.length >= 2);
+  const focusType = nodes[focus] && nodes[focus].type;
+  const pats = focusType === 'epic' ? epicPats(focus) : focusType === 'prd' ? EPICS.flatMap(([id]) => epicPats(id)) : [];
+  const patSince = focusType === 'prd' ? 'All epics' : PATTERNS[focus] ? PATTERNS[focus].since : '';
   const pat = pats.find((p) => p.id === pattern);
-  const touched = pat ? new Set([...eventTouched, focus, ...pat.reqs]) : eventTouched;
+  const touched = pat ? new Set([...eventTouched, focus, pat.epic, ...pat.reqs]) : eventTouched;
 
   // Smooth playback. The playhead, the played part of the tape and the clock are painted straight to the DOM
   // every frame; React re-renders the map only when something on it changes (an event, a new minute, a new day).
@@ -448,7 +450,7 @@ export function RecorderMap({ selected, setSelected }) {
     <div className="rec-tip-sum">${e.short || gist(e.text)}</div>
     <div className="rec-tip-foot muted tiny"><span className="mono">${e.req}</span>${e.kind === 'ai' && html`<span>· AI${e.reviewer ? ', reviewed' : ''}</span>`}<span className="grow" /><span>Click to jump</span></div><//>`;
 
-  const patterns = pats.length > 0 && html`<${Patterns} list=${pats} since=${PATTERNS[focus].since} picked=${pat && pat.id} pick=${(id) => setPattern(pattern === id ? null : id)} open=${patOpen} setOpen=${setPatOpen} />`;
+  const patterns = pats.length > 0 && html`<${Patterns} list=${pats} since=${patSince} showEpic=${focusType === 'prd'} picked=${pat && pat.id} pick=${(id) => setPattern(pattern === id ? null : id)} open=${patOpen} setOpen=${setPatOpen} />`;
   const props = { nodes, rec, T, touched, focus, center, hover, unhover, nodeTip, state, showNow, setShowNow, events: rec.events, patterns };
 
   return html`<div className="rec">
@@ -539,23 +541,25 @@ const whoName = (id) => (id === 'astra' ? 'Astra' : id === 'codex' ? 'Codex' : P
 // The Astra star, same glyph as the tester bar logo.
 const AstraMark = ({ size = 12, fill = '#fff' }) => html`<svg width=${size} height=${size} viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.5 10 6 13.5 8 10 10 8 13.5 6 10 2.5 8 6 6 8 2.5Z" fill=${fill} /></svg>`;
 
-function Patterns({ list, since, picked, pick, open, setOpen }) {
+function Patterns({ list, since, showEpic, picked, pick, open, setOpen }) {
   const n = list.length, title = `${n} pattern${n === 1 ? '' : 's'}`;
-  if (!open) return html`<button className="pat-pill" onClick=${() => setOpen(true)} aria-label=${`Show ${title} in this epic`}>
+  if (!open) return html`<button className="pat-pill" onClick=${() => setOpen(true)} aria-label=${`Show ${title}`}>
     <span className="pat-badge"><${AstraMark} /></span>${title}<${ChevronDown} size=${12} strokeWidth=${1.5} className="muted" aria-hidden="true" />
   </button>`;
-  return html`<section className="pat-callout" aria-label="Patterns in this epic">
+  return html`<section className="pat-callout" aria-label="Patterns">
     <div className="pat-head">
       <span className="pat-badge"><${AstraMark} /></span>
       <span className="pat-title">${title}</span>
       <span className="muted tiny">${since}</span>
       <button className="icon-btn sm" onClick=${() => setOpen(false)} aria-label="Collapse patterns"><${ChevronUp} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
     </div>
-    ${list.map((p) => html`<button key=${p.id} className=${cx('pat-row', picked === p.id && 'touched')} aria-pressed=${picked === p.id} onClick=${() => pick(p.id)}>
-      <${TrendingUp} size=${14} strokeWidth=${1.5} aria-hidden="true" />
-      <span className="pat-main"><span className="pat-label">${p.label}</span><span className="rec-row-sub">${p.sub}</span></span>
-      <span className="pat-ids">${p.reqs.join(' ')}</span>
-    </button>`)}
+    <div className="pat-list">
+      ${list.map((p) => html`<button key=${p.id} className=${cx('pat-row', picked === p.id && 'touched')} aria-pressed=${picked === p.id} onClick=${() => pick(p.id)}>
+        <${TrendingUp} size=${14} strokeWidth=${1.5} aria-hidden="true" />
+        <span className="pat-main">${showEpic && html`<span className="pat-epic mono">LAB-${p.epic}</span>`}<span className="pat-label">${p.label}</span><span className="rec-row-sub">${p.sub}</span></span>
+        <span className="pat-ids">${p.reqs.join(' ')}</span>
+      </button>`)}
+    </div>
   </section>`;
 }
 
@@ -604,6 +608,7 @@ function Columns(p) {
     for (const r of reqs) R.push(html`<${ReqCard} key=${r} id=${r} ...${p} />`);
     ppl = [...new Set(reqs.flatMap((r) => peopleFor(r, nodes, events)))];
   } else if (n.type === 'prd') {
+    if (p.patterns) L.push(html`<div key="pats" className="pat-slot">${p.patterns}</div>`);
     L.push(html`<${SourcesCard} key="src" ids=${Object.keys(SOURCES)} ...${p} />`);
     for (const [id] of EPICS) R.push(html`<${Card} key=${id} id=${id} anchor="right" rows=${neighbors(id, nodes).filter((k) => nodes[k].type === 'req')} ...${p} />`);
     ppl = MAIN_PEOPLE;
