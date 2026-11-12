@@ -97,6 +97,8 @@ export function Astra() {
   const fullNav = phone ? drawer : navOpen;
   const closeNav = () => (phone ? setDrawer(false) : setNavOpen(false));
   const [navW, setNavW] = useColumnWidth('nav', 232);
+  // On desktop the view tabs end at the details panel's edge in every view, so they never move.
+  const [detailsW] = useColumnWidth('details', 320);
   const pending = isPending(state);
   const inbox = ['proposed', 'resent'].includes(state.stage) ? 1 : 0;
   const view = state.astraView;
@@ -230,6 +232,7 @@ export function Astra() {
         <div className="seg" role="group" aria-label="View">
           ${VIEWS.map(([id, label]) => html`<button key=${id} className=${cx('seg-btn', view === id && 'active')} aria-pressed=${view === id} onClick=${() => dispatch({ type: 'SET_VIEW', view: id })}>${label}</button>`)}
         </div>
+        <div className=${cx('rl-top-end', !phone && 'at-panel')} style=${phone ? undefined : { flexBasis: detailsW - 12, width: detailsW - 12 }}>
         <span className="rl-top-sep" aria-hidden="true" />
         <div className="export-wrap">
           <button className="icon-btn rl-export" onClick=${() => setExportOpen(!exportOpen)} aria-label="Export" aria-haspopup="menu" aria-expanded=${exportOpen} title="Export"><${Upload} size=${16} strokeWidth=${1.5} aria-hidden="true" /></button>
@@ -241,6 +244,7 @@ export function Astra() {
         </div>
         <button className="btn btn-soft sm" onClick=${() => setToast('Sharing is not simulated in this prototype.')}>Share</button>
         <button className="icon-btn btn-square" onClick=${notSimulated('More options')} aria-label="More options" title="More options"><${MoreHorizontal} size=${15} strokeWidth=${1.5} aria-hidden="true" /></button>
+        </div>
       </header>
       <${Body} selected=${selected} setSelected=${setSelected} toast=${setToast} story=${story} />
     </section>
@@ -310,7 +314,7 @@ function DocView({ selected, setSelected, story, toast }) {
     sliceWas.current = slice;
   }, [slice]);
   const [panelW, setPanelW] = useColumnWidth('details', 320);
-  const panelOpen = !phone && !!(selected || state.stage === 'unpublished');
+  const panelOpen = !phone; // desktop: the toggle always ends at the details panel's edge, like the view tabs
   const setSlice = (id) => dispatch({ type: 'SET_SLICE', slice: id });
   const reqs = getReqs(state);
   const pending = isPending(state);
@@ -352,7 +356,7 @@ function DocView({ selected, setSelected, story, toast }) {
           <button className=${cx('seg-btn', board && 'active')} aria-pressed=${board} onClick=${() => setLayout('board')}><${Workflow} size=${14} strokeWidth=${1.6} aria-hidden="true" />Board</button>
         </div>
       <//>`}
-      ${/* With the details panel open, the toggle ends at the panel's edge; the filter stays at the far right. */''}
+      ${/* On desktop the toggle ends at the details panel's edge, under the view tabs; the filter stays at the far right. */''}
       <div className=${cx('rl-subbar-end', panelOpen && 'over-panel')} style=${panelOpen ? { flexBasis: panelW - 12, width: panelW - 12 } : undefined}>
       <div className="export-wrap">
         <button className="rl-filter btn-soft" aria-haspopup="menu" aria-expanded=${filterOpen} onClick=${() => { setFilterOpen(!filterOpen); setSliceOpen(false); }}>

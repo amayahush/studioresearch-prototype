@@ -91,7 +91,14 @@ export function useColumnWidth(key, def) {
   });
   useEffect(() => {
     try { localStorage.setItem(storeKey, String(width)); } catch {}
+    // Other places that read the same column (the top bar lines up with the details panel) follow along.
+    window.dispatchEvent(new CustomEvent('astra-column', { detail: { key, width } }));
   }, [width]);
+  useEffect(() => {
+    const on = (e) => { if (e.detail.key === key) setWidth(e.detail.width); };
+    window.addEventListener('astra-column', on);
+    return () => window.removeEventListener('astra-column', on);
+  }, [key]);
   return [width, setWidth];
 }
 

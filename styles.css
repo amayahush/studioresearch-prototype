@@ -2480,3 +2480,9 @@ body.v3-resizing .rl-side, body.v3-resizing .cx-threads, body.v3-resizing .rl-pa
 .rl-subbar-end { display: flex; align-items: center; flex: none; }
 .rl-subbar-end.over-panel { box-sizing: border-box; justify-content: flex-end; }
 .bd-layout:has(+ .rl-subbar-end.over-panel) { margin-right: 0; }
+/* Top bar end: spans the details panel's width on desktop so the view tabs end at the panel's
+   edge in every view, lined up with List/Board below. */
+.rl-top-end { display: contents; }
+.rl-top-end.at-panel { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: none; box-sizing: border-box; }
+.rl-top-end.at-panel .rl-top-sep { display: none; }
+:is(.astra, .astra-embed)[data-theme] .rl-top .seg:has(+ .rl-top-end.at-panel) { margin-right: -10px; }
