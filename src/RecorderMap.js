@@ -315,7 +315,7 @@ export function RecorderMap({ selected, setSelected }) {
   const cur = isLive || !passed.length ? [] : passed.filter((e) => e.t === passed[passed.length - 1].t);
   const eventTouched = new Set(cur.flatMap((e) => e.path.flat()));
 
-  // Epic patterns: a callout over the map. Picking one lights its requirements the same way a replayed event does.
+  // Epic patterns: a callout above Sources on the epic view. Picking one lights its requirements the same way a replayed event does.
   const [pattern, setPattern] = useState(null);
   const [patOpen, setPatOpen] = useState(true);
   useEffect(() => { setPattern(null); }, [focus]);
@@ -437,7 +437,8 @@ export function RecorderMap({ selected, setSelected }) {
     <div className="rec-tip-sum">${e.short || gist(e.text)}</div>
     <div className="rec-tip-foot muted tiny"><span className="mono">${e.req}</span>${e.kind === 'ai' && html`<span>· AI${e.reviewer ? ', reviewed' : ''}</span>`}<span className="grow" /><span>Click to jump</span></div><//>`;
 
-  const props = { nodes, rec, T, touched, focus, center, hover, unhover, nodeTip, state, showNow, setShowNow, events: rec.events };
+  const patterns = pats.length > 0 && html`<${Patterns} list=${pats} picked=${pat && pat.id} pick=${(id) => setPattern(pattern === id ? null : id)} open=${patOpen} setOpen=${setPatOpen} />`;
+  const props = { nodes, rec, T, touched, focus, center, hover, unhover, nodeTip, state, showNow, setShowNow, events: rec.events, patterns };
 
   return html`<div className="rec">
     <div className="map-bar">
@@ -460,7 +461,6 @@ export function RecorderMap({ selected, setSelected }) {
 
     <div className="rec-stage" ref=${stageBox}>
       <${Columns} key=${focus} ...${props} />
-      ${pats.length > 0 && html`<${Patterns} list=${pats} picked=${pat && pat.id} pick=${(id) => setPattern(pattern === id ? null : id)} open=${patOpen} setOpen=${setPatOpen} />`}
     </div>
 
     <div className="rec-tape">
@@ -588,6 +588,7 @@ function Columns(p) {
     ppl = peopleFor(focus, nodes, events);
   } else if (n.type === 'epic') {
     const reqs = neighbors(focus, nodes).filter((k) => nodes[k].type === 'req');
+    if (p.patterns) L.push(html`<div key="pats" className="pat-slot">${p.patterns}</div>`);
     L.push(html`<${SourcesCard} key="src" ids=${[...new Set(reqs.flatMap((r) => REQ_SOURCES[r]).filter((s) => SOURCES[s]))]} ...${p} />`);
     for (const r of reqs) R.push(html`<${ReqCard} key=${r} id=${r} ...${p} />`);
     ppl = [...new Set(reqs.flatMap((r) => peopleFor(r, nodes, events)))];

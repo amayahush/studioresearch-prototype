@@ -1362,9 +1362,10 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .rec-crumbs { display: flex; align-items: center; gap: 2px; min-height: 26px; margin-bottom: 10px; }
 
 .rec-people { width: 340px; margin-top: 40px; }
-/* Epic patterns callout: floats over the map's top left, above Sources. Neutral on purpose:
+/* Epic patterns callout: sits above Sources in the left column, raised like a callout. Neutral on purpose:
    amber means pending and green means approved, so a pattern never borrows a status color. */
-.pat-callout { position: absolute; left: 28px; top: 16px; z-index: 3; width: 300px; border-radius: 14px; background: var(--a-card, var(--r-panel)); box-shadow: inset 0 0 0 1px var(--line-2), var(--a-shadow, 0 12px 32px rgba(0, 0, 0, 0.4)); overflow: hidden; animation: rec-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.pat-slot { position: relative; z-index: 2; margin-bottom: 20px; }
+.pat-callout { width: 100%; border-radius: 14px; background: var(--a-card, var(--r-panel)); box-shadow: inset 0 0 0 1px var(--line-2), var(--a-shadow, 0 12px 32px rgba(0, 0, 0, 0.4)); overflow: hidden; animation: rec-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .pat-head { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px 0 12px; border-bottom: 1px solid var(--a-cardline, var(--r-line)); }
 .pat-badge { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #7C3AED; flex: none; }
 .pat-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1376,10 +1377,9 @@ button.band-head:focus-visible, .cluster-head:focus-visible { outline: 2px solid
 .pat-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .pat-label { font-size: 13px; line-height: 18px; color: var(--text); }
 .pat-ids { font: 11px/16px var(--mono); color: var(--muted); white-space: nowrap; margin-top: 1px; }
-.pat-pill { position: absolute; left: 28px; top: 16px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px 0 6px; border-radius: 999px; background: var(--a-card, var(--r-panel)); box-shadow: inset 0 0 0 1px var(--line-2), var(--a-shadow, 0 8px 24px rgba(0, 0, 0, 0.35)); font-size: 12px; line-height: 18px; color: var(--text); }
+.pat-pill { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px 0 6px; border-radius: 999px; background: var(--a-card, var(--r-panel)); box-shadow: inset 0 0 0 1px var(--line-2), var(--a-shadow, 0 8px 24px rgba(0, 0, 0, 0.35)); font-size: 12px; line-height: 18px; color: var(--text); }
 .pat-pill:hover { box-shadow: inset 0 0 0 1px var(--text-2), var(--a-shadow, 0 8px 24px rgba(0, 0, 0, 0.35)); }
 .pat-row:focus-visible, .pat-pill:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
-@media (max-width: 900px) { .pat-callout { left: 12px; top: 12px; width: min(300px, calc(100vw - 24px)); } .pat-pill { left: 12px; top: 12px; } }
 @media (prefers-reduced-motion: reduce) { .pat-callout { animation: none; } }
 .rec-people-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 6px; }
 .rec-person { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 8px; border-radius: 8px; text-align: left; transition: background-color 0.25s ease, box-shadow 0.25s ease; }
