@@ -3,7 +3,7 @@ import { useStore, TEXT, EVIDENCE, PEOPLE } from './store.js';
 import { Avatar, Tag, StatusChip, Diff } from './ui.js';
 import { getReqs } from './Astra.js';
 import {
-  FileText, ListTree, Box, GitBranch, Code, Frame, Target, Link2, Mic, Users, ChevronDown, ChevronRight,
+  FileText, ListTree, Box, GitBranch, Code, Frame, Target, Link2, Mic, Users, ChevronDown, ChevronRight, ChevronUp, TrendingUp,
   Play, Pause, SkipBack, SkipForward, Braces,
 } from 'lucide-react';
 
@@ -122,6 +122,16 @@ const ICONS = { prd: FileText, epic: ListTree, req: FileText, jira: Box, gitlab:
 const Ico = ({ t, size = 14 }) => { const I = ICONS[t] || FileText; return html`<${I} size=${size} strokeWidth=${1.5} aria-hidden="true" />`; };
 const epicOf = (r) => ({ R1: 'E1', R2: 'E1', R4: 'E1', R6: 'E1', R3: 'E2', R5: 'E2', R7: 'E3', R8: 'E3' }[r]);
 const MAIN_PEOPLE = ['dana', 'marcus', 'priya', 'kim', 'sam', 'jordan'];
+
+// Patterns Astra notices across an epic's requirements over time. They describe what keeps happening and cite the
+// requirements behind it; deciding what to do about a pattern is the team's call, so none of them recommends anything.
+// A pattern only shows once it spans 2+ requirements (`from`), and `until` retires it when the story resolves it.
+const PATTERNS = {
+  E1: [
+    { id: 'tested', reqs: ['R2', 'R4'], from: AT.flag, label: 'Requirements from early calls break once they’re tested', sub: '2 conflicts since v1, both in the last week' },
+    { id: 'single', reqs: ['R4', 'R6'], from: D(9, 10, 40), until: AT.decide, label: 'Half the epic still traces to a single call', sub: 'No new sources since Oct 3' },
+  ],
+};
 
 // The story as a record: events, lags and who knew what, built from the shared state.
 function buildRecord(state) {
@@ -303,7 +313,17 @@ export function RecorderMap({ selected, setSelected }) {
   const nodes = recordsAt(state, rec, T);
   const passed = events.filter((e) => e.t <= T);
   const cur = isLive || !passed.length ? [] : passed.filter((e) => e.t === passed[passed.length - 1].t);
-  const touched = new Set(cur.flatMap((e) => e.path.flat()));
+  const eventTouched = new Set(cur.flatMap((e) => e.path.flat()));
+
+  // Epic patterns: a callout over the map. Picking one lights its requirements the same way a replayed event does.
+  const [pattern, setPattern] = useState(null);
+  const [patOpen, setPatOpen] = useState(true);
+  useEffect(() => { setPattern(null); }, [focus]);
+  const pats = nodes[focus] && nodes[focus].type === 'epic'
+    ? (PATTERNS[focus] || []).filter((p) => T >= p.from && !(p.until && rec.approved && T >= p.until))
+    : [];
+  const pat = pats.find((p) => p.id === pattern);
+  const touched = pat ? new Set([...eventTouched, focus, ...pat.reqs]) : eventTouched;
 
   // Smooth playback. The playhead, the played part of the tape and the clock are painted straight to the DOM
   // every frame; React re-renders the map only when something on it changes (an event, a new minute, a new day).
@@ -440,6 +460,7 @@ export function RecorderMap({ selected, setSelected }) {
 
     <div className="rec-stage" ref=${stageBox}>
       <${Columns} key=${focus} ...${props} />
+      ${pats.length > 0 && html`<${Patterns} list=${pats} picked=${pat && pat.id} pick=${(id) => setPattern(pattern === id ? null : id)} open=${patOpen} setOpen=${setPatOpen} />`}
     </div>
 
     <div className="rec-tape">
@@ -504,6 +525,29 @@ const gist = (text) => {
   return g.length > 58 ? g.slice(0, 56).replace(/\s+\S*$/, '') + '…' : g;
 };
 const whoName = (id) => (id === 'astra' ? 'Astra' : id === 'codex' ? 'Codex' : PEOPLE[id].name);
+// The Astra star, same glyph as the tester bar logo.
+const AstraMark = ({ size = 12, fill = '#fff' }) => html`<svg width=${size} height=${size} viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.5 10 6 13.5 8 10 10 8 13.5 6 10 2.5 8 6 6 8 2.5Z" fill=${fill} /></svg>`;
+
+function Patterns({ list, picked, pick, open, setOpen }) {
+  const n = list.length, title = `${n} pattern${n === 1 ? '' : 's'}`;
+  if (!open) return html`<button className="pat-pill" onClick=${() => setOpen(true)} aria-label=${`Show ${title} in this epic`}>
+    <span className="pat-badge"><${AstraMark} /></span>${title}<${ChevronDown} size=${12} strokeWidth=${1.5} className="muted" aria-hidden="true" />
+  </button>`;
+  return html`<section className="pat-callout" aria-label="Patterns in this epic">
+    <div className="pat-head">
+      <span className="pat-badge"><${AstraMark} /></span>
+      <span className="pat-title">${title} in this epic</span>
+      <span className="muted tiny">Since v1</span>
+      <button className="icon-btn sm" onClick=${() => setOpen(false)} aria-label="Collapse patterns"><${ChevronUp} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
+    </div>
+    ${list.map((p) => html`<button key=${p.id} className=${cx('pat-row', picked === p.id && 'touched')} aria-pressed=${picked === p.id} onClick=${() => pick(p.id)}>
+      <${TrendingUp} size=${14} strokeWidth=${1.5} aria-hidden="true" />
+      <span className="pat-main"><span className="pat-label">${p.label}</span><span className="rec-row-sub">${p.sub}</span></span>
+      <span className="pat-ids">${p.reqs.join(' ')}</span>
+    </button>`)}
+  </section>`;
+}
+
 const Who = ({ id }) => (PEOPLE[id] ? html`<${Avatar} id=${id} size=${20} />` : html`<span className=${cx('rec-bot', id)}>${id === 'codex' ? '>_' : 'A'}</span>`);
 
 function Callout({ rec, T, cur, isLive, track }) {
