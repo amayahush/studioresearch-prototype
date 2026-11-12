@@ -2416,7 +2416,6 @@ body.v3-resizing .rl-side, body.v3-resizing .cx-threads, body.v3-resizing .rl-pa
    so it follows light and dark. Amber stays for "waiting on someone", blue for drafts. */
 .bd-layout { align-self: center; margin-right: 8px; }
 .bd-layout .seg-btn { display: inline-flex; align-items: center; gap: 6px; }
-.bd-draft-note { align-self: center; margin-right: 10px; font-size: 11px; line-height: 16px; color: var(--muted); white-space: nowrap; }
 .bd-wrap { position: relative; flex: 1; min-width: 0; min-height: 0; background: var(--a-chrome); }
 .bd-scroll { position: absolute; inset: 0; overflow: auto; background-image: radial-gradient(var(--a-dot) 1px, transparent 1px); background-size: 16px 16px; }
 .bd-size { position: relative; margin-bottom: 72px; }

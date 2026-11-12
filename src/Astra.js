@@ -346,7 +346,6 @@ function DocView({ selected, setSelected, story, toast }) {
       </nav>`}
       <span className="grow" />
       ${!phone && html`<${Fragment}>
-        ${board && html`<span className="bd-draft-note">Moving cards only changes the layout</span>`}
         <div className="seg sm bd-layout" role="group" aria-label="Layout">
           <button className=${cx('seg-btn', !board && 'active')} aria-pressed=${!board} onClick=${() => setLayout('list')}><${List} size=${14} strokeWidth=${1.6} aria-hidden="true" />List</button>
           <button className=${cx('seg-btn', board && 'active')} aria-pressed=${board} onClick=${() => setLayout('board')}><${Workflow} size=${14} strokeWidth=${1.6} aria-hidden="true" />Board</button>
