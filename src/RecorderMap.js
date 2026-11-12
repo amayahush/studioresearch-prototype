@@ -536,7 +536,7 @@ function Patterns({ list, picked, pick, open, setOpen }) {
   return html`<section className="pat-callout" aria-label="Patterns in this epic">
     <div className="pat-head">
       <span className="pat-badge"><${AstraMark} /></span>
-      <span className="pat-title">${title} in this epic</span>
+      <span className="pat-title">${title}</span>
       <span className="muted tiny">Since v1</span>
       <button className="icon-btn sm" onClick=${() => setOpen(false)} aria-label="Collapse patterns"><${ChevronUp} size=${14} strokeWidth=${1.5} aria-hidden="true" /></button>
     </div>
