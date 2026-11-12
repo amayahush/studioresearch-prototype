@@ -5,11 +5,12 @@ import { Avatar, Tag, Diff, EvidenceChip, Toast, CollapsibleSection, StatusChip,
 import { TimeSkip, EndCard } from './Interstitials.js';
 import { MapView, ScreensView, PresentView } from './AstraViews.js';
 import { RecorderMap } from './RecorderMap.js';
+import { BoardView } from './Board.js';
 import { dashboardLabel } from './Figma.js';
 import {
   ChevronDown, Search, Inbox, CircleUser, FileText, Settings, HelpCircle, X, History, Check, Clock, PanelLeft,
   Box, GitBranch, Frame, MessageSquare, Folder, Code, Upload, Sun, Moon, MoreHorizontal, MessageSquareText,
-  Code2, PanelsTopLeft, ShieldCheck, BarChart3, Menu, ListChecks,
+  Code2, PanelsTopLeft, ShieldCheck, BarChart3, Menu, ListChecks, List, Workflow,
 } from 'lucide-react';
 
 export const TOOLS = [['Jira', '2m', Box], ['GitLab', '5m', GitBranch], ['Figma', '1m', Frame], ['Teams', 'live', MessageSquare], ['SharePoint', '10m', Folder], ['Codex', 'live', Code]];
@@ -281,7 +282,7 @@ function StatusBar({ onRecorder, onToast }) {
 
 const FILTERS = [['all', 'All requirements'], ['approved', 'Approved'], ['pending', 'Pending'], ['draft', 'Draft']];
 
-function DocView({ selected, setSelected, story }) {
+function DocView({ selected, setSelected, story, toast }) {
   const { state, dispatch } = useStore();
   const [filter, setFilter] = useState('all');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -299,6 +300,9 @@ function DocView({ selected, setSelected, story }) {
   // Open/closed choices by section key, kept across selections that share a section.
   const [openMap, setOpenMap] = useState({});
   const slice = state.docSlice;
+  // The board is a desktop layout; phones always get the list.
+  const board = state.docLayout === 'board' && !phone;
+  const setLayout = (layout) => dispatch({ type: 'SET_DOC_LAYOUT', layout });
   // Phones: "See it in the Developer slice" is pressed inside a sheet, so lower the sheet to show the slice.
   const sliceWas = useRef(slice);
   useEffect(() => {
@@ -341,6 +345,13 @@ function DocView({ selected, setSelected, story }) {
         </button>`)}
       </nav>`}
       <span className="grow" />
+      ${!phone && html`<${Fragment}>
+        ${board && html`<span className="bd-draft-note">Moving cards only changes the layout</span>`}
+        <div className="seg sm bd-layout" role="group" aria-label="Layout">
+          <button className=${cx('seg-btn', !board && 'active')} aria-pressed=${!board} onClick=${() => setLayout('list')}><${List} size=${14} strokeWidth=${1.6} aria-hidden="true" />List</button>
+          <button className=${cx('seg-btn', board && 'active')} aria-pressed=${board} onClick=${() => setLayout('board')}><${Workflow} size=${14} strokeWidth=${1.6} aria-hidden="true" />Board</button>
+        </div>
+      <//>`}
       <div className="export-wrap">
         <button className="rl-filter btn-soft" aria-haspopup="menu" aria-expanded=${filterOpen} onClick=${() => { setFilterOpen(!filterOpen); setSliceOpen(false); }}>
           ${filterLabel} <span className="muted">${count(filter)}</span><${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" />
@@ -354,7 +365,7 @@ function DocView({ selected, setSelected, story }) {
     </div>
 
     <div className="rl-split">
-      <div className="rl-doc" onClick=${(e) => e.target === e.currentTarget && setSelected(null)}>
+      ${board ? html`<${BoardView} reqs=${visible} selected=${selected} setSelected=${setSelected} toast=${toast} onList=${() => setLayout('list')} />` : html`<div className="rl-doc" onClick=${(e) => e.target === e.currentTarget && setSelected(null)}>
         <div className="rl-doc-inner">
           <button className="doc-title" aria-pressed=${selected === 'overview'} onClick=${() => setSelected(selected === 'overview' ? null : 'overview')}>
             <h1>Line Labor Dashboard</h1>
@@ -393,7 +404,7 @@ function DocView({ selected, setSelected, story }) {
             ${state.labelUpdated && html`<span>Priya's Figma label now reads “${dashboardLabel(state)}”.</span>`}
           </div>`}
         </div>
-      </div>
+      </div>`}
 
       ${!phone && (selected || state.stage === 'unpublished') && html`<${ResizeHandle} side="end" width=${panelW} setWidth=${setPanelW} def=${320} min=${280} max=${620} label="Resize details panel" />`}
       ${phone && !selected && state.stage === 'unpublished' && !checkOpen && html`<button className="m-dock" onClick=${() => setCheckOpen(true)}>

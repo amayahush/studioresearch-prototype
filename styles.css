@@ -2409,3 +2409,65 @@ body.v3-resizing .rl-side, body.v3-resizing .cx-threads, body.v3-resizing .rl-pa
   .code-card-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .code-row { white-space: pre; width: max-content; min-width: 100%; }
 }
+
+/* ---------- PRD board (Doc › Board, PM) ----------
+   Same records as the list, laid out like a flow chart: epics are swimlanes, requirements are
+   cards, spec tasks hang off them, open questions are diamonds. Built on the Astra v2 tokens,
+   so it follows light and dark. Amber stays for "waiting on someone", blue for drafts. */
+.bd-layout { align-self: center; margin-right: 8px; }
+.bd-layout .seg-btn { display: inline-flex; align-items: center; gap: 6px; }
+.bd-draft-note { align-self: center; margin-right: 10px; font-size: 11px; line-height: 16px; color: var(--muted); white-space: nowrap; }
+.bd-wrap { position: relative; flex: 1; min-width: 0; min-height: 0; background: var(--a-chrome); }
+.bd-scroll { position: absolute; inset: 0; overflow: auto; background-image: radial-gradient(var(--a-dot) 1px, transparent 1px); background-size: 16px 16px; }
+.bd-size { position: relative; margin-bottom: 72px; }
+.bd-board { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.bd-wires { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.bd-wire { fill: none; stroke: var(--a-wire); stroke-width: 1; }
+.bd-wire.faint { stroke: var(--line-2); stroke-dasharray: 4 4; }
+.bd-wire.pending { stroke: var(--r-amber); }
+.bd-wire.dash { stroke-dasharray: 3 3; }
+.bd-head { fill: var(--a-wire); } .bd-head.pending { fill: var(--r-amber); }
+.bd-label { position: absolute; padding: 0 4px; font-size: 11px; line-height: 16px; color: var(--muted); background: var(--a-chrome); white-space: nowrap; pointer-events: none; }
+.bd-label.pending { color: var(--r-amber); }
+.bd-pill { position: absolute; left: 64px; top: 16px; width: 230px; height: 40px; box-sizing: border-box; padding: 0 16px; border-radius: 999px; display: flex; align-items: center; gap: 8px; font-size: 12px; white-space: nowrap; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); color: var(--text); }
+.bd-pill-k { color: var(--muted); }
+.bd-pill.goal { left: 800px; width: 240px; background: var(--r-green-bg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--r-green) 35%, transparent); }
+.bd-pill.goal .bd-pill-k { color: var(--r-green); }
+.bd-rule { position: absolute; left: 0; right: 0; height: 1px; background: var(--a-cardline); }
+.bd-lane { position: absolute; left: 0; width: 40px; display: flex; align-items: center; justify-content: center; background: var(--a-panel); box-shadow: inset -1px 0 0 var(--a-cardline); }
+.bd-lane span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.bd-card { position: absolute; width: 196px; height: 72px; box-sizing: border-box; padding: 9px 12px 10px; border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline); display: flex; flex-direction: column; justify-content: space-between; color: var(--text); cursor: grab; touch-action: none; user-select: none; }
+.bd-card:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
+.bd-card:active { cursor: grabbing; }
+.bd-card.pending { box-shadow: inset 0 0 0 1px var(--a-amber-line); }
+.bd-card.draft { background: transparent; box-shadow: none; outline: 1px dashed color-mix(in srgb, var(--r-blue) 55%, transparent); outline-offset: -1px; }
+.bd-card.selected { outline: 2px solid var(--a-accent); outline-offset: 3px; }
+.bd-card:focus-visible { outline: 2px solid var(--a-accent); outline-offset: 3px; }
+.bd-card-name { display: flex; align-items: baseline; gap: 7px; font-size: 13px; line-height: 18px; font-weight: 500; white-space: nowrap; overflow: hidden; }
+.bd-id { font-size: 11px; line-height: 16px; font-weight: 500; color: var(--muted); }
+.bd-card-meta { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bd-card-meta .tag { padding: 2px 7px; font-size: 11px; }
+.bd-meta-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--muted); }
+.bd-task { position: absolute; width: 208px; height: 34px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; background: var(--a-doc); box-shadow: inset 0 0 0 1px var(--a-cardline); display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; cursor: grab; touch-action: none; user-select: none; }
+.bd-task .v3-g { width: 13px; }
+.bd-task-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.bd-q { position: absolute; width: 76px; height: 76px; cursor: grab; touch-action: none; user-select: none; }
+.bd-q-shape { position: absolute; inset: 11px; transform: rotate(45deg); border-radius: 6px; background: var(--a-doc); outline: 1px dashed var(--a-wire); outline-offset: -1px; }
+.bd-q.pending .bd-q-shape { background: var(--r-amber-bg); outline: 0; box-shadow: inset 0 0 0 1px var(--a-amber-line); }
+.bd-q-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 0 14px; text-align: center; font-size: 10.5px; line-height: 13px; color: var(--text); }
+.bd-actions { position: absolute; z-index: 3; display: flex; gap: 2px; padding: 4px; border-radius: 9px; background: var(--a-fill); box-shadow: var(--a-shadow); white-space: nowrap; }
+.bd-act { height: 28px; padding: 0 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); white-space: nowrap; }
+.bd-act:hover:not(:disabled) { background: var(--a-fill-hover); }
+.bd-act.muted { color: var(--text-2); }
+.bd-act:disabled { opacity: 0.45; cursor: default; }
+.bd-tools, .bd-zoom { position: absolute; bottom: 16px; z-index: 4; display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 10px; background: var(--a-card); box-shadow: inset 0 0 0 1px var(--a-cardline), var(--a-shadow); }
+.bd-tools { left: 50%; transform: translateX(-50%); }
+.bd-zoom { right: 16px; padding: 3px; }
+.bd-tool { width: 32px; height: 32px; border-radius: 7px; display: grid; place-items: center; color: var(--text-2); }
+.bd-tool.sm { width: 28px; height: 28px; }
+.bd-tool:hover:not(:disabled) { background: var(--a-fill); color: var(--text); }
+.bd-tool.on { background: var(--a-navon); color: var(--text); }
+.bd-tool:disabled { opacity: 0.4; cursor: default; }
+.bd-tools-sep { width: 1px; align-self: stretch; margin: 6px 4px; background: var(--a-cardline); }
+.bd-zoom-val { width: 44px; text-align: center; font-size: 12px; color: var(--text-2); }
+.bd-act:focus-visible, .bd-tool:focus-visible { outline: 2px solid var(--a-accent); outline-offset: 1px; }

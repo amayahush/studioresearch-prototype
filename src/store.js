@@ -108,6 +108,7 @@ export const initialState = {
   // After approval: 0 spec update waiting, 1 reviewing T3, 2 reviewing T4.
   rerun: 0,
   docSlice: 'main',
+  docLayout: 'list', // Doc › List or Board (PM)
   // Hand edits to task code. Free play: nothing in the story depends on them.
   codeEdits: {},
   updates: { jira: true, figma: true, teams: true, metric: true, spec: true },
@@ -171,6 +172,8 @@ function storyReducer(state, action) {
       return { ...state, codeEdits: { ...state.codeEdits, [action.key]: action.code } };
     case 'SET_SLICE':
       return { ...state, docSlice: action.slice };
+    case 'SET_DOC_LAYOUT':
+      return { ...state, docLayout: action.layout };
     case 'SET_VIEW':
       return { ...state, astraView: action.view };
     case 'PROPOSE':
