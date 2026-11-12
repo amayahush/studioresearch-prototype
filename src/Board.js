@@ -10,24 +10,24 @@ import { MousePointer2, RectangleHorizontal, Diamond, MoveUpRight, StickyNote, P
 // says goes through the same details panel and approval as the list.
 
 const W = 1072; // board size at 100%
-const H = 780;
+const H = 724;
 const CARD = [196, 72];
 const TASK = [208, 34];
 const Q = [76, 76];
 
 const LANES = [
-  ['E1', 'LAB-E1 · Live labor visibility', 72, 292],
-  ['E2', 'LAB-E2 · Filtering', 292, 492],
-  ['E3', 'LAB-E3 · Alerts, history', 492, 692],
+  ['E1', 'LAB-E1 · Live labor visibility', 16, 236],
+  ['E2', 'LAB-E2 · Filtering', 236, 436],
+  ['E3', 'LAB-E3 · Alerts, history', 436, 636],
 ];
 
 // Where each node sits until someone drags it. Tidy up puts everything back here.
 const HOME = {
-  R1: [64, 92], R4: [64, 196], R2: [640, 92], R6: [860, 196],
-  R3: [64, 340], R5: [340, 340],
-  R7: [640, 512], R8: [64, 562],
-  T1: [300, 92], T2: [300, 134], T3: [420, 200], T4: [420, 244],
-  Q4: [302, 198], Q8: [302, 560],
+  R1: [64, 36], R4: [64, 140], R2: [640, 36], R6: [860, 140],
+  R3: [64, 284], R5: [340, 284],
+  R7: [640, 456], R8: [64, 506],
+  T1: [300, 36], T2: [300, 78], T3: [420, 144], T4: [420, 188],
+  Q4: [302, 142], Q8: [302, 504],
 };
 
 // Open questions. R4's only exists while the change is waiting on Dana.
@@ -117,7 +117,7 @@ export function BoardView({ reqs, selected, setSelected, onList, toast }) {
     if (!d.moved && Math.hypot(dx, dy) < 4) return;
     d.moved = true;
     const [w, h] = size(d.id);
-    setMoved((m) => ({ ...m, [d.id]: [Math.round(Math.max(48, Math.min(W - w - 8, d.start[0] + dx))), Math.round(Math.max(76, Math.min(H - h - 8, d.start[1] + dy)))] }));
+    setMoved((m) => ({ ...m, [d.id]: [Math.round(Math.max(48, Math.min(W - w - 8, d.start[0] + dx))), Math.round(Math.max(20, Math.min(H - h - 8, d.start[1] + dy)))] }));
   };
   // A drag ends with a click event too; swallow that one so dropping a card doesn't select it.
   const dragged = useRef(false);
@@ -139,12 +139,9 @@ export function BoardView({ reqs, selected, setSelected, onList, toast }) {
               <marker id="bd-ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 8 4 0 8Z" className="bd-head" /></marker>
               <marker id="bd-aa" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 8 4 0 8Z" className="bd-head pending" /></marker>
             </defs>
-            <path d="M294 36H796" className="bd-wire faint" markerEnd="url(#bd-ah)" />
             ${edges.map(([kind, a, b, , tone]) => html`<path key=${a + b} d=${route(kind, a, b, pos).d} className=${cx('bd-wire', tone && tone.startsWith('pending') && 'pending', tone === 'pending-dash' && 'dash')} markerEnd=${tone ? 'url(#bd-aa)' : 'url(#bd-ah)'} />`)}
           </svg>
 
-          <div className="bd-pill"><span className="bd-pill-k">Problem</span><span>Overtime seen too late</span></div>
-          <div className="bd-pill goal"><span className="bd-pill-k">Success</span><span>Risk spotted by mid-shift</span></div>
 
           ${LANES.map(([id, label, top, bottom]) => html`<${Fragment} key=${id}>
             <div className="bd-rule" style=${{ top }} />
