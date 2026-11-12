@@ -352,7 +352,7 @@ function DocView({ selected, setSelected, story, toast }) {
           <button className=${cx('seg-btn', board && 'active')} aria-pressed=${board} onClick=${() => setLayout('board')}><${Workflow} size=${14} strokeWidth=${1.6} aria-hidden="true" />Board</button>
         </div>
       <//>`}
-      ${/* With the details panel open, the toggle ends at the panel's edge and the filter sits over the panel. */''}
+      ${/* With the details panel open, the toggle ends at the panel's edge; the filter stays at the far right. */''}
       <div className=${cx('rl-subbar-end', panelOpen && 'over-panel')} style=${panelOpen ? { flexBasis: panelW - 12, width: panelW - 12 } : undefined}>
       <div className="export-wrap">
         <button className="rl-filter btn-soft" aria-haspopup="menu" aria-expanded=${filterOpen} onClick=${() => { setFilterOpen(!filterOpen); setSliceOpen(false); }}>
