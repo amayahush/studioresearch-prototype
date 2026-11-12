@@ -310,7 +310,6 @@ function DocView({ selected, setSelected, story, toast }) {
     sliceWas.current = slice;
   }, [slice]);
   const [panelW, setPanelW] = useColumnWidth('details', 320);
-  const panelOpen = !phone && !!(selected || state.stage === 'unpublished');
   const setSlice = (id) => dispatch({ type: 'SET_SLICE', slice: id });
   const reqs = getReqs(state);
   const pending = isPending(state);
@@ -352,8 +351,6 @@ function DocView({ selected, setSelected, story, toast }) {
           <button className=${cx('seg-btn', board && 'active')} aria-pressed=${board} onClick=${() => setLayout('board')}><${Workflow} size=${14} strokeWidth=${1.6} aria-hidden="true" />Board</button>
         </div>
       <//>`}
-      ${/* With the details panel open, the toggle ends at the panel's edge; the filter stays at the far right. */''}
-      <div className=${cx('rl-subbar-end', panelOpen && 'over-panel')} style=${panelOpen ? { flexBasis: panelW - 12, width: panelW - 12 } : undefined}>
       <div className="export-wrap">
         <button className="rl-filter btn-soft" aria-haspopup="menu" aria-expanded=${filterOpen} onClick=${() => { setFilterOpen(!filterOpen); setSliceOpen(false); }}>
           ${filterLabel} <span className="muted">${count(filter)}</span><${ChevronDown} size=${12} strokeWidth=${1.5} aria-hidden="true" />
@@ -363,7 +360,6 @@ function DocView({ selected, setSelected, story, toast }) {
             <strong>${id === 'pending' && html`<span className="dot amber" />`}${id === 'draft' && html`<span className="dot blue" />`}${label}<span className="grow" /><span className="muted">${count(id)}</span></strong>
           </button>`)}
         </div>`}
-      </div>
       </div>
     </div>
 
