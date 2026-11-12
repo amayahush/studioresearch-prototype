@@ -2414,7 +2414,7 @@ body.v3-resizing .rl-side, body.v3-resizing .cx-threads, body.v3-resizing .rl-pa
    Same records as the list, laid out like a flow chart: epics are swimlanes, requirements are
    cards, spec tasks hang off them, open questions are diamonds. Built on the Astra v2 tokens,
    so it follows light and dark. Amber stays for "waiting on someone", blue for drafts. */
-.bd-layout { align-self: center; margin-right: 8px; }
+.bd-layout { align-self: center; margin-right: 12px; }
 .bd-layout .seg-btn { display: inline-flex; align-items: center; gap: 6px; }
 .bd-wrap { position: relative; flex: 1; min-width: 0; min-height: 0; background: var(--a-chrome); }
 .bd-scroll { position: absolute; inset: 0; overflow: auto; background-image: radial-gradient(var(--a-dot) 1px, transparent 1px); background-size: 16px 16px; }
@@ -2480,3 +2480,8 @@ body.v3-resizing .rl-side, body.v3-resizing .cx-threads, body.v3-resizing .rl-pa
 .codex .cx-step .cx-astra-name { gap: 5px; font-weight: 500; }
 .codex .cx-astra-star, .codex .v3-decide-head .cx-astra-star { flex: none; color: var(--astra-mark); fill: var(--astra-mark); }
 .codex .cx-notice.handled .cx-notice-text .cx-astra-name { color: var(--astra-mark); }
+/* Subbar end: when the details panel is open, this block spans the panel's width, so the
+   List/Board toggle ends at the panel's edge and the filter lines up with the panel content. */
+.rl-subbar-end { display: flex; align-items: center; flex: none; }
+.rl-subbar-end.over-panel { box-sizing: border-box; padding-left: 12px; }
+.bd-layout:has(+ .rl-subbar-end.over-panel) { margin-right: 0; }

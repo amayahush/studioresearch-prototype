@@ -144,7 +144,6 @@ export function BoardView({ reqs, selected, setSelected, onList, toast }) {
           </svg>
 
           <div className="bd-pill"><span className="bd-pill-k">Problem</span><span>Overtime seen too late</span></div>
-          <span className="bd-label" style=${{ left: 452, top: 28 }}>every requirement below serves this</span>
           <div className="bd-pill goal"><span className="bd-pill-k">Success</span><span>Risk spotted by mid-shift</span></div>
 
           ${LANES.map(([id, label, top, bottom]) => html`<${Fragment} key=${id}>
